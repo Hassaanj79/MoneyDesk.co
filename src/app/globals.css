@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* App Configuration Styles */
+.compact-mode {
+  --spacing-unit: 0.5rem;
+  --card-padding: 0.75rem;
+  --text-sm: 0.75rem;
+  --text-base: 0.875rem;
+}
+
+.compact-mode .card {
+  padding: var(--card-padding);
+}
+
+.compact-mode .space-y-4 > * + * {
+  margin-top: var(--spacing-unit);
+}
+
+.compact-mode .space-y-6 > * + * {
+  margin-top: calc(var(--spacing-unit) * 1.5);
+}
+
+.compact-mode .text-sm {
+  font-size: var(--text-sm);
+}
+
+.compact-mode .text-base {
+  font-size: var(--text-base);
+}
+
+/* Animation duration control */
+:root {
+  --animation-duration: 150ms;
+}
+
+* {
+  transition-duration: var(--animation-duration, 150ms);
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }

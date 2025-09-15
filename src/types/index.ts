@@ -31,7 +31,7 @@ export type Account = {
 export type Category = {
   id: string;
   userId: string;
-  name:string;
+  name: string;
   type: 'income' | 'expense';
 };
 

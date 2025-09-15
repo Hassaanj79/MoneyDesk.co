@@ -16,7 +16,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { ProfileForm } from "@/components/settings/profile-form"
-import { AppearanceForm } from "@/components/settings/appearance-form"
+import { AppConfigForm } from "@/components/settings/app-config-form"
 
 export default function SettingsPage() {
   return (
@@ -31,13 +31,13 @@ export default function SettingsPage() {
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="app-config">App Configurations</TabsTrigger>
           </TabsList>
           <TabsContent value="profile">
             <ProfileForm />
           </TabsContent>
-          <TabsContent value="appearance">
-            <AppearanceForm />
+          <TabsContent value="app-config">
+            <AppConfigForm />
           </TabsContent>
         </Tabs>
       </CardContent>

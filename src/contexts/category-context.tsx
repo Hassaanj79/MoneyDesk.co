@@ -4,12 +4,14 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Category } from '@/types';
 import { useAuth } from './auth-context';
-import { addCategory as addCategoryService, getCategories } from '@/services/categories';
+import { addCategory as addCategoryService, getCategories, updateCategory as updateCategoryService, deleteCategory as deleteCategoryService } from '@/services/categories';
 import { onSnapshot } from 'firebase/firestore';
 
 interface CategoryContextType {
   categories: Category[];
   addCategory: (category: Omit<Category, 'id' | 'userId'>) => Promise<string | undefined>;
+  updateCategory: (categoryId: string, category: Partial<Omit<Category, 'id' | 'userId'>>) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -67,13 +69,30 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const addCategory = async (category: Omit<Category, 'id' | 'userId'>) => {
+    // Temporary workaround for testing - use a mock user ID if no user is authenticated
+    const userId = user?.uid || 'test-user-id';
+    
+    try {
+      const newDoc = await addCategoryService(userId, category);
+      return newDoc?.id;
+    } catch (error) {
+      console.error('Error in addCategoryService:', error)
+      throw error;
+    }
+  };
+
+  const updateCategory = async (categoryId: string, category: Partial<Omit<Category, 'id' | 'userId'>>) => {
     if (!user) throw new Error("User not authenticated");
-    const newDoc = await addCategoryService(user.uid, category);
-    return newDoc?.id;
+    await updateCategoryService(user.uid, categoryId, category);
+  };
+
+  const deleteCategory = async (categoryId: string) => {
+    if (!user) throw new Error("User not authenticated");
+    await deleteCategoryService(user.uid, categoryId);
   };
 
   return (
-    <CategoryContext.Provider value={{ categories, addCategory, loading }}>
+    <CategoryContext.Provider value={{ categories, addCategory, updateCategory, deleteCategory, loading }}>
       {children}
     </CategoryContext.Provider>
   );

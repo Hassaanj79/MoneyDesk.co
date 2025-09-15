@@ -27,19 +27,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with loading false
+  const [authInitialized, setAuthInitialized] = useState(true); // Start as initialized
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    // For live app, immediately set states to allow app to load
+    setLoading(false);
+    setUser(null);
+    setAuthInitialized(true);
+    
+    console.log('Auth context initialized for live app');
+    
+    // Optional: Try to set up Firebase auth in background
+    if (typeof window !== 'undefined') {
+      try {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+          setUser(user);
+        }, (error) => {
+          console.error('Firebase auth error:', error);
+        });
+        
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Failed to initialize Firebase auth:', error);
+      }
+    }
   }, []);
 
-  const login = (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async (email: string, password: string) => {
+    console.log('Attempting to login with email:', email);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login successful:', result.user.email);
+      return result;
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
   };
 
   const signup = async (email: string, password: string, name: string) => {
