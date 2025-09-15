@@ -10,9 +10,6 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   updateProfile,
-  signInWithPopup,
-  GoogleAuthProvider,
-  OAuthProvider,
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
@@ -23,8 +20,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
-  loginWithGoogle: () => Promise<any>;
-  loginWithApple: () => Promise<any>;
   sendPasswordReset: (email: string) => Promise<void>;
 }
 
@@ -56,16 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     return signOut(auth);
   };
-  
-  const loginWithGoogle = () => {
-    const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
-  }
-
-  const loginWithApple = () => {
-      const provider = new OAuthProvider('apple.com');
-      return signInWithPopup(auth, provider);
-  }
 
   const sendPasswordReset = (email: string) => {
     return sendPasswordResetEmail(auth, email);
@@ -77,8 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     signup,
     logout,
-    loginWithGoogle,
-    loginWithApple,
     sendPasswordReset,
   };
 
