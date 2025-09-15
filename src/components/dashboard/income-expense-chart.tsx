@@ -85,7 +85,7 @@ const IncomeExpenseChart = () => {
       <CardContent>
         <div className="h-[300px]">
            <ChartContainer config={chartConfig} className="w-full h-full">
-            <BarChart accessibilityLayer data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <BarChart accessibilityLayer data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact'})} />
