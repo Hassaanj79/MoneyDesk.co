@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 import { useNotifications } from "@/hooks/use-notifications"
 import { useCurrency } from "@/hooks/use-currency"
+import { useCountry } from "@/contexts/country-context"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserProfile, updateUserProfile } from "@/services/users"
 
@@ -44,6 +45,7 @@ export function ProfileForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const { addNotification } = useNotifications();
   const { currency, setCurrency } = useCurrency();
+  const { country, setCountry } = useCountry();
   const [loading, setLoading] = useState(true);
   
   const form = useForm<z.infer<typeof profileFormSchema>>({
@@ -55,7 +57,7 @@ export function ProfileForm() {
       street: "",
       state: "",
       zipcode: "",
-      country: "",
+      country: country,
       currency: currency,
     },
   });
@@ -82,9 +84,9 @@ export function ProfileForm() {
                     phone: profile.phone || defaultValues.phone,
                     street: profile.street || defaultValues.street,
                     state: profile.state || defaultValues.state,
-                    zipcode: profile.zipcode || defaultValues.zipcode,
-                    country: profile.country || defaultValues.country,
-                    currency: profile.currency || defaultValues.currency,
+                zipcode: profile.zipcode || defaultValues.zipcode,
+                country: profile.country || country || defaultValues.country,
+                currency: profile.currency || currency || defaultValues.currency,
                 });
                 setPhotoPreview(profile.photoURL || user.photoURL || null);
             } else {
@@ -111,6 +113,10 @@ export function ProfileForm() {
 
         if (values.currency) {
             setCurrency(values.currency);
+        }
+
+        if (values.country) {
+            setCountry(values.country);
         }
 
         addNotification({

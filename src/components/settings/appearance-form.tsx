@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form"
 import { useTheme } from "next-themes"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useEffect, useState } from "react"
 
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark"], {
@@ -22,7 +23,13 @@ const appearanceFormSchema = z.object({
 })
 
 export function AppearanceForm() {
-  const { setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure component is mounted before accessing theme
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const form = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
@@ -30,6 +37,28 @@ export function AppearanceForm() {
       theme: "light",
     },
   })
+
+  // Update form when theme changes
+  useEffect(() => {
+    if (mounted && theme) {
+      form.setValue("theme", theme as "light" | "dark")
+    }
+  }, [theme, mounted, form])
+
+  if (!mounted) {
+    return (
+      <div className="max-w-2xl">
+        <h3 className="text-lg font-medium">Appearance</h3>
+        <p className="text-sm text-muted-foreground mb-6">
+          Customize the look and feel of the application.
+        </p>
+        <div className="animate-pulse">
+          <div className="h-4 bg-muted rounded w-1/4 mb-4"></div>
+          <div className="h-32 bg-muted rounded"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl">

@@ -6,10 +6,12 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
+import { CountryProvider } from '@/contexts/country-context';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AccountProvider } from '@/contexts/account-context';
 import { BudgetProvider } from '@/contexts/budget-context';
 import { CategoryProvider } from '@/contexts/category-context';
+import { LoanProvider } from '@/contexts/loan-context';
 import { RecurringNotifications } from '@/components/recurring-notifications';
 
 export const metadata: Metadata = {
@@ -39,19 +41,23 @@ export default function RootLayout({
           <AuthProvider>
             <NotificationProvider>
               <CurrencyProvider>
-                <CategoryProvider>
+                <CountryProvider>
+                  <CategoryProvider>
                   <AccountProvider>
                     <TransactionProvider>
                        <DateRangeProvider>
                         <BudgetProvider>
+                          <LoanProvider>
                             <RecurringNotifications />
                             {children}
                             <Toaster />
+                          </LoanProvider>
                         </BudgetProvider>
                       </DateRangeProvider>
                     </TransactionProvider>
                   </AccountProvider>
-                </CategoryProvider>
+                  </CategoryProvider>
+                </CountryProvider>
               </CurrencyProvider>
             </NotificationProvider>
           </AuthProvider>

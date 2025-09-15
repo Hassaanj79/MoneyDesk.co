@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 
 interface CurrencyContextType {
   currency: string;
@@ -14,6 +14,20 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
   const [currency, setCurrency] = useState<string>('USD');
 
+  // Load currency from localStorage on mount
+  useEffect(() => {
+    const savedCurrency = localStorage.getItem('preferred-currency');
+    if (savedCurrency) {
+      setCurrency(savedCurrency);
+    }
+  }, []);
+
+  // Save currency to localStorage when it changes
+  const handleSetCurrency = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    localStorage.setItem('preferred-currency', newCurrency);
+  };
+
   const formatCurrency = useMemo(() => (value: number, options: Intl.NumberFormatOptions = {}) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -23,7 +37,7 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
   }, [currency]);
 
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, formatCurrency }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency: handleSetCurrency, formatCurrency }}>
       {children}
     </CurrencyContext.Provider>
   );

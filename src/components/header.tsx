@@ -19,6 +19,7 @@ import {
   Menu,
   LogOut,
   User as UserIcon,
+  HandCoins,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
@@ -44,6 +45,7 @@ const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
     { href: "/accounts", label: "Accounts", icon: Wallet },
+    { href: "/loans", label: "Loans", icon: HandCoins },
     { href: "/budgets", label: "Budgets", icon: Target },
     { href: "/reports", label: "Reports", icon: BarChart3 },
 ];

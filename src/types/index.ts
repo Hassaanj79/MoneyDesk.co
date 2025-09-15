@@ -48,6 +48,26 @@ export type UserProfile = {
   currency?: string;
 };
 
+export type Loan = {
+  id: string;
+  userId: string;
+  type: 'given' | 'taken';
+  borrowerName: string;
+  borrowerContact?: string;
+  amount: number;
+  interestRate?: number;
+  startDate: string;
+  dueDate: string;
+  status: 'active' | 'completed' | 'overdue';
+  description?: string;
+  accountId: string;
+  remainingAmount: number;
+  totalPaid: number;
+  lastPaymentDate?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
     
 
     

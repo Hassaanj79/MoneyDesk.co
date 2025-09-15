@@ -1,0 +1,201 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useLoans } from "@/contexts/loan-context";
+import { useCurrency } from "@/hooks/use-currency";
+import { ArrowUp, ArrowDown, HandCoins, CreditCard, AlertTriangle } from "lucide-react";
+import { format, isAfter, isBefore } from "date-fns";
+import { ReceivableBreakdown } from "./receivable-breakdown";
+import { PayableBreakdown } from "./payable-breakdown";
+
+export function LoanSummaryCards() {
+  const { loans } = useLoans();
+  const { formatCurrency } = useCurrency();
+  const [showReceivableBreakdown, setShowReceivableBreakdown] = useState(false);
+  const [showPayableBreakdown, setShowPayableBreakdown] = useState(false);
+
+  const loanStats = useMemo(() => {
+    const now = new Date();
+    
+    // Calculate accounts receivable (money others owe you - given loans)
+    const givenLoans = loans.filter(loan => loan.type === 'given');
+    const activeGivenLoans = givenLoans.filter(loan => loan.status === 'active');
+    const overdueGivenLoans = activeGivenLoans.filter(loan => isBefore(new Date(loan.dueDate), now));
+    
+    const totalReceivable = activeGivenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+    const overdueReceivable = overdueGivenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+    
+    // Calculate accounts payable (money you owe others - taken loans)
+    const takenLoans = loans.filter(loan => loan.type === 'taken');
+    const activeTakenLoans = takenLoans.filter(loan => loan.status === 'active');
+    const overdueTakenLoans = activeTakenLoans.filter(loan => isBefore(new Date(loan.dueDate), now));
+    
+    const totalPayable = activeTakenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+    const overduePayable = overdueTakenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+    
+    // Calculate net position (receivable - payable)
+    const netPosition = totalReceivable - totalPayable;
+    
+    // Calculate monthly change (simplified - you can enhance this)
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    
+    const thisMonthGiven = givenLoans.filter(loan => 
+      isAfter(new Date(loan.startDate), thisMonth)
+    ).reduce((sum, loan) => sum + loan.amount, 0);
+    
+    const lastMonthGiven = givenLoans.filter(loan => 
+      isAfter(new Date(loan.startDate), lastMonth) && isBefore(new Date(loan.startDate), thisMonth)
+    ).reduce((sum, loan) => sum + loan.amount, 0);
+    
+    const thisMonthTaken = takenLoans.filter(loan => 
+      isAfter(new Date(loan.startDate), thisMonth)
+    ).reduce((sum, loan) => sum + loan.amount, 0);
+    
+    const lastMonthTaken = takenLoans.filter(loan => 
+      isAfter(new Date(loan.startDate), lastMonth) && isBefore(new Date(loan.startDate), thisMonth)
+    ).reduce((sum, loan) => sum + loan.amount, 0);
+    
+    const receivableChange = lastMonthGiven === 0 ? (thisMonthGiven > 0 ? "+100%" : "0%") : 
+      `${((thisMonthGiven - lastMonthGiven) / lastMonthGiven * 100).toFixed(1)}%`;
+    
+    const payableChange = lastMonthTaken === 0 ? (thisMonthTaken > 0 ? "+100%" : "0%") : 
+      `${((thisMonthTaken - lastMonthTaken) / lastMonthTaken * 100).toFixed(1)}%`;
+
+    return {
+      totalReceivable,
+      overdueReceivable,
+      totalPayable,
+      overduePayable,
+      netPosition,
+      receivableChange,
+      payableChange,
+      activeGivenCount: activeGivenLoans.length,
+      activeTakenCount: activeTakenLoans.length,
+      overdueGivenCount: overdueGivenLoans.length,
+      overdueTakenCount: overdueTakenLoans.length,
+    };
+  }, [loans]);
+
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Accounts Receivable Card */}
+        <Card 
+          className="sm:col-span-1 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowReceivableBreakdown(true)}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Accounts Receivable</CardTitle>
+            <HandCoins className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(loanStats.totalReceivable)}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <ArrowUp className="h-3 w-3 text-green-600 mr-1" />
+              <span className="text-green-600 font-medium">{loanStats.receivableChange}</span>
+              <span className="ml-1">from last month</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1">
+              <Badge variant="outline" className="text-xs">
+                {loanStats.activeGivenCount} Active
+              </Badge>
+              {loanStats.overdueGivenCount > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {loanStats.overdueGivenCount} Overdue
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Accounts Payable Card */}
+        <Card 
+          className="sm:col-span-1 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowPayableBreakdown(true)}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Accounts Payable</CardTitle>
+            <CreditCard className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(loanStats.totalPayable)}</div>
+            <div className="flex items-center text-xs text-muted-foreground">
+              <ArrowDown className="h-3 w-3 text-red-600 mr-1" />
+              <span className="text-red-600 font-medium">{loanStats.payableChange}</span>
+              <span className="ml-1">from last month</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1">
+              <Badge variant="outline" className="text-xs">
+                {loanStats.activeTakenCount} Active
+              </Badge>
+              {loanStats.overdueTakenCount > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {loanStats.overdueTakenCount} Overdue
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+      {/* Net Position Card */}
+      <Card className="sm:col-span-2 lg:col-span-1">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Net Position</CardTitle>
+          <div className="flex items-center gap-1">
+            {loanStats.netPosition >= 0 ? (
+              <ArrowUp className="h-4 w-4 text-green-600" />
+            ) : (
+              <ArrowDown className="h-4 w-4 text-red-600" />
+            )}
+            {loanStats.overdueReceivable > 0 || loanStats.overduePayable > 0 ? (
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+            ) : null}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-bold ${loanStats.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {formatCurrency(Math.abs(loanStats.netPosition))}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {loanStats.netPosition >= 0 ? 'You are owed more' : 'You owe more'}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            <Badge variant="outline" className="text-xs">
+              {loanStats.activeGivenCount + loanStats.activeTakenCount} Total Loans
+            </Badge>
+            {(loanStats.overdueReceivable > 0 || loanStats.overduePayable > 0) && (
+              <Badge variant="destructive" className="text-xs">
+                Overdue Amount: {formatCurrency(loanStats.overdueReceivable + loanStats.overduePayable)}
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      </div>
+
+      {/* Receivable Breakdown Modal */}
+      <Dialog open={showReceivableBreakdown} onOpenChange={setShowReceivableBreakdown}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Accounts Receivable Breakdown</DialogTitle>
+          </DialogHeader>
+          <ReceivableBreakdown onClose={() => setShowReceivableBreakdown(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Payable Breakdown Modal */}
+      <Dialog open={showPayableBreakdown} onOpenChange={setShowPayableBreakdown}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Accounts Payable Breakdown</DialogTitle>
+          </DialogHeader>
+          <PayableBreakdown onClose={() => setShowPayableBreakdown(false)} />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
