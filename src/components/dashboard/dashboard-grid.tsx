@@ -22,17 +22,25 @@ import BalanceCard from "@/components/dashboard/balance-card";
 import BudgetOverview from "@/components/dashboard/budget-overview";
 import IncomeExpenseChart from "@/components/dashboard/income-expense-chart";
 import RecentTransactions from "@/components/dashboard/recent-transactions";
+import BalanceBreakdown from "@/components/dashboard/balance-breakdown";
+import IncomeBreakdown from "@/components/dashboard/income-breakdown";
+import ExpenseBreakdown from "@/components/dashboard/expense-breakdown";
 import { ArrowDown, ArrowUp, Wallet } from "lucide-react";
 import { useDateRange } from "@/contexts/date-range-context";
 import { SortableItem } from "./sortable-item";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useAccounts } from "@/contexts/account-context";
 import { isWithinInterval, parseISO, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 
 export default function DashboardGrid() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
+  const { accounts } = useAccounts();
   const { formatCurrency } = useCurrency();
+  const [showBalanceBreakdown, setShowBalanceBreakdown] = useState(false);
+  const [showIncomeBreakdown, setShowIncomeBreakdown] = useState(false);
+  const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
 
   const { totalBalance, totalIncome, totalExpense, incomeChange, expenseChange } = useMemo(() => {
     const currentPeriodTransactions = transactions.filter(t => 
@@ -70,7 +78,15 @@ export default function DashboardGrid() {
     const incomeChange = calculatePercentageChange(currentIncome, lastMonthIncome);
     const expenseChange = calculatePercentageChange(currentExpense, lastMonthExpense);
 
-    const totalBalance = transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+    // Calculate total balance from all accounts
+    // For each account, calculate current balance based on initial balance + transactions
+    const totalBalance = accounts.reduce((acc, account) => {
+      const accountTransactions = transactions.filter(t => t.accountId === account.id);
+      const accountBalance = account.initialBalance + accountTransactions.reduce((sum, t) => {
+        return sum + (t.type === 'income' ? t.amount : -t.amount);
+      }, 0);
+      return acc + accountBalance;
+    }, 0);
 
     return {
       totalBalance,
@@ -79,20 +95,25 @@ export default function DashboardGrid() {
       incomeChange,
       expenseChange
     };
-  }, [transactions, date]);
+  }, [transactions, date, accounts]);
 
 
   const initialItems = [
     {
       id: "balance",
       component: (
-        <BalanceCard
-          title="Total Balance"
-          amount={formatCurrency(totalBalance)}
-          icon={Wallet}
-        />
+        <div 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowBalanceBreakdown(true)}
+        >
+          <BalanceCard
+            title="Total Balance"
+            amount={formatCurrency(totalBalance)}
+            icon={Wallet}
+          />
+        </div>
       ),
-      colSpan: "sm:col-span-1 md:col-span-1 lg:col-span-1",
+      colSpan: "sm:col-span-2 md:col-span-1 lg:col-span-1",
     },
     {
       id: "income",
@@ -116,7 +137,7 @@ export default function DashboardGrid() {
           change={expenseChange}
         />
       ),
-      colSpan: "sm:col-span-2 md:col-span-1 lg:col-span-1",
+      colSpan: "sm:col-span-1 md:col-span-1 lg:col-span-1",
     },
     {
       id: "chart",
@@ -156,40 +177,72 @@ export default function DashboardGrid() {
   };
 
   return (
-    <DndContext
-      id="dashboard-dnd"
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
+    <>
+      <DndContext
+        id="dashboard-dnd"
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
       <SortableContext items={items.map(i => i.id)} strategy={rectSwappingStrategy}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
           {items.map((item) => (
              <SortableItem key={item.id} id={item.id} className={item.colSpan}>
-                {item.id === 'balance' ? <BalanceCard
-                    title="Total Balance"
-                    amount={formatCurrency(totalBalance)}
-                    icon={Wallet}
-                    iconColor="text-blue-600 dark:text-blue-400"
-                    /> : item.id === 'income' ? <BalanceCard
-                    title="Income"
-                    amount={formatCurrency(totalIncome)}
-                    icon={ArrowDown}
-                    change={incomeChange}
-                    iconColor="text-green-600 dark:text-green-400"
-                    /> : item.id === 'expense' ? <BalanceCard
-                    title="Expense"
-                    amount={formatCurrency(totalExpense)}
-                    icon={ArrowUp}
-                    change={expenseChange}
-                    iconColor="text-red-600 dark:text-red-400"
-                    changeColor="text-red-700 dark:text-red-400"
-                    /> : item.component
+                {item.id === 'balance' ? <div 
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => setShowBalanceBreakdown(true)}
+                  >
+                    <BalanceCard
+                      title="Total Balance"
+                      amount={formatCurrency(totalBalance)}
+                      icon={Wallet}
+                      iconColor="text-blue-600 dark:text-blue-400"
+                    />
+                  </div> : item.id === 'income' ? <div 
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => setShowIncomeBreakdown(true)}
+                  >
+                    <BalanceCard
+                      title="Income"
+                      amount={formatCurrency(totalIncome)}
+                      icon={ArrowDown}
+                      change={incomeChange}
+                      iconColor="text-green-600 dark:text-green-400"
+                    />
+                  </div> : item.id === 'expense' ? <div 
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => setShowExpenseBreakdown(true)}
+                  >
+                    <BalanceCard
+                      title="Expense"
+                      amount={formatCurrency(totalExpense)}
+                      icon={ArrowUp}
+                      change={expenseChange}
+                      iconColor="text-red-600 dark:text-red-400"
+                      changeColor="text-red-700 dark:text-red-400"
+                    />
+                  </div> : item.component
                 }
             </SortableItem>
           ))}
         </div>
       </SortableContext>
-    </DndContext>
+      </DndContext>
+      
+      <BalanceBreakdown 
+        open={showBalanceBreakdown} 
+        onOpenChange={setShowBalanceBreakdown} 
+      />
+      
+      <IncomeBreakdown 
+        open={showIncomeBreakdown} 
+        onOpenChange={setShowIncomeBreakdown} 
+      />
+      
+      <ExpenseBreakdown 
+        open={showExpenseBreakdown} 
+        onOpenChange={setShowExpenseBreakdown} 
+      />
+    </>
   );
 }
