@@ -9,7 +9,7 @@ import { onSnapshot } from 'firebase/firestore';
 
 interface AccountContextType {
   accounts: Account[];
-  addAccount: (account: Omit<Account, 'id' | 'userId' | 'balance'>) => Promise<string | undefined>;
+  addAccount: (account: Omit<Account, 'id' | 'userId'>) => Promise<string | undefined>;
   updateAccount: (id: string, updatedAccount: Partial<Omit<Account, 'id' | 'userId'>>) => Promise<void>;
   deleteAccount: (id: string) => Promise<void>;
   loading: boolean;
@@ -29,7 +29,13 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const userAccounts: Account[] = [];
         querySnapshot.forEach((doc) => {
-          userAccounts.push({ id: doc.id, ...doc.data() } as Account);
+          const data = doc.data();
+          // Ensure balance is set, defaulting to initialBalance if not present
+          userAccounts.push({ 
+            id: doc.id, 
+            ...data,
+            balance: data.balance !== undefined ? data.balance : data.initialBalance || 0
+          } as Account);
         });
         setAccounts(userAccounts);
         setLoading(false);
@@ -45,9 +51,14 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
-  const addAccount = async (account: Omit<Account, 'id' | 'userId' | 'balance'>) => {
+  const addAccount = async (account: Omit<Account, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    const newDoc = await addAccountService(user.uid, account);
+    // Set balance to initialBalance when creating account
+    const accountWithBalance = {
+      ...account,
+      balance: account.initialBalance || 0
+    };
+    const newDoc = await addAccountService(user.uid, accountWithBalance);
     return newDoc?.id;
   };
 

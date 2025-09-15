@@ -211,7 +211,7 @@ export function AccountsSettings() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        ${account.balance.toFixed(2)}
+                        ${(account.balance || 0).toFixed(2)}
                       </p>
                       <p className="text-sm text-muted-foreground">Current Balance</p>
                     </div>

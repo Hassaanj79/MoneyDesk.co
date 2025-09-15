@@ -9,7 +9,7 @@ export const getAccounts = (userId: string) => {
     return query(accountsCol);
 }
 
-export const addAccount = async (userId: string, account: Omit<Account, 'id' | 'userId' | 'balance'>) => {
+export const addAccount = async (userId: string, account: Omit<Account, 'id' | 'userId'>) => {
     const accountsCol = getAccountsCollection(userId);
     return await addDoc(accountsCol, account);
 };
