@@ -24,19 +24,23 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription }: B
         <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">{title}</CardTitle>
         <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col justify-between h-full">
         <div className={cn("font-semibold tracking-tight", isDateRange ? "text-base" : "text-3xl")}>{amount}</div>
-        {change && (
-          <p className={cn(
-            "text-xs font-medium",
-            isPositive && "text-green-700 dark:text-green-400",
-            isNegative && "text-red-700 dark:text-red-400",
-            !isPositive && !isNegative && "text-muted-foreground",
-            isDateRange ? "whitespace-nowrap" : ""
-          )}>
-            {change} {changeDescription || 'from last month'}
-          </p>
-        )}
+        <div className="h-5 flex items-end">
+          {change ? (
+            <p className={cn(
+              "text-xs font-medium",
+              isPositive && "text-green-700 dark:text-green-400",
+              isNegative && "text-red-700 dark:text-red-400",
+              !isPositive && !isNegative && "text-muted-foreground",
+              isDateRange ? "whitespace-nowrap" : ""
+            )}>
+              {change} {changeDescription || 'from last month'}
+            </p>
+          ) : (
+            <div className="h-5"></div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
