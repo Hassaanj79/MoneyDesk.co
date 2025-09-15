@@ -56,7 +56,7 @@ export function SignupForm() {
 
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm mx-auto">
         <CardHeader>
             <CardTitle>Create an account</CardTitle>
             <CardDescription>Enter your details to get started with MoneyDesk.</CardDescription>

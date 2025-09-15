@@ -38,6 +38,7 @@ import { Input } from "./ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { MobileNavigation } from "./mobile-navigation";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -106,7 +107,7 @@ export function Header() {
   
   const HeaderContent = (
      <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40">
-        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+        <nav className="hidden flex-col gap-6 text-lg font-medium lg:flex lg:flex-row lg:items-center lg:gap-5 lg:text-sm xl:gap-6">
           <Link
             href="/"
             className="flex items-center gap-2 text-lg font-semibold md:text-base"
@@ -132,7 +133,7 @@ export function Header() {
             <Button
               variant="outline"
               size="icon"
-              className="shrink-0 md:hidden"
+              className="shrink-0 lg:hidden"
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>
@@ -165,16 +166,18 @@ export function Header() {
 
         <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 lg:gap-2">
             <div className="ml-auto flex-1 sm:flex-initial">
-                <DateRangePicker date={date} onDateChange={setDate} />
+                <div className="hidden md:block">
+                    <DateRangePicker date={date} onDateChange={setDate} />
+                </div>
             </div>
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
-                <div className="relative flex-1 md:grow-0 max-w-sm">
+                <div className="relative flex-1 lg:grow-0 max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search transactions..."
-                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
+                    placeholder="Search..."
+                    className="w-full rounded-lg bg-background pl-8 lg:w-[200px] xl:w-[300px]"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => {
@@ -299,7 +302,12 @@ export function Header() {
     return <>{HeaderContent}</>;
   }
   
-  const content = <>{HeaderContent}</>
+  const content = (
+    <>
+      {HeaderContent}
+      <MobileNavigation />
+    </>
+  );
 
   if (isMobile) {
     return content;

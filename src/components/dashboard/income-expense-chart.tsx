@@ -83,7 +83,7 @@ const IncomeExpenseChart = () => {
         )}
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
+        <div className="h-[250px] md:h-[300px] lg:h-[350px]">
            <ChartContainer config={chartConfig} className="w-full h-full">
             <BarChart accessibilityLayer data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />

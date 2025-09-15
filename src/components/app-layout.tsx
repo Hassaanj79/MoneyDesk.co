@@ -9,7 +9,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/40">
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 lg:gap-8 lg:p-8 bg-muted/40 pb-20 lg:pb-8">
         {children}
       </main>
     </div>

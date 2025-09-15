@@ -78,7 +78,7 @@ export function LoginForm() {
 
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm mx-auto">
       <CardHeader>
         <CardTitle>{isForgotPassword ? "Reset Password" : "Welcome back"}</CardTitle>
         <CardDescription>
