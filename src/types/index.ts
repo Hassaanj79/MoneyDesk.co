@@ -15,8 +15,12 @@ export type Transaction = {
 export type Budget = {
   id: string;
   userId: string;
+  name: string;
+  amount: number;
+  period: 'weekly' | 'monthly' | 'yearly';
   categoryId: string;
-  limit: number;
+  startDate: Date;
+  endDate: Date;
 };
 
 export type Account = {

@@ -11,8 +11,6 @@ import {
   LayoutDashboard,
   Search,
   Settings,
-  Target,
-  Wallet,
   X,
   Loader2,
   History,
@@ -44,11 +42,10 @@ import { MobileNavigation } from "./mobile-navigation";
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
-    { href: "/accounts", label: "Accounts", icon: Wallet },
     { href: "/loans", label: "Loans", icon: HandCoins },
-    { href: "/budgets", label: "Budgets", icon: Target },
     { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
+
 
 export function Header() {
   const pathname = usePathname();

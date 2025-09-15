@@ -270,7 +270,7 @@ export function BudgetsSettings() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        ${budget.amount.toFixed(2)}
+                        ${(budget.amount || 0).toFixed(2)}
                       </p>
                       <p className="text-sm text-muted-foreground">Budget Limit</p>
                     </div>
@@ -335,7 +335,7 @@ export function BudgetsSettings() {
                         {new Date(budget.startDate).toLocaleDateString()} - {new Date(budget.endDate).toLocaleDateString()}
                       </span>
                       <span>
-                        ${(budget.amount * progress / 100).toFixed(2)} spent
+                        ${((budget.amount || 0) * progress / 100).toFixed(2)} spent
                       </span>
                     </div>
                   </div>
