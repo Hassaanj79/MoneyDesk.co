@@ -11,9 +11,11 @@ type BalanceCardProps = {
   icon: LucideIcon;
   change?: string;
   changeDescription?: string;
+  iconColor?: string;
+  changeColor?: string;
 };
 
-const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription }: BalanceCardProps) => {
+const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, iconColor, changeColor }: BalanceCardProps) => {
   const isPositive = change?.startsWith("+");
   const isNegative = change?.startsWith("-");
   const isDateRange = title === 'Date Range';
@@ -22,7 +24,7 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription }: B
     <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">{title}</CardTitle>
-        <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        <Icon className={cn("h-5 w-5", iconColor || "text-muted-foreground")} aria-hidden="true" />
       </CardHeader>
       <CardContent className="flex flex-col justify-between h-full">
         <div className={cn("font-semibold tracking-tight", isDateRange ? "text-base" : "text-3xl")}>{amount}</div>
@@ -30,9 +32,9 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription }: B
           {change ? (
             <p className={cn(
               "text-xs font-medium",
-              isPositive && "text-green-700 dark:text-green-400",
-              isNegative && "text-red-700 dark:text-red-400",
-              !isPositive && !isNegative && "text-muted-foreground",
+              changeColor || (isPositive && "text-green-700 dark:text-green-400"),
+              changeColor || (isNegative && "text-red-700 dark:text-red-400"),
+              !changeColor && !isPositive && !isNegative && "text-muted-foreground",
               isDateRange ? "whitespace-nowrap" : ""
             )}>
               {change} {changeDescription || 'from last month'}

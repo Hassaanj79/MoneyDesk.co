@@ -170,16 +170,20 @@ export default function DashboardGrid() {
                     title="Total Balance"
                     amount={formatCurrency(totalBalance)}
                     icon={Wallet}
+                    iconColor="text-blue-600 dark:text-blue-400"
                     /> : item.id === 'income' ? <BalanceCard
                     title="Income"
                     amount={formatCurrency(totalIncome)}
-                    icon={ArrowUp}
+                    icon={ArrowDown}
                     change={incomeChange}
+                    iconColor="text-green-600 dark:text-green-400"
                     /> : item.id === 'expense' ? <BalanceCard
                     title="Expense"
                     amount={formatCurrency(totalExpense)}
-                    icon={ArrowDown}
+                    icon={ArrowUp}
                     change={expenseChange}
+                    iconColor="text-red-600 dark:text-red-400"
+                    changeColor="text-red-700 dark:text-red-400"
                     /> : item.component
                 }
             </SortableItem>
