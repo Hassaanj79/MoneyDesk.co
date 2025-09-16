@@ -62,7 +62,7 @@ const BudgetOverview = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{budget.categoryName}</span>
                   <div className="flex items-center gap-2">
-                    {budget.isOverBudget && <AlertCircle className="h-4 w-4 text-red-500" />}
+                    {budget.isOverBudget && <AlertCircle className="h-4 w-4 text-orange-500" />}
                     <span className={`text-sm font-medium ${budget.status.color}`}>
                       {budget.progress.toFixed(1)}%
                     </span>
