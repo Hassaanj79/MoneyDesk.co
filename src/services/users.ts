@@ -21,3 +21,4 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     }
     return null;
 }
+

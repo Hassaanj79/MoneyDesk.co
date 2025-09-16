@@ -45,6 +45,7 @@ export type UserProfile = {
   email?: string;
   phone?: string;
   street?: string;
+  city?: string;
   state?: string;
   zipcode?: string;
   country?: string;

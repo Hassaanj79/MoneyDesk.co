@@ -5,6 +5,7 @@ import React from "react";
 import type { ReactNode } from "react";
 import { Header } from "@/components/header";
 import { MobileNavigation } from "@/components/mobile-navigation";
+import { WelcomePopup } from "@/components/onboarding/welcome-popup";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -14,6 +15,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
         {children}
       </main>
       <MobileNavigation />
+      <WelcomePopup />
     </div>
   );
 };
