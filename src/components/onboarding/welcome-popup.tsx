@@ -32,20 +32,33 @@ export function WelcomePopup() {
   const [hasSeenWelcome, setHasSeenWelcome] = useState(false)
 
   useEffect(() => {
-    // Check if user has seen the welcome popup
+    // Check if user has seen the welcome popup and if they're a new user
     if (typeof window !== 'undefined' && user) {
       const seenWelcome = localStorage.getItem('hasSeenWelcome')
-      console.log('Welcome popup check - seenWelcome:', seenWelcome, 'user:', user.displayName)
+      const isNewUser = checkIfNewUser(user)
       
-      // For testing: uncomment the next line to always show the popup
-      // setIsOpen(true)
+      console.log('Welcome popup check - seenWelcome:', seenWelcome, 'isNewUser:', isNewUser, 'user:', user.displayName)
       
-      if (!seenWelcome) {
-        console.log('Showing welcome popup for user:', user.displayName)
+      // Only show popup for new users who haven't seen it
+      if (!seenWelcome && isNewUser) {
+        console.log('Showing welcome popup for new user:', user.displayName)
         setIsOpen(true)
       }
     }
   }, [user])
+
+  const checkIfNewUser = (user: any) => {
+    if (!user.metadata?.creationTime) {
+      return false
+    }
+    
+    // Check if user was created within the last 5 minutes (300 seconds)
+    const creationTime = new Date(user.metadata.creationTime).getTime()
+    const now = Date.now()
+    const fiveMinutesAgo = now - (5 * 60 * 1000)
+    
+    return creationTime > fiveMinutesAgo
+  }
 
   const handleClose = () => {
     setIsOpen(false)
@@ -62,7 +75,7 @@ export function WelcomePopup() {
     handleClose()
   }
 
-  if (hasSeenWelcome || !user) {
+  if (hasSeenWelcome || !user || !checkIfNewUser(user)) {
     return null
   }
 
