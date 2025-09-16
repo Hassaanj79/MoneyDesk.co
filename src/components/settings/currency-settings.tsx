@@ -495,10 +495,7 @@ export function CurrencySettings() {
       setCountry(selectedCountry)
       setTimezone(selectedTimezone)
       
-      // Save to localStorage for persistence
-      localStorage.setItem('currency', selectedCurrency)
-      localStorage.setItem('country', selectedCountry)
-      localStorage.setItem('timezone', selectedTimezone)
+      // Settings are now automatically saved to Firebase via context
       
       setHasChanges(false)
       
