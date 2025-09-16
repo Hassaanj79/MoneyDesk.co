@@ -30,22 +30,22 @@ export function AppConfigForm() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="currency" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="currency" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Currency
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
+              <TabsTrigger value="currency" className="flex flex-col items-center gap-1 p-2 text-xs">
+                <DollarSign className="h-3 w-3" />
+                <span className="truncate">Currency</span>
               </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center gap-2">
-                <Tag className="h-4 w-4" />
-                Categories
+              <TabsTrigger value="categories" className="flex flex-col items-center gap-1 p-2 text-xs">
+                <Tag className="h-3 w-3" />
+                <span className="truncate">Categories</span>
               </TabsTrigger>
-              <TabsTrigger value="accounts" className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Accounts
+              <TabsTrigger value="accounts" className="flex flex-col items-center gap-1 p-2 text-xs">
+                <CreditCard className="h-3 w-3" />
+                <span className="truncate">Accounts</span>
               </TabsTrigger>
-              <TabsTrigger value="budgets" className="flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Budgets
+              <TabsTrigger value="budgets" className="flex flex-col items-center gap-1 p-2 text-xs">
+                <Target className="h-3 w-3" />
+                <span className="truncate">Budgets</span>
               </TabsTrigger>
             </TabsList>
             

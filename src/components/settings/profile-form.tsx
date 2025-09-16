@@ -145,13 +145,13 @@ export function ProfileForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8 max-w-2xl">
         <FormField
           control={form.control}
           name="photo"
           render={({ field }) => (
-            <FormItem className="flex items-center space-x-4">
-               <Avatar className="h-20 w-20">
+            <FormItem className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+               <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
                 <AvatarImage src={photoPreview || undefined} alt="Avatar" data-ai-hint="person face" />
                 <AvatarFallback>{getInitials(form.getValues('name'))}</AvatarFallback>
               </Avatar>

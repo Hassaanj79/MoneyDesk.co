@@ -7,16 +7,14 @@ import {
   ArrowRightLeft,
   BarChart3,
   LayoutDashboard,
-  Target,
-  Wallet,
+  HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
-  { href: "/accounts", label: "Accounts", icon: Wallet },
-  { href: "/budgets", label: "Budgets", icon: Target },
+  { href: "/loans", label: "Loans", icon: HandCoins },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 

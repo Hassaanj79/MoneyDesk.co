@@ -27,7 +27,7 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, ico
         <Icon className={cn("h-5 w-5", iconColor || "text-muted-foreground")} aria-hidden="true" />
       </CardHeader>
       <CardContent className="flex flex-col justify-between h-full">
-        <div className={cn("font-semibold tracking-tight whitespace-nowrap overflow-hidden text-ellipsis", isDateRange ? "text-base" : "text-2xl sm:text-3xl")}>{amount}</div>
+        <div className={cn("font-semibold tracking-tight whitespace-nowrap overflow-hidden text-ellipsis", isDateRange ? "text-base" : "text-xl sm:text-2xl lg:text-3xl")}>{amount}</div>
         <div className="h-5 flex items-end">
           {change ? (
             <p className={cn(

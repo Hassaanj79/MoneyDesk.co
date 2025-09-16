@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
+import { useCategories } from "@/contexts/category-context";
 
 const generatedReports = [
   { id: "1", name: "Q3 2024 Expense Report", date: "2024-10-05", type: "PDF" },
@@ -62,12 +63,17 @@ const chartConfig = {
 export default function ReportsPage() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
+  const { categories } = useCategories();
   const { addNotification } = useNotifications();
   const { formatCurrency, currency } = useCurrency();
 
   const { from, to } = date || {};
   const fromDate = from ? format(from, "LLL dd, y") : null;
   const toDate = to ? format(to, "LLL dd, y") : null;
+
+  const getCategoryName = (categoryId: string) => {
+    return categories.find(c => c.id === categoryId)?.name || 'Unknown';
+  };
 
   const {
     currentPeriodTransactions,
@@ -93,10 +99,11 @@ export default function ReportsPage() {
     const spendingByCategory = currentPeriodTransactions
         .filter(t => t.type === 'expense')
         .reduce((acc, t) => {
-            if (!acc[t.category]) {
-                acc[t.category] = 0;
+            const categoryName = getCategoryName(t.categoryId);
+            if (!acc[categoryName]) {
+                acc[categoryName] = 0;
             }
-            acc[t.category] += t.amount;
+            acc[categoryName] += t.amount;
             return acc;
         }, {} as Record<string, number>);
 
@@ -141,7 +148,7 @@ export default function ReportsPage() {
     autoTable(doc, {
         startY: tableStartY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, formatCurrency(t.amount)]),
+        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185] },
     });
@@ -152,7 +159,7 @@ export default function ReportsPage() {
      autoTable(doc, {
         startY: secondTableY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, formatCurrency(t.amount)]),
+        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [192, 57, 43] },
     });
@@ -178,7 +185,7 @@ export default function ReportsPage() {
         [
           format(parseISO(t.date), 'yyyy-MM-dd'),
           `"${t.name.replace(/"/g, '""')}"`,
-          t.category,
+          getCategoryName(t.categoryId),
           t.amount.toFixed(2)
         ].join(',')
       ).join('\n');
@@ -243,7 +250,7 @@ export default function ReportsPage() {
           </DropdownMenu>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -252,7 +259,7 @@ export default function ReportsPage() {
                 <ArrowUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500">{formatCurrency(totalIncome)}</div>
+                <div className="text-xl sm:text-2xl font-bold text-green-500">{formatCurrency(totalIncome)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -263,7 +270,7 @@ export default function ReportsPage() {
                 <ArrowDown className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-500">{formatCurrency(totalExpense)}</div>
+                <div className="text-xl sm:text-2xl font-bold text-red-500">{formatCurrency(totalExpense)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -272,7 +279,7 @@ export default function ReportsPage() {
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(netSavings)}</div>
+                <div className="text-xl sm:text-2xl font-bold">{formatCurrency(netSavings)}</div>
               </CardContent>
             </Card>
           </div>

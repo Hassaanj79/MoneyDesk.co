@@ -115,7 +115,7 @@ export default function DashboardGrid() {
           />
         </div>
       ),
-      colSpan: "sm:col-span-2 md:col-span-1 lg:col-span-1",
+      colSpan: "sm:col-span-1 lg:col-span-1",
     },
     {
       id: "income",
@@ -127,7 +127,7 @@ export default function DashboardGrid() {
           change={incomeChange}
         />
       ),
-      colSpan: "sm:col-span-1 md:col-span-1 lg:col-span-1",
+      colSpan: "sm:col-span-1 lg:col-span-1",
     },
     {
       id: "expense",
@@ -139,32 +139,32 @@ export default function DashboardGrid() {
           change={expenseChange}
         />
       ),
-      colSpan: "sm:col-span-1 md:col-span-1 lg:col-span-1",
+      colSpan: "sm:col-span-1 lg:col-span-1",
     },
     {
       id: "loan-summary",
       component: <LoanSummaryCards />,
-      colSpan: "sm:col-span-2 md:col-span-3 lg:col-span-3",
+      colSpan: "sm:col-span-2 lg:col-span-3",
     },
     {
       id: "chart",
       component: <IncomeExpenseChart />,
-      colSpan: "sm:col-span-2 md:col-span-3 lg:col-span-3",
+      colSpan: "sm:col-span-2 lg:col-span-3",
     },
     {
       id: "budget",
       component: <BudgetOverview />,
-      colSpan: "sm:col-span-2 md:col-span-2 lg:col-span-2",
+      colSpan: "sm:col-span-2 lg:col-span-2",
     },
     {
       id: "recent",
       component: <RecentTransactions />,
-      colSpan: "sm:col-span-2 md:col-span-1 lg:col-span-1",
+      colSpan: "sm:col-span-2 lg:col-span-1",
     },
     {
       id: "loans",
       component: <LoanCards />,
-      colSpan: "sm:col-span-2 md:col-span-3 lg:col-span-3",
+      colSpan: "sm:col-span-2 lg:col-span-3",
     },
   ];
 
@@ -197,7 +197,7 @@ export default function DashboardGrid() {
         onDragEnd={handleDragEnd}
       >
       <SortableContext items={items.map(i => i.id)} strategy={rectSwappingStrategy}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {items.map((item) => (
              <SortableItem key={item.id} id={item.id} className={item.colSpan}>
                 {item.id === 'balance' ? <div 

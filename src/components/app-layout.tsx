@@ -4,6 +4,7 @@
 import React from "react";
 import type { ReactNode } from "react";
 import { Header } from "@/components/header";
+import { MobileNavigation } from "@/components/mobile-navigation";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
@@ -12,6 +13,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6 lg:gap-8 lg:p-8 bg-muted/40 pb-20 lg:pb-8">
         {children}
       </main>
+      <MobileNavigation />
     </div>
   );
 };

@@ -205,18 +205,18 @@ export default function TransactionsPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="income">Income</TabsTrigger>
-              <TabsTrigger value="expense">Expense</TabsTrigger>
+            <TabsList className="mb-4 grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="all" className="flex items-center justify-center p-2 text-xs sm:text-sm">All</TabsTrigger>
+              <TabsTrigger value="income" className="flex items-center justify-center p-2 text-xs sm:text-sm">Income</TabsTrigger>
+              <TabsTrigger value="expense" className="flex items-center justify-center p-2 text-xs sm:text-sm">Expense</TabsTrigger>
             </TabsList>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Transaction</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Due Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead className="hidden lg:table-cell">Due Date</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
@@ -227,15 +227,16 @@ export default function TransactionsPage() {
                     return (
                     <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                            <span>{transaction.name}</span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{transaction.name}</span>
                             {transaction.isRecurring && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger>
-                                            <Badge variant="outline" className="flex items-center gap-1 capitalize">
+                                            <Badge variant="outline" className="flex items-center gap-1 capitalize text-xs">
                                                 <Repeat className="h-3 w-3" />
-                                                {transaction.recurrenceFrequency}
+                                                <span className="hidden sm:inline">{transaction.recurrenceFrequency}</span>
                                             </Badge>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -244,13 +245,18 @@ export default function TransactionsPage() {
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
+                            <span>{format(parseISO(transaction.date), 'MMM d')}</span>
+                            <Badge variant="outline" className="text-xs">{getCategoryName(transaction.categoryId)}</Badge>
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">{format(parseISO(transaction.date), 'PPP')}</TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {nextDueDate ? format(nextDueDate, 'PPP') : '-'}
                       </TableCell>
                       <TableCell

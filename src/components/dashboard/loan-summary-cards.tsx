@@ -84,7 +84,7 @@ export function LoanSummaryCards() {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {/* Loans Given Card */}
         <Card 
           className="sm:col-span-1 cursor-pointer hover:shadow-md transition-shadow"
@@ -95,7 +95,7 @@ export function LoanSummaryCards() {
             <HandCoins className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(loanStats.totalReceivable)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(loanStats.totalReceivable)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUp className="h-3 w-3 text-green-600 mr-1" />
               <span className="text-green-600 font-medium">{loanStats.receivableChange}</span>
@@ -124,7 +124,7 @@ export function LoanSummaryCards() {
             <CreditCard className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(loanStats.totalPayable)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(loanStats.totalPayable)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowDown className="h-3 w-3 text-red-600 mr-1" />
               <span className="text-red-600 font-medium">{loanStats.payableChange}</span>
@@ -162,7 +162,7 @@ export function LoanSummaryCards() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${loanStats.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-xl sm:text-2xl font-bold ${loanStats.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatCurrency(Math.abs(loanStats.netPosition))}
           </div>
           <div className="text-xs text-muted-foreground">

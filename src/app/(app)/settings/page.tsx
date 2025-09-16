@@ -29,9 +29,13 @@ export default function SettingsPage() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="app-config">App Configurations</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="profile" className="flex items-center justify-center p-3 text-xs sm:text-sm">
+              <span>Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="app-config" className="flex items-center justify-center p-3 text-xs sm:text-sm">
+              <span>App Config</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="profile">
             <ProfileForm />

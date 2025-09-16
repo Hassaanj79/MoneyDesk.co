@@ -37,7 +37,6 @@ import { Input } from "./ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { MobileNavigation } from "./mobile-navigation";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -122,14 +121,17 @@ export function Header() {
   
   const HeaderContent = (
      <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40">
-        <nav className="hidden flex-col gap-6 text-lg font-medium lg:flex lg:flex-row lg:items-center lg:gap-5 lg:text-sm xl:gap-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-lg font-semibold md:text-base"
-          >
-            <Logo className="h-6 w-6" />
-            <span className="">MoneyDesk</span>
-          </Link>
+        {/* Logo - always visible */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-lg font-semibold md:text-base flex-shrink-0"
+        >
+          <Logo className="h-6 w-6" />
+          <span className="hidden sm:inline">MoneyDesk</span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden lg:flex lg:flex-row lg:items-center lg:gap-5 lg:text-sm xl:gap-6">
            {navItems.map((item) => (
             <Link
               key={item.href}
@@ -180,19 +182,18 @@ export function Header() {
         </Sheet>
 
         <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 lg:gap-2">
-            <div className="ml-auto flex-1 sm:flex-initial">
-                <div className="hidden md:block">
-                    <DateRangePicker date={date} onDateChange={setDate} />
-                </div>
+            {/* Date Range Picker - hidden on mobile */}
+            <div className="hidden md:block ml-auto">
+                <DateRangePicker date={date} onDateChange={setDate} />
             </div>
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
-                <div className="relative flex-1 lg:grow-0 max-w-sm">
+                <div className="relative flex-1 sm:flex-initial max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
                     placeholder="Search..."
-                    className="w-full rounded-lg bg-background pl-8 lg:w-[200px] xl:w-[300px]"
+                    className="w-full rounded-lg bg-background pl-8 sm:w-[200px] lg:w-[250px] xl:w-[300px]"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => {
@@ -213,7 +214,7 @@ export function Header() {
                 )}
                 </div>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-[320px] md:w-[400px] lg:w-[500px]">
+            <PopoverContent align="start" className="w-[280px] sm:w-[320px] md:w-[400px] lg:w-[500px]">
                 {isSearching ? (
                 <div className="flex items-center justify-center p-4">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -316,17 +317,6 @@ export function Header() {
   if (!isClient) {
     return <>{HeaderContent}</>;
   }
-  
-  const content = (
-    <>
-      {HeaderContent}
-      <MobileNavigation />
-    </>
-  );
 
-  if (isMobile) {
-    return content;
-  }
-
-  return <TooltipProvider>{content}</TooltipProvider>;
+  return <TooltipProvider>{HeaderContent}</TooltipProvider>;
 }
