@@ -18,6 +18,13 @@ import { RecurringNotifications } from '@/components/recurring-notifications';
 export const metadata: Metadata = {
   title: 'MoneyDesk',
   description: 'Personal Expense & Income Management SaaS',
+  icons: {
+    icon: [
+      { url: '/favicon.svg?v=2', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=2', sizes: 'any' },
+    ],
+    apple: '/apple-touch-icon.png?v=2',
+  },
 };
 
 export default function RootLayout({
