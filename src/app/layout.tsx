@@ -12,6 +12,7 @@ import { AccountProvider } from '@/contexts/account-context';
 import { BudgetProvider } from '@/contexts/budget-context';
 import { CategoryProvider } from '@/contexts/category-context';
 import { LoanProvider } from '@/contexts/loan-context';
+import { TimezoneProvider } from '@/contexts/timezone-context';
 import { RecurringNotifications } from '@/components/recurring-notifications';
 
 export const metadata: Metadata = {
@@ -48,9 +49,11 @@ export default function RootLayout({
                        <DateRangeProvider>
                         <BudgetProvider>
                           <LoanProvider>
-                            <RecurringNotifications />
-                            {children}
-                            <Toaster />
+                            <TimezoneProvider>
+                              <RecurringNotifications />
+                              {children}
+                              <Toaster />
+                            </TimezoneProvider>
                           </LoanProvider>
                         </BudgetProvider>
                       </DateRangeProvider>

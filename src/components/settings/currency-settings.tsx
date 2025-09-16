@@ -11,6 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast"
 import { useCurrency } from "@/hooks/use-currency"
 import { useCountry } from "@/contexts/country-context"
+import { useTimezone } from "@/contexts/timezone-context"
+import { TIMEZONES, getTimezonesByCountry, getTimezoneByValue, getCurrentTimeInTimezone } from "@/lib/timezone-data"
 import { 
   DollarSign, 
   Globe, 
@@ -18,7 +20,8 @@ import {
   RotateCcw,
   CheckCircle,
   Search,
-  ChevronDown
+  ChevronDown,
+  Clock
 } from "lucide-react"
 
 const CURRENCIES = [
@@ -404,20 +407,25 @@ export function CurrencySettings() {
   const { toast } = useToast()
   const { currency, setCurrency, formatCurrency } = useCurrency()
   const { country, setCountry } = useCountry()
+  const { timezone, setTimezone } = useTimezone()
   const [loading, setLoading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   
   const [selectedCurrency, setSelectedCurrency] = useState(currency)
   const [selectedCountry, setSelectedCountry] = useState(country)
+  const [selectedTimezone, setSelectedTimezone] = useState(timezone)
   const [customSymbol, setCustomSymbol] = useState('')
   const [customCode, setCustomCode] = useState('')
   const [currencyOpen, setCurrencyOpen] = useState(false)
   const [countryOpen, setCountryOpen] = useState(false)
+  const [timezoneOpen, setTimezoneOpen] = useState(false)
   const [currencySearch, setCurrencySearch] = useState("")
   const [countrySearch, setCountrySearch] = useState("")
+  const [timezoneSearch, setTimezoneSearch] = useState("")
 
   const currentCurrency = CURRENCIES.find(c => c.code === selectedCurrency)
   const currentCountry = COUNTRIES.find(c => c.code === selectedCountry)
+  const currentTimezone = getTimezoneByValue(selectedTimezone)
 
   const filteredCurrencies = CURRENCIES.filter(currency =>
     currency.name.toLowerCase().includes(currencySearch.toLowerCase()) ||
@@ -431,10 +439,20 @@ export function CurrencySettings() {
     country.code.toLowerCase().includes(countrySearch.toLowerCase())
   )
 
+  // Filter timezones based on selected country
+  const availableTimezones = selectedCountry ? getTimezonesByCountry(selectedCountry) : TIMEZONES
+  const filteredTimezones = availableTimezones.filter(timezone =>
+    timezone.label.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.country.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.value.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.offset.toLowerCase().includes(timezoneSearch.toLowerCase())
+  )
+
   useEffect(() => {
     setSelectedCurrency(currency)
     setSelectedCountry(country)
-  }, [currency, country])
+    setSelectedTimezone(timezone)
+  }, [currency, country, timezone])
 
   const handleCurrencyChange = (newCurrency: string) => {
     setSelectedCurrency(newCurrency)
@@ -456,24 +474,37 @@ export function CurrencySettings() {
     if (matchingCurrency) {
       setSelectedCurrency(matchingCurrency)
     }
+    
+    // Auto-select first timezone for the country
+    const countryTimezones = getTimezonesByCountry(newCountry)
+    if (countryTimezones.length > 0) {
+      setSelectedTimezone(countryTimezones[0].value)
+    }
+  }
+
+  const handleTimezoneChange = (newTimezone: string) => {
+    setSelectedTimezone(newTimezone)
+    setHasChanges(true)
   }
 
   const handleSave = async () => {
     setLoading(true)
     try {
-      // Save currency and country settings
+      // Save currency, country, and timezone settings
       setCurrency(selectedCurrency)
       setCountry(selectedCountry)
+      setTimezone(selectedTimezone)
       
       // Save to localStorage for persistence
       localStorage.setItem('currency', selectedCurrency)
       localStorage.setItem('country', selectedCountry)
+      localStorage.setItem('timezone', selectedTimezone)
       
       setHasChanges(false)
       
       toast({
         title: "Settings Saved",
-        description: "Currency and country settings have been updated successfully.",
+        description: "Currency, country, and timezone settings have been updated successfully.",
       })
     } catch (error) {
       toast({
@@ -489,6 +520,7 @@ export function CurrencySettings() {
   const handleReset = () => {
     setSelectedCurrency('USD')
     setSelectedCountry('US')
+    setSelectedTimezone('America/New_York')
     setCustomSymbol('')
     setCustomCode('')
     setHasChanges(true)
@@ -535,7 +567,7 @@ export function CurrencySettings() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-3">
               <div className="text-2xl">{currentCurrency?.symbol || '$'}</div>
               <div>
@@ -550,11 +582,26 @@ export function CurrencySettings() {
                 <div className="text-sm text-muted-foreground">{currentCountry?.code || 'US'}</div>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              <Clock className="h-6 w-6 text-muted-foreground" />
+              <div>
+                <div className="font-medium">{currentTimezone?.label || 'Eastern Time'}</div>
+                <div className="text-sm text-muted-foreground">{currentTimezone?.offset || 'UTC-5/-4'}</div>
+              </div>
+            </div>
           </div>
-          <div className="mt-4 p-3 bg-white dark:bg-gray-900 rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Preview:</div>
-            <div className="text-lg font-mono">
-              {formatCurrency(1234.56)}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 bg-white dark:bg-gray-900 rounded-lg">
+              <div className="text-sm text-muted-foreground mb-1">Currency Preview:</div>
+              <div className="text-lg font-mono">
+                {formatCurrency(1234.56)}
+              </div>
+            </div>
+            <div className="p-3 bg-white dark:bg-gray-900 rounded-lg">
+              <div className="text-sm text-muted-foreground mb-1">Current Time:</div>
+              <div className="text-lg font-mono">
+                {getCurrentTimeInTimezone(selectedTimezone)}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -715,6 +762,92 @@ export function CurrencySettings() {
               </PopoverContent>
             </Popover>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Timezone Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Timezone Settings</CardTitle>
+          <CardDescription>
+            Select your timezone for accurate time display and scheduling
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label htmlFor="timezone-select">Timezone</Label>
+            <Popover open={timezoneOpen} onOpenChange={setTimezoneOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={timezoneOpen}
+                  className="w-full justify-between"
+                >
+                  {currentTimezone ? (
+                    <span className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{currentTimezone.label}</span>
+                      <span className="text-sm text-muted-foreground">({currentTimezone.offset})</span>
+                    </span>
+                  ) : (
+                    "Select a timezone..."
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search timezones..." 
+                    value={timezoneSearch}
+                    onValueChange={setTimezoneSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>No timezone found.</CommandEmpty>
+                    <CommandGroup>
+                      {selectedCountry && (
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                          Timezones for {currentCountry?.name}
+                        </div>
+                      )}
+                      {filteredTimezones.map((timezone) => (
+                        <CommandItem
+                          key={timezone.value}
+                          value={timezone.value}
+                          onSelect={() => {
+                            handleTimezoneChange(timezone.value)
+                            setTimezoneOpen(false)
+                            setTimezoneSearch("")
+                          }}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex-1">
+                              <div className="font-medium">{timezone.label}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {timezone.country} • {timezone.offset}
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {getCurrentTimeInTimezone(timezone.value).split(',')[0]}
+                            </div>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+          {selectedCountry && availableTimezones.length === 0 && (
+            <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <div className="text-sm text-amber-800 dark:text-amber-200">
+                No specific timezones found for {currentCountry?.name}. Showing all timezones.
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
