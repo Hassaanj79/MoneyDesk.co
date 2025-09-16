@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useAccounts } from "@/contexts/account-context"
+import { useCurrency } from "@/hooks/use-currency"
 import { Plus, Edit, Trash2, CreditCard, Wallet, Building2 } from "lucide-react"
 import type { Account } from "@/types"
 
@@ -25,6 +26,7 @@ const accountTypes = [
 
 export function AccountsSettings() {
   const { accounts, addAccount, updateAccount, deleteAccount, loading } = useAccounts()
+  const { formatCurrency } = useCurrency()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const [newAccount, setNewAccount] = useState({
@@ -211,7 +213,7 @@ export function AccountsSettings() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        ${(account.balance || 0).toFixed(2)}
+                        {formatCurrency(account.balance || 0)}
                       </p>
                       <p className="text-sm text-muted-foreground">Current Balance</p>
                     </div>

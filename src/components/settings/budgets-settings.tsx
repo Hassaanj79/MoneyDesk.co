@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useBudgets } from "@/contexts/budget-context"
 import { useCategories } from "@/contexts/category-context"
 import { useTransactions } from "@/contexts/transaction-context"
+import { useCurrency } from "@/hooks/use-currency"
 import { Plus, Edit, Trash2, Target, Calendar, DollarSign } from "lucide-react"
 import type { Budget } from "@/types"
 import { calculateBudgetProgress, getBudgetStatus } from "@/lib/budget-utils"
@@ -25,6 +26,7 @@ export function BudgetsSettings() {
   const { budgets, addBudget, updateBudget, deleteBudget, loading: budgetsLoading } = useBudgets()
   const { categories, loading: categoriesLoading } = useCategories()
   const { transactions } = useTransactions()
+  const { formatCurrency } = useCurrency()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
   const [newBudget, setNewBudget] = useState({
@@ -281,10 +283,10 @@ export function BudgetsSettings() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        ${(budget.amount || 0).toFixed(2)}
+                        {formatCurrency(budget.amount || 0)}
                       </p>
                       <p className={`text-sm ${status.color}`}>
-                        {isOverBudget ? 'Over Budget' : `$${remaining.toFixed(2)} remaining`}
+                        {isOverBudget ? 'Over Budget' : `${formatCurrency(remaining)} remaining`}
                       </p>
                     </div>
                     <div className="flex gap-1">
@@ -330,7 +332,7 @@ export function BudgetsSettings() {
                   {/* Progress Bar */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Progress ({spent.toFixed(2)} / {(budget.amount || 0).toFixed(2)})</span>
+                      <span>Progress ({formatCurrency(spent)} / {formatCurrency(budget.amount || 0)})</span>
                       <span className={`${status.color} font-medium`}>
                         {progress.toFixed(1)}% - {status.status}
                       </span>
@@ -346,7 +348,7 @@ export function BudgetsSettings() {
                         {budget.startDate ? (budget.startDate instanceof Date ? budget.startDate : new Date(budget.startDate)).toLocaleDateString() : 'N/A'} - {budget.endDate ? (budget.endDate instanceof Date ? budget.endDate : new Date(budget.endDate)).toLocaleDateString() : 'N/A'}
                       </span>
                       <span>
-                        ${spent.toFixed(2)} spent
+                        {formatCurrency(spent)} spent
                       </span>
                     </div>
                   </div>
