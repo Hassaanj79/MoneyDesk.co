@@ -51,7 +51,15 @@ export function Header() {
   const pathname = usePathname();
   const { date, setDate } = useDateRange();
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [searchResults, setSearchResults] = React.useState<Omit<Transaction, 'categoryIcon'>>([]);
+  const [searchResults, setSearchResults] = React.useState<{
+    id: string;
+    name: string;
+    category: string;
+    date: string;
+    amount: number;
+    type: 'income' | 'expense';
+    accountId: string;
+  }[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchPopoverOpen, setSearchPopoverOpen] = React.useState(false);
   const [recapOpen, setRecapOpen] = React.useState(false);
@@ -80,7 +88,15 @@ export function Header() {
       try {
         const response = await searchTransactions({
           query: searchQuery,
-          transactions: transactions,
+          transactions: transactions.map(t => ({
+            id: t.id,
+            name: t.name,
+            category: t.categoryId, // Map categoryId to category for search
+            date: t.date,
+            amount: t.amount,
+            type: t.type,
+            accountId: t.accountId,
+          })),
         });
         setSearchResults(response.results);
       } catch (error) {

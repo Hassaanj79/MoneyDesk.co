@@ -10,12 +10,14 @@ import { ArrowUp, ArrowDown, HandCoins, CreditCard, AlertTriangle } from "lucide
 import { format, isAfter, isBefore } from "date-fns";
 import { ReceivableBreakdown } from "./receivable-breakdown";
 import { PayableBreakdown } from "./payable-breakdown";
+import { NetPositionBreakdown } from "./net-position-breakdown";
 
 export function LoanSummaryCards() {
   const { loans } = useLoans();
   const { formatCurrency } = useCurrency();
   const [showReceivableBreakdown, setShowReceivableBreakdown] = useState(false);
   const [showPayableBreakdown, setShowPayableBreakdown] = useState(false);
+  const [showNetPositionBreakdown, setShowNetPositionBreakdown] = useState(false);
 
   const loanStats = useMemo(() => {
     const now = new Date();
@@ -83,13 +85,13 @@ export function LoanSummaryCards() {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Accounts Receivable Card */}
+        {/* Loans Given Card */}
         <Card 
           className="sm:col-span-1 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setShowReceivableBreakdown(true)}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accounts Receivable</CardTitle>
+            <CardTitle className="text-sm font-medium">Loans Given</CardTitle>
             <HandCoins className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -112,14 +114,14 @@ export function LoanSummaryCards() {
           </CardContent>
         </Card>
 
-        {/* Accounts Payable Card */}
+        {/* Loans Taken Card */}
         <Card 
           className="sm:col-span-1 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setShowPayableBreakdown(true)}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accounts Payable</CardTitle>
-            <CreditCard className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium">Loans Taken</CardTitle>
+            <CreditCard className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(loanStats.totalPayable)}</div>
@@ -142,7 +144,10 @@ export function LoanSummaryCards() {
         </Card>
 
       {/* Net Position Card */}
-      <Card className="sm:col-span-2 lg:col-span-1">
+      <Card 
+        className="sm:col-span-2 lg:col-span-1 cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => setShowNetPositionBreakdown(true)}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Net Position</CardTitle>
           <div className="flex items-center gap-1">
@@ -181,7 +186,7 @@ export function LoanSummaryCards() {
       <Dialog open={showReceivableBreakdown} onOpenChange={setShowReceivableBreakdown}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Accounts Receivable Breakdown</DialogTitle>
+            <DialogTitle>Loans Given Breakdown</DialogTitle>
           </DialogHeader>
           <ReceivableBreakdown onClose={() => setShowReceivableBreakdown(false)} />
         </DialogContent>
@@ -191,9 +196,19 @@ export function LoanSummaryCards() {
       <Dialog open={showPayableBreakdown} onOpenChange={setShowPayableBreakdown}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Accounts Payable Breakdown</DialogTitle>
+            <DialogTitle>Loans Taken Breakdown</DialogTitle>
           </DialogHeader>
           <PayableBreakdown onClose={() => setShowPayableBreakdown(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Net Position Breakdown Modal */}
+      <Dialog open={showNetPositionBreakdown} onOpenChange={setShowNetPositionBreakdown}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Net Position Breakdown</DialogTitle>
+          </DialogHeader>
+          <NetPositionBreakdown onClose={() => setShowNetPositionBreakdown(false)} />
         </DialogContent>
       </Dialog>
     </>

@@ -17,7 +17,13 @@ export const addBudget = async (userId: string, budget: Omit<Budget, 'id' | 'use
 export const updateBudget = async (userId: string, budgetId: string, updates: Partial<Omit<Budget, 'id' | 'userId'>>) => {
     const budgetsCol = getBudgetsCollection(userId);
     const budgetRef = doc(budgetsCol, budgetId);
-    await updateDoc(budgetRef, updates);
+    
+    // Filter out undefined values to prevent Firebase errors
+    const filteredUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined)
+    );
+    
+    await updateDoc(budgetRef, filteredUpdates);
 };
 
 export const deleteBudget = async (userId: string, budgetId: string) => {

@@ -27,32 +27,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false); // Start with loading false
-  const [authInitialized, setAuthInitialized] = useState(true); // Start as initialized
+  const [loading, setLoading] = useState(true); // Start with loading true
+  const [authInitialized, setAuthInitialized] = useState(false); // Start as not initialized
 
   useEffect(() => {
-    // For live app, immediately set states to allow app to load
-    setLoading(false);
-    setUser(null);
-    setAuthInitialized(true);
+    if (typeof window === 'undefined') return;
     
-    console.log('Auth context initialized for live app');
+    setLoading(true);
+    setAuthInitialized(false);
     
-    // Optional: Try to set up Firebase auth in background
-    if (typeof window !== 'undefined') {
-      try {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          console.log('Auth state changed:', user ? 'User logged in' : 'No user');
-          setUser(user);
-        }, (error) => {
-          console.error('Firebase auth error:', error);
-        });
-        
-        return () => unsubscribe();
-      } catch (error) {
-        console.error('Failed to initialize Firebase auth:', error);
-      }
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+      setUser(user);
+      setLoading(false);
+      setAuthInitialized(true);
+    }, (error) => {
+      console.error('Firebase auth error:', error);
+      setLoading(false);
+      setAuthInitialized(true);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {

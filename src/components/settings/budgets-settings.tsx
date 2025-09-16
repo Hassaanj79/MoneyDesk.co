@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useBudgets } from "@/contexts/budget-context"
 import { useCategories } from "@/contexts/category-context"
+import { useTransactions } from "@/contexts/transaction-context"
 import { Plus, Edit, Trash2, Target, Calendar, DollarSign } from "lucide-react"
 import type { Budget } from "@/types"
+import { calculateBudgetProgress, getBudgetStatus } from "@/lib/budget-utils"
 
 const budgetPeriods = [
   { value: 'weekly', label: 'Weekly' },
@@ -22,6 +24,7 @@ const budgetPeriods = [
 export function BudgetsSettings() {
   const { budgets, addBudget, updateBudget, deleteBudget, loading: budgetsLoading } = useBudgets()
   const { categories, loading: categoriesLoading } = useCategories()
+  const { transactions } = useTransactions()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
   const [newBudget, setNewBudget] = useState({
@@ -61,17 +64,27 @@ export function BudgetsSettings() {
   }
 
   const handleUpdateBudget = async () => {
-    if (!editingBudget || !editingBudget.name.trim() || !editingBudget.categoryId || editingBudget.amount <= 0) return
+    if (!editingBudget || !editingBudget.name || !editingBudget.name.trim() || !editingBudget.categoryId || editingBudget.amount <= 0) return
 
     try {
-      await updateBudget(editingBudget.id, {
+      const updateData: Partial<Omit<Budget, 'id' | 'userId'>> = {
         name: editingBudget.name.trim(),
         amount: editingBudget.amount,
-        period: editingBudget.period,
         categoryId: editingBudget.categoryId,
-        startDate: editingBudget.startDate,
-        endDate: editingBudget.endDate
-      })
+      };
+
+      // Only include fields that are defined
+      if (editingBudget.period) {
+        updateData.period = editingBudget.period;
+      }
+      if (editingBudget.startDate) {
+        updateData.startDate = editingBudget.startDate;
+      }
+      if (editingBudget.endDate) {
+        updateData.endDate = editingBudget.endDate;
+      }
+
+      await updateBudget(editingBudget.id, updateData)
       
       setEditingBudget(null)
     } catch (error) {
@@ -97,11 +110,8 @@ export function BudgetsSettings() {
     return category ? category.type : 'expense'
   }
 
-  const getBudgetProgress = (budget: Budget) => {
-    // This is a simplified progress calculation
-    // In a real app, you'd calculate based on actual spending
-    const progress = Math.random() * 100 // Mock progress
-    return Math.min(progress, 100)
+  const getBudgetData = (budget: Budget) => {
+    return calculateBudgetProgress(budget, transactions);
   }
 
   const loading = budgetsLoading || categoriesLoading
@@ -249,9 +259,10 @@ export function BudgetsSettings() {
           </Card>
         ) : (
           budgets.map((budget) => {
-            const progress = getBudgetProgress(budget)
+            const budgetData = getBudgetData(budget)
+            const { progress, spent, remaining, isOverBudget } = budgetData
             const categoryType = getCategoryType(budget.categoryId)
-            const isOverBudget = progress > 100
+            const status = getBudgetStatus(progress)
             
             return (
               <Card key={budget.id}>
@@ -272,7 +283,9 @@ export function BudgetsSettings() {
                       <p className="font-semibold">
                         ${(budget.amount || 0).toFixed(2)}
                       </p>
-                      <p className="text-sm text-muted-foreground">Budget Limit</p>
+                      <p className={`text-sm ${status.color}`}>
+                        {isOverBudget ? 'Over Budget' : `$${remaining.toFixed(2)} remaining`}
+                      </p>
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -317,25 +330,23 @@ export function BudgetsSettings() {
                   {/* Progress Bar */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span className={isOverBudget ? 'text-red-600 font-medium' : 'text-muted-foreground'}>
-                        {progress.toFixed(1)}%
+                      <span>Progress ({spent.toFixed(2)} / {(budget.amount || 0).toFixed(2)})</span>
+                      <span className={`${status.color} font-medium`}>
+                        {progress.toFixed(1)}% - {status.status}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className={`w-full rounded-full h-2 ${status.progressBarBgColor || 'bg-gray-200'}`}>
                       <div
-                        className={`h-2 rounded-full transition-all ${
-                          isOverBudget ? 'bg-red-500' : 'bg-primary'
-                        }`}
-                        style={{ width: `${Math.min(progress, 100)}%` }}
+                        className={`h-2 rounded-full transition-all ${status.progressBarColor || 'bg-purple-600'}`}
+                        style={{ width: `${Math.min(progress || 0, 100)}%` }}
                       />
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>
-                        {new Date(budget.startDate).toLocaleDateString()} - {new Date(budget.endDate).toLocaleDateString()}
+                        {budget.startDate ? (budget.startDate instanceof Date ? budget.startDate : new Date(budget.startDate)).toLocaleDateString() : 'N/A'} - {budget.endDate ? (budget.endDate instanceof Date ? budget.endDate : new Date(budget.endDate)).toLocaleDateString() : 'N/A'}
                       </span>
                       <span>
-                        ${((budget.amount || 0) * progress / 100).toFixed(2)} spent
+                        ${spent.toFixed(2)} spent
                       </span>
                     </div>
                   </div>
@@ -361,7 +372,7 @@ export function BudgetsSettings() {
                 <Label htmlFor="edit-budget-name">Budget Name</Label>
                 <Input
                   id="edit-budget-name"
-                  value={editingBudget.name}
+                  value={editingBudget.name || ''}
                   onChange={(e) => setEditingBudget({...editingBudget, name: e.target.value})}
                   placeholder="Enter budget name"
                 />
@@ -372,7 +383,7 @@ export function BudgetsSettings() {
                   id="edit-budget-amount"
                   type="number"
                   step="0.01"
-                  value={editingBudget.amount}
+                  value={editingBudget.amount || 0}
                   onChange={(e) => setEditingBudget({...editingBudget, amount: parseFloat(e.target.value) || 0})}
                   placeholder="0.00"
                 />
@@ -419,7 +430,7 @@ export function BudgetsSettings() {
                   <Input
                     id="edit-start-date"
                     type="date"
-                    value={editingBudget.startDate.toISOString().split('T')[0]}
+                    value={editingBudget.startDate ? (editingBudget.startDate instanceof Date ? editingBudget.startDate : new Date(editingBudget.startDate)).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
                     onChange={(e) => setEditingBudget({...editingBudget, startDate: new Date(e.target.value)})}
                   />
                 </div>
@@ -428,7 +439,7 @@ export function BudgetsSettings() {
                   <Input
                     id="edit-end-date"
                     type="date"
-                    value={editingBudget.endDate.toISOString().split('T')[0]}
+                    value={editingBudget.endDate ? (editingBudget.endDate instanceof Date ? editingBudget.endDate : new Date(editingBudget.endDate)).toISOString().split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                     onChange={(e) => setEditingBudget({...editingBudget, endDate: new Date(e.target.value)})}
                   />
                 </div>

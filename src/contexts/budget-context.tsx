@@ -29,7 +29,19 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const userBudgets: Budget[] = [];
         querySnapshot.forEach((doc) => {
-          userBudgets.push({ id: doc.id, ...doc.data() } as Budget);
+          const data = doc.data();
+          // Convert Firestore Timestamps to Date objects
+          const budget: Budget = {
+            id: doc.id,
+            userId: data.userId,
+            name: data.name,
+            amount: data.amount,
+            period: data.period,
+            categoryId: data.categoryId,
+            startDate: data.startDate?.toDate ? data.startDate.toDate() : new Date(data.startDate),
+            endDate: data.endDate?.toDate ? data.endDate.toDate() : new Date(data.endDate),
+          };
+          userBudgets.push(budget);
         });
         setBudgets(userBudgets);
         setLoading(false);
