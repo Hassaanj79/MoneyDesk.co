@@ -10,13 +10,11 @@ import {
   Bell,
   LayoutDashboard,
   Search,
-  Settings,
+  Menu,
   X,
   Loader2,
   History,
-  Menu,
   LogOut,
-  User as UserIcon,
   HandCoins,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
@@ -39,7 +37,6 @@ import { useCategories } from "@/contexts/category-context";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useAuth } from "@/contexts/auth-context";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Badge } from "./ui/badge";
 
@@ -517,10 +514,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || "User"} data-ai-hint="person face" />
-                    <AvatarFallback>{user?.displayName?.charAt(0) || <UserIcon />}</AvatarFallback>
-                  </Avatar>
+                  <Menu className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -528,7 +522,7 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <Link href="/settings">
                   <DropdownMenuItem className="cursor-pointer">
-                      <Settings className="mr-2" /> Settings
+                      <Menu className="mr-2" /> Settings
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">

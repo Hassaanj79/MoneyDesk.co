@@ -22,6 +22,7 @@ import { useRef, useState, useEffect } from "react"
 import { useNotifications } from "@/hooks/use-notifications"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserProfile, updateUserProfile } from "@/services/users"
+import { updateProfile } from "firebase/auth"
 import { deleteUserAccount, getAccountDeletionWarning } from "@/services/account-deletion"
 import { useRouter } from "next/navigation"
 import {
@@ -110,9 +111,16 @@ export function ProfileForm() {
     const { photo, ...profileData } = values;
     
     try {
+        // Update Firestore profile
         await updateUserProfile(user.uid, {
             ...profileData,
             photoURL: photoPreview || null
+        });
+
+        // Update Firebase Auth user profile (including photoURL)
+        await updateProfile(user, {
+            displayName: values.name || user.displayName || '',
+            photoURL: photoPreview || user.photoURL || null
         });
 
         // Country and currency are already synced in real-time via useEffect
