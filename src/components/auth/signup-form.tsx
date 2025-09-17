@@ -22,15 +22,16 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
+  name: z.string().min(1, "Name is required.").min(2, "Name must be at least 2 characters."),
+  email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
+  password: z.string().min(1, "Password is required.").min(8, "Password must be at least 8 characters."),
 });
 
 
 export function SignupForm() {
     const { signup } = useAuth();
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState({ email: false });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -41,8 +42,11 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(prev => ({...prev, email: true}));
     setError(null);
+    setSuccess(null);
     try {
         await signup(values.email, values.password, values.name);
+        setSuccess("Account created successfully! You can now log in.");
+        form.reset();
     } catch(err: any) {
         if (err.code === 'auth/email-already-in-use') {
             setError("This email is already in use. Please try another one.");
@@ -65,6 +69,7 @@ export function SignupForm() {
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+                {success && <Alert><AlertDescription>{success}</AlertDescription></Alert>}
                  <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Name</FormLabel>

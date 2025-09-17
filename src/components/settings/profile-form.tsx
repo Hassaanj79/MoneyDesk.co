@@ -278,8 +278,18 @@ export function ProfileForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="Your email" {...field} value={field.value || ''} />
+                <Input 
+                  type="email" 
+                  placeholder="Your email" 
+                  {...field} 
+                  value={field.value || ''} 
+                  disabled
+                  className="bg-muted"
+                />
               </FormControl>
+              <FormDescription>
+                Email cannot be changed. Contact support if you need to update your email address.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

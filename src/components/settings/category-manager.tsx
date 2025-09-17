@@ -20,10 +20,24 @@ export function CategoryManager() {
     name: '',
     type: 'expense' as 'income' | 'expense'
   })
+  const [errors, setErrors] = useState<{name?: string}>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const validateForm = () => {
+    const newErrors: {name?: string} = {}
+    
+    if (!newCategory.name.trim()) {
+      newErrors.name = 'Category name is required'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleAddCategory = async () => {
-    if (!newCategory.name.trim()) return
-
+    if (!validateForm()) return
+    
+    setIsSubmitting(true)
     try {
       await addCategory({
         name: newCategory.name.trim(),
@@ -31,9 +45,13 @@ export function CategoryManager() {
       })
       
       setNewCategory({ name: '', type: 'expense' })
+      setErrors({})
       setIsAddDialogOpen(false)
     } catch (error) {
       console.error('Error adding category:', error)
+      setErrors({ name: 'Failed to create category. Please try again.' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -103,9 +121,14 @@ export function CategoryManager() {
                 <Input
                   id="category-name"
                   value={newCategory.name}
-                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                  onChange={(e) => {
+                    setNewCategory({...newCategory, name: e.target.value})
+                    if (errors.name) setErrors({...errors, name: undefined})
+                  }}
                   placeholder="Enter category name"
+                  className={errors.name ? 'border-red-500' : ''}
                 />
+                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
               </div>
               <div>
                 <Label htmlFor="category-type">Type</Label>
@@ -124,11 +147,18 @@ export function CategoryManager() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsAddDialogOpen(false)
+                setErrors({})
+                setNewCategory({ name: '', type: 'expense' })
+              }}>
                 Cancel
               </Button>
-              <Button onClick={handleAddCategory}>
-                Add Category
+              <Button 
+                onClick={handleAddCategory}
+                disabled={isSubmitting || !newCategory.name.trim()}
+              >
+                {isSubmitting ? 'Adding...' : 'Add Category'}
               </Button>
             </DialogFooter>
           </DialogContent>

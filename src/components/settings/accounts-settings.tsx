@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useAccounts } from "@/contexts/account-context"
+import { useTransactions } from "@/contexts/transaction-context"
 import { useCurrency } from "@/hooks/use-currency"
-import { Plus, Edit, Trash2, CreditCard, Wallet, Building2 } from "lucide-react"
+import { Plus, Edit, Trash2, CreditCard, Wallet, Building2, RefreshCw, BarChart3 } from "lucide-react"
+import { AccountBreakdown } from "@/components/accounts/account-breakdown"
 import type { Account } from "@/types"
 
 const accountTypes = [
@@ -26,6 +28,7 @@ const accountTypes = [
 
 export function AccountsSettings() {
   const { accounts, addAccount, updateAccount, deleteAccount, loading } = useAccounts()
+  const { recalculateAllAccountBalances } = useTransactions()
   const { formatCurrency } = useCurrency()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
@@ -34,10 +37,31 @@ export function AccountsSettings() {
     type: 'bank' as Account['type'],
     initialBalance: 0
   })
+  const [errors, setErrors] = useState<{name?: string, initialBalance?: string}>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isRecalculating, setIsRecalculating] = useState(false)
+  const [breakdownAccount, setBreakdownAccount] = useState<Account | null>(null)
+  const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
+
+  const validateForm = () => {
+    const newErrors: {name?: string, initialBalance?: string} = {}
+    
+    if (!newAccount.name.trim()) {
+      newErrors.name = 'Account name is required'
+    }
+    
+    if (isNaN(newAccount.initialBalance) || newAccount.initialBalance < 0) {
+      newErrors.initialBalance = 'Initial balance must be a valid number'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleAddAccount = async () => {
-    if (!newAccount.name.trim()) return
-
+    if (!validateForm()) return
+    
+    setIsSubmitting(true)
     try {
       await addAccount({
         name: newAccount.name.trim(),
@@ -46,9 +70,13 @@ export function AccountsSettings() {
       })
       
       setNewAccount({ name: '', type: 'bank', initialBalance: 0 })
+      setErrors({})
       setIsAddDialogOpen(false)
     } catch (error) {
       console.error('Error adding account:', error)
+      setErrors({ name: 'Failed to create account. Please try again.' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -74,6 +102,22 @@ export function AccountsSettings() {
     } catch (error) {
       console.error('Error deleting account:', error)
     }
+  }
+
+  const handleRecalculateBalances = async () => {
+    setIsRecalculating(true)
+    try {
+      await recalculateAllAccountBalances()
+    } catch (error) {
+      console.error('Error recalculating balances:', error)
+    } finally {
+      setIsRecalculating(false)
+    }
+  }
+
+  const handleViewBreakdown = (account: Account) => {
+    setBreakdownAccount(account)
+    setIsBreakdownOpen(true)
   }
 
   const getAccountIcon = (type: Account['type']) => {
@@ -106,13 +150,23 @@ export function AccountsSettings() {
             Manage your financial accounts and their balances
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Account
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleRecalculateBalances}
+            disabled={isRecalculating}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRecalculating ? 'animate-spin' : ''}`} />
+            {isRecalculating ? 'Recalculating...' : 'Recalculate Balances'}
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Account
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Account</DialogTitle>
@@ -126,9 +180,14 @@ export function AccountsSettings() {
                 <Input
                   id="account-name"
                   value={newAccount.name}
-                  onChange={(e) => setNewAccount({...newAccount, name: e.target.value})}
+                  onChange={(e) => {
+                    setNewAccount({...newAccount, name: e.target.value})
+                    if (errors.name) setErrors({...errors, name: undefined})
+                  }}
                   placeholder="Enter account name"
+                  className={errors.name ? 'border-red-500' : ''}
                 />
+                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
               </div>
               <div>
                 <Label htmlFor="account-type">Account Type</Label>
@@ -161,33 +220,46 @@ export function AccountsSettings() {
                   type="number"
                   step="0.01"
                   value={newAccount.initialBalance}
-                  onChange={(e) => setNewAccount({...newAccount, initialBalance: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => {
+                    setNewAccount({...newAccount, initialBalance: parseFloat(e.target.value) || 0})
+                    if (errors.initialBalance) setErrors({...errors, initialBalance: undefined})
+                  }}
                   placeholder="0.00"
+                  className={errors.initialBalance ? 'border-red-500' : ''}
                 />
+                {errors.initialBalance && <p className="text-sm text-red-500 mt-1">{errors.initialBalance}</p>}
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsAddDialogOpen(false)
+                setErrors({})
+                setNewAccount({ name: '', type: 'bank', initialBalance: 0 })
+              }}>
                 Cancel
               </Button>
-              <Button onClick={handleAddAccount}>
-                Add Account
+              <Button 
+                onClick={handleAddAccount}
+                disabled={isSubmitting || !newAccount.name.trim()}
+              >
+                {isSubmitting ? 'Adding...' : 'Add Account'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {accounts.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-8">
-              <Wallet className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Accounts Yet</h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
+            <CardContent className="flex flex-col items-center justify-center py-6 sm:py-8">
+              <Wallet className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">No Accounts Yet</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground text-center mb-4 px-4">
                 Add your first account to start tracking your finances
               </p>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Button onClick={() => setIsAddDialogOpen(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Account
               </Button>
@@ -197,32 +269,51 @@ export function AccountsSettings() {
           accounts.map((account) => {
             const IconComponent = getAccountIcon(account.type)
             return (
-              <Card key={account.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <IconComponent className="h-5 w-5 text-primary" />
+              <Card key={account.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div 
+                      className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0"
+                      onClick={() => handleViewBreakdown(account)}
+                    >
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                        <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                       </div>
-                      <div>
-                        <h4 className="font-semibold">{account.name}</h4>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-sm sm:text-base truncate">{account.name}</h4>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {getAccountTypeLabel(account.type)}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
+                    <div 
+                      className="text-right flex-1 min-w-0"
+                      onClick={() => handleViewBreakdown(account)}
+                    >
+                      <p className="font-semibold text-sm sm:text-base truncate">
                         {formatCurrency(account.balance || 0)}
                       </p>
-                      <p className="text-sm text-muted-foreground">Current Balance</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Current Balance</p>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingAccount(account)}
+                        onClick={() => handleViewBreakdown(account)}
+                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                        title="View breakdown"
+                      >
+                        <BarChart3 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditingAccount(account)
+                        }}
                         className="h-8 w-8 p-0"
+                        title="Edit account"
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
@@ -232,6 +323,8 @@ export function AccountsSettings() {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            title="Delete account"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -330,6 +423,18 @@ export function AccountsSettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Account Breakdown Dialog */}
+      {breakdownAccount && (
+        <AccountBreakdown
+          account={breakdownAccount}
+          isOpen={isBreakdownOpen}
+          onClose={() => {
+            setIsBreakdownOpen(false)
+            setBreakdownAccount(null)
+          }}
+        />
+      )}
     </div>
   )
 }

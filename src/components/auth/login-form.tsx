@@ -22,12 +22,12 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
 });
 
 

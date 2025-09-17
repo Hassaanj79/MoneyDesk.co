@@ -12,6 +12,7 @@ import { AccountProvider } from '@/contexts/account-context';
 import { BudgetProvider } from '@/contexts/budget-context';
 import { CategoryProvider } from '@/contexts/category-context';
 import { LoanProvider } from '@/contexts/loan-context';
+import { LoanInstallmentProvider } from '@/contexts/loan-installment-context';
 import { TimezoneProvider } from '@/contexts/timezone-context';
 import { RecurringNotifications } from '@/components/recurring-notifications';
 
@@ -56,11 +57,13 @@ export default function RootLayout({
                        <DateRangeProvider>
                         <BudgetProvider>
                           <LoanProvider>
-                            <TimezoneProvider>
-                              <RecurringNotifications />
-                              {children}
-                              <Toaster />
-                            </TimezoneProvider>
+                            <LoanInstallmentProvider>
+                              <TimezoneProvider>
+                                <RecurringNotifications />
+                                {children}
+                                <Toaster />
+                              </TimezoneProvider>
+                            </LoanInstallmentProvider>
                           </LoanProvider>
                         </BudgetProvider>
                       </DateRangeProvider>

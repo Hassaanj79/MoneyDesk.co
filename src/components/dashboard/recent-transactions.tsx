@@ -61,28 +61,47 @@ const RecentTransactions = () => {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {recentTransactions.map((transaction) => {
-            const categoryName = getCategoryName(transaction.categoryId);
-            const Icon = categoryIcons[categoryName] || UtensilsCrossed;
-            return (
-              <div key={transaction.id} className="flex items-center">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-muted">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">{transaction.name}</p>
-                  <p className="text-sm text-muted-foreground">{format(parseISO(transaction.date), 'MMM dd, yyyy')}</p>
+        {recentTransactions.length === 0 ? (
+          <div className="text-center py-6">
+            <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-sm font-medium mb-1">No Transactions Yet</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Start tracking your income and expenses to see them here
+            </p>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.location.href = '/transactions'}
+              className="text-xs"
+            >
+              <ArrowUp className="h-3 w-3 mr-1" />
+              Add Transaction
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recentTransactions.map((transaction) => {
+              const categoryName = getCategoryName(transaction.categoryId);
+              const Icon = categoryIcons[categoryName] || UtensilsCrossed;
+              return (
+                <div key={transaction.id} className="flex items-center">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-muted">
+                      <Icon className="h-5 w-5 text-muted-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="ml-4 space-y-1">
+                    <p className="text-sm font-medium leading-none">{transaction.name}</p>
+                    <p className="text-sm text-muted-foreground">{format(parseISO(transaction.date), 'MMM dd, yyyy')}</p>
+                  </div>
+                  <div className={`ml-auto font-medium ${transaction.type === "income" ? "text-green-500" : "text-red-500"}`}>
+                    {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
+                  </div>
                 </div>
-                <div className={`ml-auto font-medium ${transaction.type === "income" ? "text-green-500" : "text-red-500"}`}>
-                  {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

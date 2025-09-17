@@ -71,6 +71,25 @@ export type Loan = {
   lastPaymentDate?: string;
   createdAt: string;
   updatedAt: string;
+  // Installment fields
+  isInstallment?: boolean;
+  installmentCount?: number;
+  installmentAmount?: number;
+  installmentFrequency?: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  nextPaymentDate?: string;
+};
+
+export type LoanInstallment = {
+  id: string;
+  loanId: string;
+  userId: string;
+  amount: number;
+  dueDate: string;
+  paidDate?: string;
+  status: 'pending' | 'paid' | 'overdue';
+  installmentNumber: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
     

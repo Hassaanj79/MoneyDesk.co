@@ -36,18 +36,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setAuthInitialized(false);
     
+    // Set a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      console.log('Auth timeout - setting loading to false');
+      setLoading(false);
+      setAuthInitialized(true);
+    }, 5000); // 5 second timeout
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('Auth state changed:', user ? 'User logged in' : 'No user');
+      clearTimeout(timeout);
       setUser(user);
       setLoading(false);
       setAuthInitialized(true);
     }, (error) => {
       console.error('Firebase auth error:', error);
+      clearTimeout(timeout);
       setLoading(false);
       setAuthInitialized(true);
     });
     
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {

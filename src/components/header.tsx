@@ -16,6 +16,7 @@ import {
   History,
   LogOut,
   HandCoins,
+  Settings,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
@@ -39,6 +40,7 @@ import { Input } from "./ui/input";
 import { useAuth } from "@/contexts/auth-context";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Badge } from "./ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -79,6 +81,7 @@ export function Header() {
   const { categories } = useCategories();
   const { user, logout } = useAuth();
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -245,6 +248,15 @@ export function Header() {
     setTimeout(() => {
       searchInputRef.current?.focus();
     }, 0);
+  };
+
+  const handleLogout = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutDialog(false);
   };
   
   const HeaderContent = (
@@ -522,10 +534,10 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <Link href="/settings">
                   <DropdownMenuItem className="cursor-pointer">
-                      <Menu className="mr-2" /> Settings
+                      <Settings className="mr-2" /> Settings
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -533,6 +545,27 @@ export function Header() {
 
         </div>
         <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
+        
+        {/* Logout Confirmation Dialog */}
+        <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to logout? You will need to sign in again to access your account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmLogout}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Logout
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </header>
   );
 

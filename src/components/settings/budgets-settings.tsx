@@ -337,11 +337,17 @@ export function BudgetsSettings() {
                         {progress.toFixed(1)}% - {status.status}
                       </span>
                     </div>
-                    <div className={`w-full rounded-full h-2 ${status.progressBarBgColor || 'bg-gray-200'}`}>
+                    <div className={`w-full rounded-full h-2 ${status.progressBarBgColor || 'bg-gray-200'} relative`}>
                       <div
                         className={`h-2 rounded-full transition-all ${status.progressBarColor || 'bg-purple-600'}`}
                         style={{ width: `${Math.min(progress || 0, 100)}%` }}
                       />
+                      {progress > 100 && (
+                        <div
+                          className="h-2 rounded-full bg-red-500 absolute top-0 left-0 opacity-60"
+                          style={{ width: '100%' }}
+                        />
+                      )}
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>

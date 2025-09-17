@@ -1,11 +1,14 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 import { getLoanCalculation } from "@/lib/loan-calculations";
+import { LoanInstallments } from "./loan-installments";
+import { LoanPayment } from "./loan-payment";
+import { LoanRepayment } from "./loan-repayment";
 import type { Loan } from "@/types";
 import { HandCoins, Calendar, User, DollarSign, CreditCard, AlertTriangle, CheckCircle, Calculator } from "lucide-react";
 
@@ -222,6 +225,27 @@ export function LoanDetails({ loan, children }: LoanDetailsProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{loan.description}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Installment Schedule */}
+      <LoanInstallments loan={loan} />
+
+      {/* Loan Payment (for non-installment loans) */}
+      {!loan.isInstallment && <LoanPayment loan={loan} />}
+
+      {/* Quick Repayment Option */}
+      {loan.status !== 'completed' && loan.remainingAmount > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Quick Repayment</CardTitle>
+            <CardDescription>
+              Use the general repayment tool for this loan
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoanRepayment />
           </CardContent>
         </Card>
       )}

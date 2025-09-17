@@ -27,6 +27,7 @@ import { GiveLoanForm } from "@/components/loans/give-loan-form";
 import { TakeLoanForm } from "@/components/loans/take-loan-form";
 import { EditLoanForm } from "@/components/loans/edit-loan-form";
 import { LoanDetails } from "@/components/loans/loan-details";
+import { LoanRepayment } from "@/components/loans/loan-repayment";
 import { cn } from "@/lib/utils";
 import { PlusCircle, Trash2, Pencil, HandCoins, CreditCard, AlertTriangle, CheckCircle } from "lucide-react";
 import type { Loan } from "@/types";
@@ -141,24 +142,90 @@ export default function LoansPage() {
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [loans, date, filter]);
 
+  // Calculate loan statistics
+  const loanStats = useMemo(() => {
+    const givenLoans = loans.filter(loan => loan.type === 'given');
+    const takenLoans = loans.filter(loan => loan.type === 'taken');
+    
+    const totalGiven = givenLoans.reduce((sum, loan) => sum + loan.amount, 0);
+    const totalTaken = takenLoans.reduce((sum, loan) => sum + loan.amount, 0);
+    const remainingGiven = givenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+    const remainingTaken = takenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
+    
+    return {
+      totalGiven,
+      totalTaken,
+      remainingGiven,
+      remainingTaken,
+      netPosition: remainingGiven - remainingTaken
+    };
+  }, [loans]);
+
   return (
     <>
+      {/* Loan Summary */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Loan Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="total" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="total">Total Amount</TabsTrigger>
+              <TabsTrigger value="remaining">Remaining Amount</TabsTrigger>
+            </TabsList>
+            <TabsContent value="total" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Total Given</div>
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(loanStats.totalGiven)}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Total Taken</div>
+                    <div className="text-2xl font-bold text-red-600">{formatCurrency(loanStats.totalTaken)}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            <TabsContent value="remaining" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Outstanding Given</div>
+                    <div className="text-2xl font-bold text-blue-600">{formatCurrency(loanStats.remainingGiven)}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Outstanding Taken</div>
+                    <div className="text-2xl font-bold text-orange-600">{formatCurrency(loanStats.remainingTaken)}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl font-bold">Loans</CardTitle>
-              <p className="text-muted-foreground">
+              <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold">Loans</CardTitle>
+              <p className="text-sm text-muted-foreground">
                 Manage your given and taken loans
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       onClick={() => handleTriggerClick("given")}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 flex-1 sm:flex-initial"
                     >
                       <HandCoins className="h-4 w-4" />
                       <span className="hidden sm:inline">Give Loan</span>
@@ -175,7 +242,7 @@ export default function LoansPage() {
                     <Button
                       onClick={() => handleTriggerClick("taken")}
                       variant="outline"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 flex-1 sm:flex-initial"
                     >
                       <CreditCard className="h-4 w-4" />
                       <span className="hidden sm:inline">Take Loan</span>
@@ -183,6 +250,16 @@ export default function LoansPage() {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Take Loan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <LoanRepayment />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Record Loan Repayment</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -196,18 +273,20 @@ export default function LoansPage() {
               <TabsTrigger value="given">Given</TabsTrigger>
               <TabsTrigger value="taken">Taken</TabsTrigger>
             </TabsList>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Loan</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Account</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Loan</TableHead>
+                    <TableHead className="hidden sm:table-cell">Type</TableHead>
+                    <TableHead className="hidden md:table-cell">Amount</TableHead>
+                    <TableHead className="hidden lg:table-cell">Remaining</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Due Date</TableHead>
+                    <TableHead className="hidden lg:table-cell">Account</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {filteredLoans.length > 0 ? (
                   filteredLoans.map((loan) => {
@@ -215,24 +294,43 @@ export default function LoansPage() {
                     return (
                       <TableRow key={loan.id} onClick={() => handleRowClick(loan)} className="cursor-pointer">
                         <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <span>{loan.borrowerName}</span>
-                            {loan.interestRate && loan.interestRate > 0 && (
-                              <Badge variant="outline" className="text-xs">
-                                {loan.interestRate}% APR
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate">{loan.borrowerName}</span>
+                              {loan.interestRate && loan.interestRate > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  {loan.interestRate}% APR
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
+                              <Badge variant={loan.type === 'given' ? 'default' : 'secondary'} className="text-xs">
+                                {loan.type === 'given' ? 'Given' : 'Taken'}
                               </Badge>
-                            )}
+                              <span className="font-bold">{formatCurrency(loan.amount)}</span>
+                              <Badge 
+                                variant={getStatusColor(loan.status, loan.dueDate)} 
+                                className="flex items-center gap-1 text-xs"
+                              >
+                                {getStatusIcon(loan.status, loan.dueDate)}
+                                {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                                {isOverdue && ' (Overdue)'}
+                              </Badge>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge variant={loan.type === 'given' ? 'default' : 'secondary'}>
                             {loan.type === 'given' ? 'Given' : 'Taken'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold">
+                        <TableCell className="hidden md:table-cell font-bold">
                           {formatCurrency(loan.amount)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell font-bold">
+                          {formatCurrency(loan.remainingAmount)}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge 
                             variant={getStatusColor(loan.status, loan.dueDate)} 
                             className="flex items-center gap-1 w-fit"
@@ -242,10 +340,10 @@ export default function LoansPage() {
                             {isOverdue && ' (Overdue)'}
                           </Badge>
                         </TableCell>
-                        <TableCell className={isOverdue ? 'text-red-500' : ''}>
+                        <TableCell className={`hidden md:table-cell ${isOverdue ? 'text-red-500' : ''}`}>
                           {format(parseISO(loan.dueDate), 'MMM dd, yyyy')}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <span className="text-sm text-muted-foreground">
                             {getAccountName(loan.accountId)}
                           </span>
@@ -280,7 +378,7 @@ export default function LoansPage() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="h-24 text-center"
                     >
                       No loans found for the selected filters.
@@ -289,6 +387,7 @@ export default function LoansPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </Tabs>
         </CardContent>
       </Card>

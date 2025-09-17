@@ -111,50 +111,80 @@ export default function AccountsPage() {
     <>
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <Card>
-          <CardHeader className="flex flex-row items-center">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div>
-              <CardTitle>Accounts</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Accounts</CardTitle>
+              <CardDescription className="text-sm">
                 Manage your financial accounts.
               </CardDescription>
             </div>
             <DialogTrigger asChild>
-              <Button className="ml-auto gap-1">
+              <Button className="w-full sm:w-auto gap-1">
                 <PlusCircle className="h-4 w-4" />
                 Add Account
               </Button>
             </DialogTrigger>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Account Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {processedAccounts.map((account) => (
-                  <TableRow key={account.id}>
-                    <TableCell className="font-medium">{account.name}</TableCell>
-                    <TableCell>{getAccountTypeLabel(account.type)}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(account.balance)}
-                    </TableCell>
-                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(account);
-                      }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="p-0 sm:p-6">
+            {processedAccounts.length === 0 ? (
+              <div className="p-6 text-center text-muted-foreground">
+                <Wallet className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-semibold mb-2">No Accounts Yet</h3>
+                <p className="text-sm mb-4">Get started by adding your first account to track your finances.</p>
+                <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Add Your First Account
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="px-3 sm:px-6">Account Name</TableHead>
+                      <TableHead className="hidden sm:table-cell px-3 sm:px-6">Type</TableHead>
+                      <TableHead className="text-right px-3 sm:px-6">Balance</TableHead>
+                      <TableHead className="text-right px-3 sm:px-6">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {processedAccounts.map((account) => (
+                      <TableRow key={account.id} className="hover:bg-muted/50">
+                        <TableCell className="px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-sm sm:text-base truncate">{account.name}</span>
+                            <span className="text-xs text-muted-foreground sm:hidden">
+                              {getAccountTypeLabel(account.type)}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4">
+                          <span className="text-sm">{getAccountTypeLabel(account.type)}</span>
+                        </TableCell>
+                        <TableCell className="text-right px-3 sm:px-6 py-3 sm:py-4">
+                          <div className="font-semibold text-sm sm:text-base">
+                            {formatCurrency(account.balance)}
+                          </div>
+                        </TableCell>
+                         <TableCell className="text-right px-3 sm:px-6 py-3 sm:py-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(account);
+                            }}
+                            className="h-8 w-8 p-0 hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
         <DialogContent>

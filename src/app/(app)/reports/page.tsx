@@ -226,20 +226,21 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div>
-            <CardTitle>Reports</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Reports</CardTitle>
             {fromDate && toDate && (
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Showing data for the period: {fromDate} - {toDate}
               </CardDescription>
             )}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button className="ml-auto gap-1">
+                <Button className="w-full sm:w-auto gap-1">
                     <Download className="h-4 w-4" />
-                    Generate Report
+                    <span className="hidden sm:inline">Generate Report</span>
+                    <span className="sm:hidden">Generate</span>
                     <ChevronDown className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
@@ -294,7 +295,7 @@ export default function ReportsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[350px]">
+          <div className="h-[250px] sm:h-[350px]">
             <ChartContainer config={chartConfig} className="w-full h-full">
               <BarChart
                 accessibilityLayer

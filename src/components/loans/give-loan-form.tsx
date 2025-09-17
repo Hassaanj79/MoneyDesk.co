@@ -15,13 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Loader2, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Loader2, DollarSign, CheckCircle, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLoans } from "@/contexts/loan-context";
@@ -30,8 +25,11 @@ import { useTransactions } from "@/contexts/transaction-context";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
 import { useCategories } from "@/contexts/category-context";
+import { useLoanInstallments } from "@/contexts/loan-installment-context";
 import { LoanCalculationDisplay } from "./loan-calculation-display";
 import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const giveLoanSchema = z.object({
   borrowerName: z.string().min(2, "Borrower name must be at least 2 characters."),
@@ -42,28 +40,29 @@ const giveLoanSchema = z.object({
   dueDate: z.date(),
   description: z.string().optional(),
   accountId: z.string().min(1, "Please select an account."),
+  isInstallment: z.boolean().optional(),
+  installmentCount: z.number().min(1).max(120).optional(),
+  installmentFrequency: z.enum(['weekly', 'monthly', 'quarterly', 'yearly']).optional(),
 });
 
-export function GiveLoanForm() {
+interface GiveLoanFormProps {
+  onSuccess?: () => void;
+}
+
+export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
   const { addLoan } = useLoans();
   const { accounts, loading: accountsLoading } = useAccounts();
   const { transactions, addTransaction } = useTransactions();
   const { categories } = useCategories();
   const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
+  const { generateLoanInstallments } = useLoanInstallments();
   const [loading, setLoading] = useState(false);
 
-  // Calculate current balance for each account
+  // Get current balance for each account
   const getAccountBalance = (accountId: string) => {
     const account = accounts.find(acc => acc.id === accountId);
-    if (!account) return 0;
-    
-    const accountTransactions = transactions.filter(t => t.accountId === accountId);
-    const currentBalance = account.initialBalance + accountTransactions.reduce((sum, t) => {
-      return sum + (t.type === 'income' ? t.amount : -t.amount);
-    }, 0);
-    
-    return currentBalance;
+    return account?.balance || 0;
   };
 
   const form = useForm<z.infer<typeof giveLoanSchema>>({
@@ -77,6 +76,9 @@ export function GiveLoanForm() {
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       description: "",
       accountId: "",
+      isInstallment: false,
+      installmentCount: 1,
+      installmentFrequency: 'monthly',
     },
   });
 
@@ -115,7 +117,23 @@ export function GiveLoanForm() {
         accountId: values.accountId,
         remainingAmount: totalAmountToReceive, // Total amount remaining to be paid back
         totalPaid: 0,
+        isInstallment: values.isInstallment || false,
+        installmentCount: values.installmentCount || 1,
+        installmentAmount: values.isInstallment ? totalAmountToReceive / (values.installmentCount || 1) : undefined,
+        installmentFrequency: values.installmentFrequency || 'monthly',
+        nextPaymentDate: values.isInstallment ? values.startDate.toISOString() : undefined,
       });
+
+      // Generate installments if installment loan
+      if (values.isInstallment && values.installmentCount && values.installmentCount > 1) {
+        await generateLoanInstallments(loanId, {
+          amount: values.amount, // Use principal amount for calculation
+          installmentCount: values.installmentCount,
+          installmentFrequency: values.installmentFrequency || 'monthly',
+          startDate: values.startDate.toISOString(),
+          interestRate: values.interestRate || 0,
+        });
+      }
 
       // Create a transaction to deduct the total amount (principal + interest) from the account
       const loanCategory = categories.find(cat => cat.name.toLowerCase().includes('loan') && cat.type === 'expense');
@@ -144,6 +162,7 @@ export function GiveLoanForm() {
       });
 
       form.reset();
+      onSuccess?.();
     } catch (error) {
       console.error("Failed to give loan", error);
       addNotification({
@@ -243,37 +262,15 @@ export function GiveLoanForm() {
             control={form.control}
             name="startDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem>
                 <FormLabel>Start Date *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date("1900-01-01")}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <DatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Pick a start date"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -283,37 +280,15 @@ export function GiveLoanForm() {
             control={form.control}
             name="dueDate"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem>
                 <FormLabel>Due Date *</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date("1900-01-01")}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <FormControl>
+                  <DatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Pick a due date"
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -370,6 +345,85 @@ export function GiveLoanForm() {
             </FormItem>
           )}
         />
+
+        {/* Installment Options */}
+        <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+          <FormField
+            control={form.control}
+            name="isInstallment"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Installment Loan</FormLabel>
+                  <FormDescription>
+                    Enable to split the loan into multiple payments
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {form.watch("isInstallment") && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="installmentCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Installments</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="120"
+                        placeholder="12"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      How many payments to split the loan into
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="installmentFrequency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Frequency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      How often payments are due
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Loan Calculation Display */}
         {form.watch('amount') > 0 && form.watch('startDate') && form.watch('dueDate') && (

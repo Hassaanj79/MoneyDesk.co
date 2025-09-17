@@ -162,16 +162,16 @@ export default function TransactionsPage() {
   return (
     <>
       <Card>
-        <CardHeader className="flex-row items-center">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div>
-            <CardTitle>Transactions</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Transactions</CardTitle>
           </div>
-          <div className="ml-auto flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <TooltipProvider>
               <Tooltip>
                   <TooltipTrigger asChild>
                       <Button
-                      className="gap-1"
+                      className="gap-1 flex-1 sm:flex-initial"
                       variant="success"
                       onClick={() => handleTriggerClick("income")}
                       size="sm"
@@ -187,7 +187,7 @@ export default function TransactionsPage() {
               <Tooltip>
                   <TooltipTrigger asChild>
                       <Button
-                      className="gap-1"
+                      className="gap-1 flex-1 sm:flex-initial"
                       variant="destructive"
                       onClick={() => handleTriggerClick("expense")}
                       size="sm"

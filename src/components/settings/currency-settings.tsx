@@ -635,7 +635,7 @@ export function CurrencySettings() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Search currencies..." 
                     value={currencySearch}
@@ -647,7 +647,7 @@ export function CurrencySettings() {
                       {filteredCurrencies.map((currency) => (
                         <CommandItem
                           key={currency.code}
-                          value={currency.code}
+                          value={`${currency.name} ${currency.code} ${currency.symbol}`}
                           onSelect={() => {
                             handleCurrencyChange(currency.code)
                             setCurrencyOpen(false)
@@ -725,7 +725,7 @@ export function CurrencySettings() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Search countries..." 
                     value={countrySearch}
@@ -737,7 +737,7 @@ export function CurrencySettings() {
                       {filteredCountries.map((country) => (
                         <CommandItem
                           key={country.code}
-                          value={country.code}
+                          value={`${country.name} ${country.code}`}
                           onSelect={() => {
                             handleCountryChange(country.code)
                             setCountryOpen(false)
@@ -794,7 +794,7 @@ export function CurrencySettings() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Search timezones..." 
                     value={timezoneSearch}
@@ -811,7 +811,7 @@ export function CurrencySettings() {
                       {filteredTimezones.map((timezone) => (
                         <CommandItem
                           key={timezone.value}
-                          value={timezone.value}
+                          value={`${timezone.label} ${timezone.value}`}
                           onSelect={() => {
                             handleTimezoneChange(timezone.value)
                             setTimezoneOpen(false)

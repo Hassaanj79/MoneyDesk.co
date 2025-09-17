@@ -102,34 +102,34 @@ const ExpenseBreakdown = ({ open, onOpenChange }: ExpenseBreakdownProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ArrowUp className="h-5 w-5 text-red-600" />
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto mx-2 sm:mx-4">
+        <DialogHeader className="pb-4 sm:pb-6">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
             Expense Breakdown
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground !text-muted-foreground">Total Expenses</CardTitle>
+              <CardHeader className="pb-2 px-3 sm:px-6">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground !text-muted-foreground">Total Expenses</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 dark:text-red-400 break-words">
                   {formatCurrency(expenseBreakdown.totalExpense)}
                 </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground !text-muted-foreground">Total Transactions</CardTitle>
+              <CardHeader className="pb-2 px-3 sm:px-6">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground !text-muted-foreground">Total Transactions</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold break-words">
                   {expenseBreakdown.totalTransactions}
                 </div>
               </CardContent>

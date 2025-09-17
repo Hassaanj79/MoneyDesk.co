@@ -13,6 +13,7 @@ interface TransactionContextType {
   addTransaction: (transaction: Omit<Transaction, 'id' | 'userId'>) => Promise<string | undefined>;
   updateTransaction: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'userId'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  recalculateAllAccountBalances: () => Promise<void>;
   loading: boolean;
 }
 
@@ -28,6 +29,20 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     
     try {
+      // Get the account's initial balance from the account context
+      // We need to import useAccounts or get the account data differently
+      // For now, let's get it from the accounts service
+      const { getAccount } = await import('@/services/accounts');
+      const account = await getAccount(user.uid, accountId);
+      
+      if (!account) {
+        console.error('Account not found:', accountId);
+        return;
+      }
+      
+      // Start with the initial balance
+      const initialBalance = account.initialBalance || 0;
+      
       // Get current account balance from all transactions for this account
       let accountTransactions = transactions.filter(t => t.accountId === accountId);
       
@@ -42,11 +57,11 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
         } else {
           return balance - transaction.amount;
         }
-      }, 0);
+      }, initialBalance);
 
       // Update the account balance in Firestore
       await updateAccountService(user.uid, accountId, { balance: currentBalance });
-      console.log(`Updated account ${accountId} balance to ${currentBalance}`);
+      console.log(`Updated account ${accountId} balance to ${currentBalance} (initial: ${initialBalance})`);
     } catch (error) {
       console.error('Error updating account balance:', error);
     }
@@ -143,8 +158,32 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const recalculateAllAccountBalances = async () => {
+    if (!user) return;
+    
+    try {
+      // Get all accounts
+      const { getAccounts } = await import('@/services/accounts');
+      const accountsQuery = getAccounts(user.uid);
+      const accountsSnapshot = await import('firebase/firestore').then(firestore => 
+        firestore.getDocs(accountsQuery)
+      );
+      
+      const accounts = accountsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account));
+      
+      // Recalculate balance for each account
+      for (const account of accounts) {
+        await updateAccountBalance(account.id);
+      }
+      
+      console.log('Recalculated all account balances');
+    } catch (error) {
+      console.error('Error recalculating account balances:', error);
+    }
+  };
+
   return (
-    <TransactionContext.Provider value={{ transactions, addTransaction, updateTransaction, deleteTransaction, loading }}>
+    <TransactionContext.Provider value={{ transactions, addTransaction, updateTransaction, deleteTransaction, recalculateAllAccountBalances, loading }}>
       {children}
     </TransactionContext.Provider>
   );

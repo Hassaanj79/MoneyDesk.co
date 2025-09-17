@@ -28,7 +28,7 @@ export function calculateBudgetProgress(budget: Budget, transactions: Transactio
   
   
   return {
-    progress: Math.min(progress, 100),
+    progress: progress, // Don't cap at 100% - show actual progress even when over budget
     spent,
     remaining,
     isOverBudget,
@@ -38,7 +38,7 @@ export function calculateBudgetProgress(budget: Budget, transactions: Transactio
 
 /**
  * Get budget status based on progress
- * @param progress - Progress percentage (0-100)
+ * @param progress - Progress percentage (can be over 100%)
  * @returns Status string and color classes
  */
 export function getBudgetStatus(progress: number) {
