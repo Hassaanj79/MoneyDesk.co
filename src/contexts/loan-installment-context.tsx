@@ -11,6 +11,8 @@ import {
   generateInstallments 
 } from '@/services/loan-installments';
 import type { LoanInstallment } from '@/types';
+import { toast } from 'sonner';
+// import { addNotification, createNotificationMessage } from '@/services/notifications';
 
 interface LoanInstallmentContextType {
   installments: LoanInstallment[];
@@ -102,6 +104,28 @@ export const LoanInstallmentProvider = ({ children }: { children: ReactNode }) =
     try {
       await payInstallment(user.uid, id, paidDate);
       await fetchInstallments(); // Refresh the list
+      
+    // Show success toast
+    toast.success("Installment paid successfully!", {
+      description: "Payment has been recorded"
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('installment_paid', {
+    //   loanId: installment.loanId,
+    //   installmentNumber: installment.installmentNumber,
+    //   amount: installment.amount
+    // });
+    // 
+    // await addNotification({
+    //   type: 'installment_paid',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: installment.loanId,
+    //   relatedEntityType: 'loan'
+    // });
     } catch (error) {
       console.error('Error paying installment:', error);
       throw error;

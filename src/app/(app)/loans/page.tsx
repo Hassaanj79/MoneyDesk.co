@@ -60,6 +60,8 @@ export default function LoansPage() {
   const [loanType, setLoanType] = useState<"given" | "taken">("given");
   const [dialogTitle, setDialogTitle] = useState("Give Loan");
   const [filter, setFilter] = useState<"all" | "given" | "taken">("all");
+  const [selectedLoans, setSelectedLoans] = useState<string[]>([]);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const { date } = useDateRange();
   const { formatCurrency } = useCurrency();
 
@@ -67,6 +69,34 @@ export default function LoansPage() {
     setLoanType(type);
     setDialogTitle(type === "given" ? "Give Loan" : "Take Loan");
     setAddDialogOpen(true);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedLoans.length === filteredLoans.length) {
+      setSelectedLoans([]);
+    } else {
+      setSelectedLoans(filteredLoans.map(l => l.id));
+    }
+  };
+
+  const handleSelectLoan = (loanId: string) => {
+    setSelectedLoans(prev => 
+      prev.includes(loanId) 
+        ? prev.filter(id => id !== loanId)
+        : [...prev, loanId]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      for (const loanId of selectedLoans) {
+        await deleteLoan(loanId);
+      }
+      setSelectedLoans([]);
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting loans:', error);
+    }
   };
 
   const handleRowClick = (loan: Loan) => {
@@ -139,7 +169,13 @@ export default function LoansPage() {
       filtered = filtered.filter(loan => loan.type === filter);
     }
 
-    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return filtered.sort((a, b) => {
+      // Sort by createdAt timestamp for newest first
+      // Both loans should have createdAt as they're created with it
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return bTime - aTime; // Newest first
+    });
   }, [loans, date, filter]);
 
   // Calculate loan statistics
@@ -152,27 +188,62 @@ export default function LoansPage() {
     const remainingGiven = givenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
     const remainingTaken = takenLoans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
     
+    // Calculate additional insights
+    const activeLoans = loans.filter(loan => loan.status === 'active');
+    const completedLoans = loans.filter(loan => loan.status === 'completed');
+    const overdueLoans = loans.filter(loan => {
+      const isOverdue = new Date(loan.dueDate) < new Date() && loan.status === 'active';
+      return isOverdue;
+    });
+    
+    // Calculate average loan amounts
+    const avgGivenAmount = givenLoans.length > 0 ? totalGiven / givenLoans.length : 0;
+    const avgTakenAmount = takenLoans.length > 0 ? totalTaken / takenLoans.length : 0;
+    
+    // Calculate interest-bearing loans
+    const interestLoans = loans.filter(loan => loan.interestRate && loan.interestRate > 0);
+    const avgInterestRate = interestLoans.length > 0 
+      ? interestLoans.reduce((sum, loan) => sum + (loan.interestRate || 0), 0) / interestLoans.length 
+      : 0;
+    
+    // Recent loans (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentLoans = loans.filter(loan => 
+      parseISO(loan.startDate) >= thirtyDaysAgo
+    );
+    
     return {
       totalGiven,
       totalTaken,
       remainingGiven,
       remainingTaken,
-      netPosition: remainingGiven - remainingTaken
+      netPosition: remainingGiven - remainingTaken,
+      activeCount: activeLoans.length,
+      completedCount: completedLoans.length,
+      overdueCount: overdueLoans.length,
+      totalCount: loans.length,
+      avgGivenAmount,
+      avgTakenAmount,
+      interestLoansCount: interestLoans.length,
+      avgInterestRate,
+      recentCount: recentLoans.length
     };
   }, [loans]);
 
   return (
     <>
       {/* Loan Summary */}
-      <Card className="mb-6">
+      <Card className="mb-3">
         <CardHeader>
           <CardTitle>Loan Summary</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="total" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="total">Total Amount</TabsTrigger>
               <TabsTrigger value="remaining">Remaining Amount</TabsTrigger>
+              <TabsTrigger value="insights">Insights</TabsTrigger>
             </TabsList>
             <TabsContent value="total" className="mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,6 +273,73 @@ export default function LoansPage() {
                   <CardContent className="p-4">
                     <div className="text-sm font-medium text-muted-foreground">Outstanding Taken</div>
                     <div className="text-2xl font-bold text-orange-600">{formatCurrency(loanStats.remainingTaken)}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            <TabsContent value="insights" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Active Loans</div>
+                    <div className="text-2xl font-bold text-green-600">{loanStats.activeCount}</div>
+                    <div className="text-xs text-muted-foreground">Currently active</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Completed Loans</div>
+                    <div className="text-2xl font-bold text-blue-600">{loanStats.completedCount}</div>
+                    <div className="text-xs text-muted-foreground">Successfully repaid</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Overdue Loans</div>
+                    <div className="text-2xl font-bold text-red-600">{loanStats.overdueCount}</div>
+                    <div className="text-xs text-muted-foreground">Past due date</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Average Given</div>
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(loanStats.avgGivenAmount)}</div>
+                    <div className="text-xs text-muted-foreground">Per given loan</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Average Taken</div>
+                    <div className="text-2xl font-bold text-orange-600">{formatCurrency(loanStats.avgTakenAmount)}</div>
+                    <div className="text-xs text-muted-foreground">Per taken loan</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Interest Rate</div>
+                    <div className="text-2xl font-bold text-purple-600">{loanStats.avgInterestRate.toFixed(1)}%</div>
+                    <div className="text-xs text-muted-foreground">Average APR</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Interest Loans</div>
+                    <div className="text-2xl font-bold text-indigo-600">{loanStats.interestLoansCount}</div>
+                    <div className="text-xs text-muted-foreground">With interest rate</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Recent Activity</div>
+                    <div className="text-2xl font-bold text-cyan-600">{loanStats.recentCount}</div>
+                    <div className="text-xs text-muted-foreground">Last 30 days</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium text-muted-foreground">Total Loans</div>
+                    <div className="text-2xl font-bold text-gray-600">{loanStats.totalCount}</div>
+                    <div className="text-xs text-muted-foreground">All time</div>
                   </CardContent>
                 </Card>
               </div>
@@ -273,10 +411,42 @@ export default function LoansPage() {
               <TabsTrigger value="given">Given</TabsTrigger>
               <TabsTrigger value="taken">Taken</TabsTrigger>
             </TabsList>
+            {selectedLoans.length > 0 && (
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg mb-4">
+                <span className="text-sm text-muted-foreground">
+                  {selectedLoans.length} loan{selectedLoans.length > 1 ? 's' : ''} selected
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedLoans([])}
+                  >
+                    Clear Selection
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedLoans.length === filteredLoans.length && filteredLoans.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded border-gray-300"
+                      />
+                    </TableHead>
                     <TableHead>Loan</TableHead>
                     <TableHead className="hidden sm:table-cell">Type</TableHead>
                     <TableHead className="hidden md:table-cell">Amount</TableHead>
@@ -292,8 +462,17 @@ export default function LoansPage() {
                   filteredLoans.map((loan) => {
                     const isOverdue = new Date(loan.dueDate) < new Date() && loan.status === 'active';
                     return (
-                      <TableRow key={loan.id} onClick={() => handleRowClick(loan)} className="cursor-pointer">
-                        <TableCell className="font-medium">
+                      <TableRow key={loan.id} className="cursor-pointer">
+                        <TableCell className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedLoans.includes(loan.id)}
+                            onChange={() => handleSelectLoan(loan.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded border-gray-300"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium" onClick={() => handleRowClick(loan)}>
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
                               <span className="truncate">{loan.borrowerName}</span>
@@ -319,18 +498,18 @@ export default function LoansPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell">
+                        <TableCell className="hidden sm:table-cell" onClick={() => handleRowClick(loan)}>
                           <Badge variant={loan.type === 'given' ? 'default' : 'secondary'}>
                             {loan.type === 'given' ? 'Given' : 'Taken'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell font-bold">
+                        <TableCell className="hidden md:table-cell font-bold" onClick={() => handleRowClick(loan)}>
                           {formatCurrency(loan.amount)}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell font-bold">
+                        <TableCell className="hidden lg:table-cell font-bold" onClick={() => handleRowClick(loan)}>
                           {formatCurrency(loan.remainingAmount)}
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell">
+                        <TableCell className="hidden sm:table-cell" onClick={() => handleRowClick(loan)}>
                           <Badge 
                             variant={getStatusColor(loan.status, loan.dueDate)} 
                             className="flex items-center gap-1 w-fit"
@@ -340,10 +519,10 @@ export default function LoansPage() {
                             {isOverdue && ' (Overdue)'}
                           </Badge>
                         </TableCell>
-                        <TableCell className={`hidden md:table-cell ${isOverdue ? 'text-red-500' : ''}`}>
+                        <TableCell className={`hidden md:table-cell ${isOverdue ? 'text-red-500' : ''}`} onClick={() => handleRowClick(loan)}>
                           {format(parseISO(loan.dueDate), 'MMM dd, yyyy')}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">
+                        <TableCell className="hidden lg:table-cell" onClick={() => handleRowClick(loan)}>
                           <span className="text-sm text-muted-foreground">
                             {getAccountName(loan.accountId)}
                           </span>
@@ -378,7 +557,7 @@ export default function LoansPage() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="h-24 text-center"
                     >
                       No loans found for the selected filters.
@@ -454,6 +633,25 @@ export default function LoansPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Loans</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedLoans.length} loan{selectedLoans.length > 1 ? 's' : ''}? 
+              This action cannot be undone and will permanently delete the selected loan records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete {selectedLoans.length} Loan{selectedLoans.length > 1 ? 's' : ''}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

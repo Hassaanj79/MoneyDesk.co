@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLoanInstallments } from "@/contexts/loan-installment-context";
 import { useCurrency } from "@/hooks/use-currency";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCategories } from "@/contexts/category-context";
@@ -24,7 +24,7 @@ interface LoanInstallmentsProps {
 export function LoanInstallments({ loan }: LoanInstallmentsProps) {
   const { getInstallmentsByLoan, payInstallmentPayment, loading } = useLoanInstallments();
   const { formatCurrency } = useCurrency();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   const { accounts } = useAccounts();
   const { addTransaction } = useTransactions();
   const { categories } = useCategories();
@@ -74,23 +74,26 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
         console.warn('No appropriate category found for loan payment transaction');
       }
       
-      addNotification({
-        icon: CheckCircle,
-        title: 'Payment Recorded',
-        description: `Installment #${selectedInstallment.installmentNumber} payment recorded successfully.`,
-        variant: 'default',
-      });
+      // addNotification({
+      //   type: 'installment_paid',
+      //   title: 'Payment Recorded',
+      //   message: `Installment #${selectedInstallment.installmentNumber} payment recorded successfully.`,
+      //   navigationPath: '/loans',
+      //   navigationParams: { id: selectedInstallment.loanId },
+      //   relatedEntityId: selectedInstallment.loanId,
+      //   relatedEntityType: 'loan'
+      // });
       
       setIsPaymentDialogOpen(false);
       setSelectedInstallment(null);
       setPaymentAccountId("");
     } catch (error) {
-      addNotification({
-        icon: AlertCircle,
-        title: 'Payment Failed',
-        description: 'Failed to record payment. Please try again.',
-        variant: 'destructive',
-      });
+      // addNotification({
+      //   type: 'error',
+      //   title: 'Payment Failed',
+      //   message: 'Failed to record payment. Please try again.',
+      //   navigationPath: '/loans'
+      // });
     } finally {
       setIsPaying(false);
     }

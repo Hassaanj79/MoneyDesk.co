@@ -6,7 +6,9 @@ import type { Transaction } from '@/types';
 import { useAuth } from './auth-context';
 import { addTransaction as addTransactionService, deleteTransaction as deleteTransactionService, getTransactions, updateTransaction as updateTransactionService } from '@/services/transactions';
 import { updateAccount as updateAccountService } from '@/services/accounts';
+// import { addNotification, createNotificationMessage } from '@/services/notifications';
 import { Timestamp, onSnapshot } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -77,10 +79,13 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
           const data = doc.data();
           // This handles both Timestamp and string dates from Firestore
           const date = data.date.toDate ? (data.date as Timestamp).toDate().toISOString() : data.date;
+          // Handle createdAt field - convert from Timestamp to Date if it exists
+          const createdAt = data.createdAt?.toDate ? (data.createdAt as Timestamp).toDate() : data.createdAt;
           userTransactions.push({ 
             id: doc.id, 
             ...data,
             date: date,
+            createdAt: createdAt,
           } as Transaction);
         });
         setTransactions(userTransactions);
@@ -107,11 +112,37 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       const newTransaction: Transaction = {
         ...transaction,
         id: newDoc.id,
-        userId: user.uid
+        userId: user.uid,
+        createdAt: new Date() // Add createdAt for immediate sorting
       };
+      
+      // Immediately add to local state for instant UI update
+      setTransactions(prev => [newTransaction, ...prev]);
       
       // Update account balance immediately with the new transaction
       await updateAccountBalance(transaction.accountId, newTransaction);
+      
+      // Show success toast
+      toast.success(`${transaction.type === 'income' ? 'Income' : 'Expense'} added successfully!`, {
+        description: `${transaction.description} - ${transaction.amount}`
+      });
+      
+      // Create notification (disabled)
+      // const notificationData = createNotificationMessage('transaction_created', {
+      //   ...newTransaction,
+      //   amount: transaction.amount,
+      //   type: transaction.type
+      // });
+      
+      // await addNotification({
+      //   type: 'transaction_created',
+      //   title: notificationData.title,
+      //   message: notificationData.message,
+      //   navigationPath: notificationData.navigationPath,
+      //   navigationParams: notificationData.navigationParams,
+      //   relatedEntityId: newDoc.id,
+      //   relatedEntityType: 'transaction'
+      // });
     }
     
     return newDoc?.id;
@@ -139,6 +170,28 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
         updateAccountBalance(updatedTransaction.accountId);
       }, 200);
     }
+    
+    // Show success toast
+    toast.success("Transaction updated successfully!", {
+      description: `${updatedTransaction.description || originalTransaction?.description} - ${updatedTransaction.amount || originalTransaction?.amount}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('transaction_updated', {
+    //   id,
+    //   name: updatedTransaction.description || originalTransaction?.description || 'Transaction',
+    //   amount: updatedTransaction.amount || originalTransaction?.amount
+    // });
+    
+    // await addNotification({
+    //   type: 'transaction_updated',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'transaction'
+    // });
   };
   
   const deleteTransaction = async (id: string) => {
@@ -156,6 +209,27 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
         updateAccountBalance(transactionToDelete.accountId);
       }, 200);
     }
+    
+    // Show success toast
+    toast.success("Transaction deleted successfully!", {
+      description: `${transactionToDelete?.description || 'Transaction'} - ${transactionToDelete?.amount}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('transaction_deleted', {
+    //   id,
+    //   name: transactionToDelete?.description || 'Transaction'
+    // });
+    
+    // await addNotification({
+    //   type: 'transaction_deleted',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'transaction'
+    // });
   };
 
   const recalculateAllAccountBalances = async () => {

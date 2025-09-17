@@ -6,6 +6,8 @@ import type { Category } from '@/types';
 import { useAuth } from './auth-context';
 import { addCategory as addCategoryService, getCategories, updateCategory as updateCategoryService, deleteCategory as deleteCategoryService } from '@/services/categories';
 import { onSnapshot } from 'firebase/firestore';
+import { toast } from 'sonner';
+// import { addNotification, createNotificationMessage } from '@/services/notifications';
 
 interface CategoryContextType {
   categories: Category[];
@@ -74,6 +76,28 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       const newDoc = await addCategoryService(userId, category);
+      
+    // Show success toast
+    toast.success("Category created successfully!", {
+      description: `${category.name} - ${category.type}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('category_created', {
+    //   ...category,
+    //   id: newDoc.id
+    // });
+    // 
+    // await addNotification({
+    //   type: 'category_created',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: newDoc.id,
+    //   relatedEntityType: 'category'
+    // });
+      
       return newDoc?.id;
     } catch (error) {
       console.error('Error in addCategoryService:', error)
@@ -84,11 +108,52 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   const updateCategory = async (categoryId: string, category: Partial<Omit<Category, 'id' | 'userId'>>) => {
     if (!user) throw new Error("User not authenticated");
     await updateCategoryService(user.uid, categoryId, category);
+    
+    // Show success toast
+    toast.success("Category updated successfully!", {
+      description: `${category.name || 'Category'} - ${category.type || 'Category'}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('category_updated', {
+    //   id,
+    //   ...category
+    // });
+    // 
+    // await addNotification({
+    //   type: 'category_updated',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'category'
+    // });
   };
 
   const deleteCategory = async (categoryId: string) => {
     if (!user) throw new Error("User not authenticated");
     await deleteCategoryService(user.uid, categoryId);
+    
+    // Show success toast
+    toast.success("Category deleted successfully!");
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('category_deleted', {
+    //   id,
+    //   name: 'Category',
+    //   type: 'Category'
+    // });
+    // 
+    // await addNotification({
+    //   type: 'category_deleted',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'category'
+    // });
   };
 
   return (

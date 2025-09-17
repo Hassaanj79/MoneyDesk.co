@@ -33,7 +33,7 @@ import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X } from "lucide-reac
 import { format } from "date-fns";
 import type { Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useEffect, useRef, useState } from "react";
 import { useAccounts } from "@/contexts/account-context";
@@ -61,7 +61,7 @@ type AddTransactionFormProps = {
 
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
   const { addTransaction } = useTransactions();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
@@ -105,11 +105,15 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       date: format(values.date, "yyyy-MM-dd"),
     });
 
-    addNotification({
-      icon: values.type === 'income' ? ArrowUp : ArrowDown,
-      title: `Transaction Added`,
-      description: `${values.name} for ${formatCurrency(values.amount)} has been saved.`,
-    });
+    // addNotification({
+    //   type: 'transaction_created',
+    //   title: `Transaction Added`,
+    //   message: `${values.description} for ${formatCurrency(values.amount)} has been saved.`,
+    //   navigationPath: '/transactions',
+    //   navigationParams: { id: transactionId },
+    //   relatedEntityId: transactionId,
+    //   relatedEntityType: 'transaction'
+    // });
 
     onSuccess?.();
     form.reset();

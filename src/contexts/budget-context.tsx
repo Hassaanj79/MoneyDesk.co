@@ -6,6 +6,8 @@ import type { Budget } from '@/types';
 import { useAuth } from './auth-context';
 import { addBudget as addBudgetService, deleteBudget as deleteBudgetService, getBudgets, updateBudget as updateBudgetService } from '@/services/budgets';
 import { onSnapshot } from 'firebase/firestore';
+import { toast } from 'sonner';
+// import { addNotification, createNotificationMessage } from '@/services/notifications';
 
 interface BudgetContextType {
   budgets: Budget[];
@@ -60,17 +62,80 @@ export const BudgetProvider = ({ children }: { children: ReactNode }) => {
   const addBudget = async (budget: Omit<Budget, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
     const newDoc = await addBudgetService(user.uid, budget);
+    
+    // Show success toast
+    toast.success("Budget created successfully!", {
+      description: `${budget.name} - ${budget.amount}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('budget_created', {
+    //   ...budget,
+    //   id: newDoc.id
+    // });
+    // 
+    // await addNotification({
+    //   type: 'budget_created',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: newDoc.id,
+    //   relatedEntityType: 'budget'
+    // });
+    
     return newDoc?.id;
   };
 
   const updateBudget = async (id: string, updatedBudget: Partial<Omit<Budget, 'id' | 'userId'>>) => {
      if (!user) throw new Error("User not authenticated");
     await updateBudgetService(user.uid, id, updatedBudget);
+    
+    // Show success toast
+    toast.success("Budget updated successfully!", {
+      description: `${updatedBudget.name || 'Budget'} - ${updatedBudget.amount}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('budget_updated', {
+    //   id,
+    //   ...updatedBudget
+    // });
+    // 
+    // await addNotification({
+    //   type: 'budget_updated',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'budget'
+    // });
   };
   
   const deleteBudget = async (id: string) => {
     if (!user) throw new Error("User not authenticated");
     await deleteBudgetService(user.uid, id);
+    
+    // Show success toast
+    toast.success("Budget deleted successfully!");
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('budget_deleted', {
+    //   id,
+    //   name: 'Budget',
+    //   amount: 0
+    // });
+    // 
+    // await addNotification({
+    //   type: 'budget_deleted',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'budget'
+    // });
   };
 
   return (

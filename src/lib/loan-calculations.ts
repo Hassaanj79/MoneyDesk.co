@@ -13,15 +13,15 @@ export interface LoanCalculation {
 
 /**
  * Calculate simple interest for a loan
- * Interest rate is the actual interest amount to be received, not a percentage
+ * Interest rate is a percentage (e.g., 5 for 5%)
  */
 export function calculateSimpleInterest(
   principal: number,
   interestRate: number,
   timeInYears: number
 ): LoanCalculation {
-  // Interest rate is the actual interest amount to be received
-  const interestAmount = interestRate;
+  // Calculate interest as percentage of principal
+  const interestAmount = (principal * interestRate / 100) * timeInYears;
   const totalAmount = principal + interestAmount;
   
   return {

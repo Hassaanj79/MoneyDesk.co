@@ -10,12 +10,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { cn } from "@/lib/utils";
 import { Bell, BellOff } from "lucide-react";
 
 export default function NotificationsPage() {
-  const { notifications, markAllAsRead } = useNotifications();
+  // const { notifications, markAllAsRead } = useNotifications();
+  const notifications: any[] = [];
+  const markAllAsRead = () => {}; // Empty array since notifications are disabled
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (

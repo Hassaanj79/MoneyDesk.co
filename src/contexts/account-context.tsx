@@ -6,6 +6,8 @@ import type { Account } from '@/types';
 import { useAuth } from './auth-context';
 import { addAccount as addAccountService, deleteAccount as deleteAccountService, getAccounts, updateAccount as updateAccountService } from '@/services/accounts';
 import { onSnapshot } from 'firebase/firestore';
+import { toast } from 'sonner';
+// import { addNotification, createNotificationMessage } from '@/services/notifications';
 
 interface AccountContextType {
   accounts: Account[];
@@ -59,17 +61,80 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       balance: account.initialBalance || 0
     };
     const newDoc = await addAccountService(user.uid, accountWithBalance);
+    
+    // Show success toast
+    toast.success("Account created successfully!", {
+      description: `${account.name} - ${account.type}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('account_created', {
+    //   ...account,
+    //   id: newDoc.id
+    // });
+    // 
+    // await addNotification({
+    //   type: 'account_created',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: newDoc.id,
+    //   relatedEntityType: 'account'
+    // });
+    
     return newDoc?.id;
   };
 
   const updateAccount = async (id: string, updatedAccount: Partial<Omit<Account, 'id' | 'userId'>>) => {
      if (!user) throw new Error("User not authenticated");
     await updateAccountService(user.uid, id, updatedAccount);
+    
+    // Show success toast
+    toast.success("Account updated successfully!", {
+      description: `${updatedAccount.name || 'Account'} - ${updatedAccount.type || 'Account'}`
+    });
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('account_updated', {
+    //   id,
+    //   ...updatedAccount
+    // });
+    // 
+    // await addNotification({
+    //   type: 'account_updated',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'account'
+    // });
   };
   
   const deleteAccount = async (id: string) => {
     if (!user) throw new Error("User not authenticated");
     await deleteAccountService(user.uid, id);
+    
+    // Show success toast
+    toast.success("Account deleted successfully!");
+    
+    // Create notification (disabled)
+    // const notificationData = createNotificationMessage('account_deleted', {
+    //   id,
+    //   name: 'Account',
+    //   type: 'Account'
+    // });
+    // 
+    // await addNotification({
+    //   type: 'account_deleted',
+    //   title: notificationData.title,
+    //   message: notificationData.message,
+    //   navigationPath: notificationData.navigationPath,
+    //   navigationParams: notificationData.navigationParams,
+    //   relatedEntityId: id,
+    //   relatedEntityType: 'account'
+    // });
   };
 
   return (

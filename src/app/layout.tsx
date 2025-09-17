@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { DateRangeProvider } from '@/contexts/date-range-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
-import { NotificationProvider } from '@/contexts/notification-context';
+// import { NotificationProvider } from '@/contexts/notification-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
 import { CountryProvider } from '@/contexts/country-context';
 import { AuthProvider } from '@/contexts/auth-context';
@@ -49,8 +49,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <NotificationProvider>
-              <CurrencyProvider>
+        <CurrencyProvider>
                 <CountryProvider>
                   <CategoryProvider>
                   <AccountProvider>
@@ -73,8 +72,7 @@ export default function RootLayout({
                   </AccountProvider>
                   </CategoryProvider>
                 </CountryProvider>
-              </CurrencyProvider>
-            </NotificationProvider>
+          </CurrencyProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

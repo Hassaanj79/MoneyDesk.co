@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { useLoans } from "@/contexts/loan-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useTransactions } from "@/contexts/transaction-context";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useCategories } from "@/contexts/category-context";
 import { useState, useEffect } from "react";
@@ -50,7 +50,7 @@ export function EditLoanForm({ loan, onSuccess }: EditLoanFormProps) {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { transactions, addTransaction } = useTransactions();
   const { categories } = useCategories();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
   const [loading, setLoading] = useState(false);
 
@@ -127,22 +127,25 @@ export function EditLoanForm({ loan, onSuccess }: EditLoanFormProps) {
         }
       }
 
-      addNotification({
-        icon: CheckCircle,
-        title: "Loan Updated",
-        description: `Loan with ${values.borrowerName} has been updated successfully.${wasCompleted ? ' Money returned to account.' : ''}`,
-        variant: "default",
-      });
+      // addNotification({
+      //   type: 'loan_updated',
+      //   title: "Loan Updated",
+      //   message: `Loan with ${values.borrowerName} has been updated successfully.${wasCompleted ? ' Money returned to account.' : ''}`,
+      //   navigationPath: '/loans',
+      //   navigationParams: { id: loan.id },
+      //   relatedEntityId: loan.id,
+      //   relatedEntityType: 'loan'
+      // });
 
       onSuccess();
     } catch (error) {
       console.error("Error updating loan:", error);
-      addNotification({
-        icon: AlertCircle,
-        title: "Error",
-        description: "Failed to update loan. Please try again.",
-        variant: "destructive",
-      });
+      // addNotification({
+      //   type: 'error',
+      //   title: "Error",
+      //   message: "Failed to update loan. Please try again.",
+      //   navigationPath: '/loans'
+      // });
     } finally {
       setLoading(false);
     }

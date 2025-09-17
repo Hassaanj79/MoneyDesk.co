@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { useLoans } from "@/contexts/loan-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useTransactions } from "@/contexts/transaction-context";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useCategories } from "@/contexts/category-context";
 import { useLoanInstallments } from "@/contexts/loan-installment-context";
@@ -34,8 +34,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const takeLoanSchema = z.object({
   borrowerName: z.string().min(2, "Lender name must be at least 2 characters."),
   borrowerContact: z.string().optional(),
-  amount: z.number().min(0.01, "Amount must be greater than 0."),
-  interestRate: z.number().min(0).max(100).optional(),
+  amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
+  interestRate: z.coerce.number().min(0).max(100).optional(),
   startDate: z.date(),
   dueDate: z.date(),
   description: z.string().optional(),
@@ -43,6 +43,9 @@ const takeLoanSchema = z.object({
   isInstallment: z.boolean().optional(),
   installmentCount: z.number().min(1).max(120).optional(),
   installmentFrequency: z.enum(['weekly', 'monthly', 'quarterly', 'yearly']).optional(),
+}).refine((data) => data.dueDate > data.startDate, {
+  message: "Due date must be after start date",
+  path: ["dueDate"],
 });
 
 interface TakeLoanFormProps {
@@ -54,7 +57,7 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
   const { accounts, loading: accountsLoading } = useAccounts();
   const { transactions, addTransaction } = useTransactions();
   const { categories } = useCategories();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
   const { generateLoanInstallments } = useLoanInstallments();
   const [loading, setLoading] = useState(false);
@@ -62,7 +65,17 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
   // Get current balance for each account
   const getAccountBalance = (accountId: string) => {
     const account = accounts.find(acc => acc.id === accountId);
-    return account?.balance || 0;
+    if (!account) return 0;
+    
+    // Calculate balance from transactions
+    const balance = transactions.reduce((acc, t) => {
+      if (t.accountId === accountId) {
+        return acc + (t.type === 'income' ? t.amount : -t.amount);
+      }
+      return acc;
+    }, account.initialBalance || 0);
+    
+    return balance;
   };
 
   const form = useForm<z.infer<typeof takeLoanSchema>>({
@@ -70,8 +83,8 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
     defaultValues: {
       borrowerName: "",
       borrowerContact: "",
-      amount: 0,
-      interestRate: 0,
+      amount: '' as any,
+      interestRate: '' as any,
       startDate: new Date(),
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       description: "",
@@ -91,7 +104,7 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
       const totalAmountToPay = values.amount + interestAmount;
 
       // Create the loan
-      const loanId = await addLoan({
+      const loanData: any = {
         type: 'taken',
         borrowerName: values.borrowerName,
         borrowerContact: values.borrowerContact,
@@ -106,10 +119,16 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
         totalPaid: 0,
         isInstallment: values.isInstallment || false,
         installmentCount: values.installmentCount || 1,
-        installmentAmount: values.isInstallment ? totalAmountToPay / (values.installmentCount || 1) : undefined,
         installmentFrequency: values.installmentFrequency || 'monthly',
-        nextPaymentDate: values.isInstallment ? values.startDate.toISOString() : undefined,
-      });
+      };
+
+      // Only add installment-specific fields if it's an installment loan
+      if (values.isInstallment) {
+        loanData.installmentAmount = totalAmountToPay / (values.installmentCount || 1);
+        loanData.nextPaymentDate = values.startDate.toISOString();
+      }
+
+      const loanId = await addLoan(loanData);
 
       // Generate installments if installment loan
       if (values.isInstallment && values.installmentCount && values.installmentCount > 1) {
@@ -141,23 +160,26 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
         console.warn('No income category found for loan transaction');
       }
 
-      addNotification({
-        icon: CreditCard,
-        title: 'Loan Taken',
-        description: `Successfully took loan of ${formatCurrency(values.amount)} from ${values.borrowerName}. Amount added to account.`,
-        variant: 'default',
-      });
+      // addNotification({
+      //   type: 'loan_created',
+      //   title: 'Loan Taken',
+      //   message: `Successfully took loan of ${formatCurrency(values.amount)} from ${values.borrowerName}. Amount added to account.`,
+      //   navigationPath: '/loans',
+      //   navigationParams: { id: loanId },
+      //   relatedEntityId: loanId,
+      //   relatedEntityType: 'loan'
+      // });
 
       form.reset();
       onSuccess?.();
     } catch (error) {
       console.error("Failed to take loan", error);
-      addNotification({
-        icon: CreditCard,
-        title: 'Error',
-        description: 'Could not take loan. Please try again.',
-        variant: 'destructive',
-      });
+      // addNotification({
+      //   type: 'error',
+      //   title: 'Error',
+      //   message: 'Could not take loan. Please try again.',
+      //   navigationPath: '/loans'
+      // });
     } finally {
       setLoading(false);
     }
@@ -225,7 +247,7 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
             name="interestRate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Interest Amount</FormLabel>
+                <FormLabel>Interest Rate (%)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"

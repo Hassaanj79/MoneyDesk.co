@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTransactions } from '@/contexts/transaction-context';
-import { useNotifications } from './use-notifications';
+// import { useNotifications } from '@/contexts/notification-context';
 import { Transaction } from '@/types';
 import { parseISO, addDays, addWeeks, addMonths, addYears, isTomorrow, format } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
@@ -63,7 +63,7 @@ const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
 
 export const useRecurringNotifications = () => {
     const { transactions } = useTransactions();
-    const { addNotification } = useNotifications();
+    // const { addNotification } = useNotifications();
     const { formatCurrency } = useCurrency();
     const [sentNotifications, setSentNotifications] = useState<Record<string, string>>({});
 
@@ -93,12 +93,14 @@ export const useRecurringNotifications = () => {
                 const notificationId = `${transaction.id}-${format(nextDueDate, 'yyyy-MM-dd')}`;
                 
                 if (!sentNotifications[notificationId]) {
-                    addNotification({
-                        icon: AlertTriangle,
-                        title: 'Upcoming Recurring Expense',
-                        description: `Your payment for "${transaction.name}" of ${formatCurrency(transaction.amount)} is due tomorrow.`,
-                        variant: 'default',
-                    });
+                    // addNotification({
+                    //     type: 'recurring_reminder',
+                    //     title: 'Upcoming Recurring Expense',
+                    //     message: `Your payment for "${transaction.description}" of ${formatCurrency(transaction.amount)} is due tomorrow.`,
+                    //     navigationPath: '/transactions',
+                    //     relatedEntityId: transaction.id,
+                    //     relatedEntityType: 'transaction'
+                    // });
                     newSentNotifications[notificationId] = 'sent';
                     updated = true;
                 }
@@ -113,7 +115,7 @@ export const useRecurringNotifications = () => {
                 console.error("Could not write to localStorage", error);
             }
         }
-    }, [transactions, addNotification, formatCurrency, sentNotifications]);
+    }, [transactions, formatCurrency, sentNotifications]);
 
     return null; 
 };

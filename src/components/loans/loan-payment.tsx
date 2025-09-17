@@ -11,7 +11,7 @@ import { useAccounts } from "@/contexts/account-context";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCategories } from "@/contexts/category-context";
 import { useCurrency } from "@/hooks/use-currency";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import type { Loan } from "@/types";
 
@@ -25,7 +25,7 @@ export function LoanPayment({ loan }: LoanPaymentProps) {
   const { addTransaction } = useTransactions();
   const { categories } = useCategories();
   const { formatCurrency } = useCurrency();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(loan.remainingAmount);
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
@@ -74,23 +74,26 @@ export function LoanPayment({ loan }: LoanPaymentProps) {
         console.warn('No appropriate category found for loan payment transaction');
       }
       
-      addNotification({
-        icon: CheckCircle,
-        title: 'Payment Recorded',
-        description: `Payment of ${formatCurrency(paymentAmount)} recorded successfully. ${isCompleted ? 'Loan completed!' : `${formatCurrency(newRemainingAmount)} remaining.`}`,
-        variant: 'default',
-      });
+      // addNotification({
+      //   type: 'payment_recorded',
+      //   title: 'Payment Recorded',
+      //   message: `Payment of ${formatCurrency(paymentAmount)} recorded successfully. ${isCompleted ? 'Loan completed!' : `${formatCurrency(newRemainingAmount)} remaining.`}`,
+      //   navigationPath: '/loans',
+      //   navigationParams: { id: loan.id },
+      //   relatedEntityId: loan.id,
+      //   relatedEntityType: 'loan'
+      // });
       
       setIsPaymentDialogOpen(false);
       setPaymentAmount(loan.remainingAmount);
       setPaymentAccountId("");
     } catch (error) {
-      addNotification({
-        icon: AlertCircle,
-        title: 'Payment Failed',
-        description: 'Failed to record payment. Please try again.',
-        variant: 'destructive',
-      });
+      // addNotification({
+      //   type: 'error',
+      //   title: 'Payment Failed',
+      //   message: 'Failed to record payment. Please try again.',
+      //   navigationPath: '/loans'
+      // });
     } finally {
       setIsPaying(false);
     }

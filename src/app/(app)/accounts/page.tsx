@@ -41,7 +41,7 @@ import type { Account } from "@/types";
 import { PlusCircle, Trash2, Wallet } from "lucide-react";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCurrency } from "@/hooks/use-currency";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { useAccounts } from "@/contexts/account-context";
 
 function getAccountTypeLabel(type: Account['type']) {
@@ -64,7 +64,7 @@ export default function AccountsPage() {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const { transactions } = useTransactions();
   const { formatCurrency } = useCurrency();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
 
 
   const processedAccounts: Account[] = useMemo(() => {
@@ -81,11 +81,12 @@ export default function AccountsPage() {
 
   const handleAddAccountSuccess = (newAccountName: string) => {
     setAddDialogOpen(false);
-    addNotification({
-        icon: Wallet,
-        title: 'Account Added',
-        description: `The account "${newAccountName}" has been added successfully.`
-    })
+    // addNotification({
+    //   type: 'account_created',
+    //   title: 'Account Added',
+    //   message: `The account "${newAccountName}" has been added successfully.`,
+    //   navigationPath: '/accounts'
+    // });
   }
 
   const handleDeleteClick = (account: Account) => {
@@ -96,12 +97,12 @@ export default function AccountsPage() {
   const confirmDelete = async () => {
     if (selectedAccount) {
       await deleteAccount(selectedAccount.id);
-       addNotification({
-        icon: Trash2,
-        title: 'Account Deleted',
-        description: `The account "${selectedAccount.name}" has been deleted.`,
-        variant: 'destructive'
-      });
+       // addNotification({
+       //   type: 'account_deleted',
+       //   title: 'Account Deleted',
+       //   message: `The account "${selectedAccount.name}" has been deleted.`,
+       //   navigationPath: '/accounts'
+       // });
     }
     setDeleteDialogOpen(false);
     setSelectedAccount(null);

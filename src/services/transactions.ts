@@ -16,7 +16,8 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
     const transactionsCol = getTransactionsCollection(userId);
     const transactionData = {
         ...transaction,
-        date: new Date(transaction.date)
+        date: new Date(transaction.date),
+        createdAt: Timestamp.now()
     };
     return await addDoc(transactionsCol, transactionData);
 };

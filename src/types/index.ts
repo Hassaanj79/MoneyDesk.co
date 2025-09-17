@@ -10,6 +10,7 @@ export type Transaction = {
   accountId: string;
   isRecurring?: boolean;
   recurrenceFrequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  createdAt?: Date;
 };
 
 export type Budget = {
@@ -92,6 +93,4 @@ export type LoanInstallment = {
   updatedAt: string;
 };
 
-    
-
-    
+// export * from './notification';

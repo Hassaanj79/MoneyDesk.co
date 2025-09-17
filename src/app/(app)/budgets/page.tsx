@@ -114,7 +114,7 @@ export default function BudgetsPage() {
           {processedBudgets.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {processedBudgets.map((budget) => {
-                const percentage = (budget.spent / budget.limit) * 100;
+                const percentage = (budget.spent / budget.amount) * 100;
                 return (
                   <Card key={budget.id} className="flex flex-col">
                     <CardHeader>
@@ -138,13 +138,13 @@ export default function BudgetsPage() {
                         </div>
                         <div className="flex justify-between items-baseline">
                           <span className="text-2xl font-bold">{formatCurrency(budget.spent)}</span>
-                          <span className="text-lg font-medium text-muted-foreground">/ {formatCurrency(budget.limit)}</span>
+                          <span className="text-lg font-medium text-muted-foreground">/ {formatCurrency(budget.amount)}</span>
                         </div>
                         <Progress value={percentage} />
                         <div className="text-sm text-muted-foreground">
                           {percentage > 100 
-                            ? <p className="text-destructive font-medium">You've overspent by {formatCurrency(budget.spent - budget.limit)}</p>
-                            : <p>{formatCurrency(budget.limit - budget.spent)} remaining</p>
+                            ? <p className="text-destructive font-medium">You've overspent by {formatCurrency(budget.spent - budget.amount)}</p>
+                            : <p>{formatCurrency(budget.amount - budget.spent)} remaining</p>
                           }
                         </div>
                       </div>

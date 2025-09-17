@@ -12,7 +12,7 @@ import { useAccounts } from "@/contexts/account-context";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCategories } from "@/contexts/category-context";
 import { useCurrency } from "@/hooks/use-currency";
-import { useNotifications } from "@/hooks/use-notifications";
+// import { useNotifications } from "@/contexts/notification-context";
 import { CreditCard, CheckCircle, AlertCircle, ArrowUpDown } from "lucide-react";
 import type { Loan } from "@/types";
 
@@ -26,7 +26,7 @@ export function LoanRepayment({ onSuccess }: LoanRepaymentProps) {
   const { addTransaction } = useTransactions();
   const { categories } = useCategories();
   const { formatCurrency } = useCurrency();
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   
   const [isRepaymentDialogOpen, setIsRepaymentDialogOpen] = useState(false);
   const [repaymentType, setRepaymentType] = useState<"pay" | "receive">("pay");
@@ -91,12 +91,15 @@ export function LoanRepayment({ onSuccess }: LoanRepaymentProps) {
         console.warn('No appropriate category found for loan repayment transaction');
       }
       
-      addNotification({
-        icon: CheckCircle,
-        title: 'Repayment Recorded',
-        description: `${repaymentType === 'pay' ? 'Payment' : 'Received payment'} of ${formatCurrency(paymentAmount)} recorded successfully. ${isCompleted ? 'Loan completed!' : `${formatCurrency(newRemainingAmount)} remaining.`}`,
-        variant: 'default',
-      });
+      // addNotification({
+      //   type: 'repayment_recorded',
+      //   title: 'Repayment Recorded',
+      //   message: `${repaymentType === 'pay' ? 'Payment' : 'Received payment'} of ${formatCurrency(paymentAmount)} recorded successfully. ${isCompleted ? 'Loan completed!' : `${formatCurrency(newRemainingAmount)} remaining.`}`,
+      //   navigationPath: '/loans',
+      //   navigationParams: { id: selectedLoan?.id },
+      //   relatedEntityId: selectedLoan?.id,
+      //   relatedEntityType: 'loan'
+      // });
       
       // Reset form
       setSelectedLoanId("");
@@ -105,12 +108,12 @@ export function LoanRepayment({ onSuccess }: LoanRepaymentProps) {
       setIsRepaymentDialogOpen(false);
       onSuccess?.();
     } catch (error) {
-      addNotification({
-        icon: AlertCircle,
-        title: 'Repayment Failed',
-        description: 'Failed to record repayment. Please try again.',
-        variant: 'destructive',
-      });
+      // addNotification({
+      //   type: 'error',
+      //   title: 'Repayment Failed',
+      //   message: 'Failed to record repayment. Please try again.',
+      //   navigationPath: '/loans'
+      // });
     } finally {
       setIsProcessing(false);
     }

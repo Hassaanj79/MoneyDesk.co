@@ -19,12 +19,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, User, Loader2, Trash2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
-import { useNotifications } from "@/hooks/use-notifications"
+// import { useNotifications } from "@/contexts/notification-context"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserProfile, updateUserProfile } from "@/services/users"
 import { updateProfile } from "firebase/auth"
 import { deleteUserAccount, getAccountDeletionWarning } from "@/services/account-deletion"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +53,7 @@ export function ProfileForm() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const { addNotification } = useNotifications();
+  // const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [password, setPassword] = useState("");
@@ -125,18 +126,26 @@ export function ProfileForm() {
 
         // Country and currency are already synced in real-time via useEffect
 
-        addNotification({
-            icon: User,
-            title: 'Profile Updated',
-            description: 'Your profile has been updated successfully.',
+        // Show success toast
+        toast.success("Profile updated successfully!", {
+            description: "Your profile information has been saved"
         });
+        
+        // Create notification (disabled)
+        // addNotification({
+        //   type: 'profile_updated',
+        //   title: 'Profile Updated',
+        //   message: 'Your profile has been updated successfully',
+        //   navigationPath: '/settings',
+        //   navigationParams: { tab: 'profile' },
+        //   relatedEntityType: 'user'
+        // });
     } catch (error) {
         console.error("Failed to update profile", error);
-        addNotification({
-            icon: User,
-            title: 'Update Failed',
-            description: 'Could not update your profile. Please try again.',
-            variant: 'destructive',
+        
+        // Show error toast
+        toast.error("Failed to update profile", {
+            description: "Could not update your profile. Please try again."
         });
     } finally {
         setLoading(false);
@@ -163,12 +172,12 @@ export function ProfileForm() {
 
   const handleDeleteAccount = async () => {
     if (!password.trim()) {
-      addNotification({
-        icon: AlertTriangle,
-        title: 'Password Required',
-        description: 'Please enter your password to confirm account deletion.',
-        variant: 'destructive',
-      });
+      // addNotification({
+      //   icon: AlertTriangle,
+      //   title: 'Password Required',
+      //   description: 'Please enter your password to confirm account deletion.',
+      //   variant: 'destructive',
+      // });
       return;
     }
 
@@ -177,11 +186,11 @@ export function ProfileForm() {
     try {
       await deleteUserAccount(password);
       
-      addNotification({
-        icon: Trash2,
-        title: 'Account Deleted',
-        description: 'Your account and all data have been permanently deleted.',
-      });
+      // addNotification({
+      //   icon: Trash2,
+      //   title: 'Account Deleted',
+      //   description: 'Your account and all data have been permanently deleted.',
+      // });
 
       // Logout and redirect to login
       await logout();
@@ -198,12 +207,12 @@ export function ProfileForm() {
         errorMessage = error.message;
       }
 
-      addNotification({
-        icon: AlertTriangle,
-        title: 'Deletion Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      // addNotification({
+      //   icon: AlertTriangle,
+      //   title: 'Deletion Failed',
+      //   description: errorMessage,
+      //   variant: 'destructive',
+      // });
     } finally {
       setDeleteLoading(false);
       setShowDeleteDialog(false);
