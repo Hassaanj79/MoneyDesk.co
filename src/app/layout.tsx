@@ -15,6 +15,7 @@ import { LoanProvider } from '@/contexts/loan-context';
 import { LoanInstallmentProvider } from '@/contexts/loan-installment-context';
 import { TimezoneProvider } from '@/contexts/timezone-context';
 import { RecurringNotifications } from '@/components/recurring-notifications';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
@@ -62,6 +63,7 @@ export default function RootLayout({
                                 <RecurringNotifications />
                                 {children}
                                 <Toaster />
+                                <Analytics />
                               </TimezoneProvider>
                             </LoanInstallmentProvider>
                           </LoanProvider>
