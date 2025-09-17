@@ -14,6 +14,7 @@ import { CategoryProvider } from '@/contexts/category-context';
 import { LoanProvider } from '@/contexts/loan-context';
 import { LoanInstallmentProvider } from '@/contexts/loan-installment-context';
 import { TimezoneProvider } from '@/contexts/timezone-context';
+import { LanguageProvider } from '@/contexts/language-context';
 import { RecurringNotifications } from '@/components/recurring-notifications';
 import { Analytics } from '@vercel/analytics/next';
 
@@ -48,32 +49,34 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-        <CurrencyProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <CurrencyProvider>
                 <CountryProvider>
                   <CategoryProvider>
-                  <AccountProvider>
-                    <TransactionProvider>
-                       <DateRangeProvider>
-                        <BudgetProvider>
-                          <LoanProvider>
-                            <LoanInstallmentProvider>
-                              <TimezoneProvider>
-                                <RecurringNotifications />
-                                {children}
-                                <Toaster />
-                                <Analytics />
-                              </TimezoneProvider>
-                            </LoanInstallmentProvider>
-                          </LoanProvider>
-                        </BudgetProvider>
-                      </DateRangeProvider>
-                    </TransactionProvider>
-                  </AccountProvider>
+                    <AccountProvider>
+                      <TransactionProvider>
+                        <DateRangeProvider>
+                          <BudgetProvider>
+                            <LoanProvider>
+                              <LoanInstallmentProvider>
+                                <TimezoneProvider>
+                                  <RecurringNotifications />
+                                  {children}
+                                  <Toaster />
+                                  <Analytics />
+                                </TimezoneProvider>
+                              </LoanInstallmentProvider>
+                            </LoanProvider>
+                          </BudgetProvider>
+                        </DateRangeProvider>
+                      </TransactionProvider>
+                    </AccountProvider>
                   </CategoryProvider>
                 </CountryProvider>
-          </CurrencyProvider>
-          </AuthProvider>
+              </CurrencyProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

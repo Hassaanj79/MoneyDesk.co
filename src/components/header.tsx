@@ -41,16 +41,18 @@ import { useAuth } from "@/contexts/auth-context";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Badge } from "./ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { useTranslation } from "@/hooks/use-translation";
 
 const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
-    { href: "/loans", label: "Loans", icon: HandCoins },
-    { href: "/reports", label: "Reports", icon: BarChart3 },
+    { href: "/", labelKey: "navigation.dashboard", icon: LayoutDashboard },
+    { href: "/transactions", labelKey: "navigation.transactions", icon: ArrowRightLeft },
+    { href: "/loans", labelKey: "navigation.loans", icon: HandCoins },
+    { href: "/reports", labelKey: "navigation.reports", icon: BarChart3 },
 ];
 
 
 export function Header() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const { date, setDate } = useDateRange();
@@ -280,7 +282,7 @@ export function Header() {
                 pathname === item.href ? "text-foreground" : "text-muted-foreground"
               )}
             >
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
         </nav>
@@ -313,7 +315,7 @@ export function Header() {
                         pathname === item.href ? "text-foreground" : "text-muted-foreground"
                     )}
                     >
-                    {item.label}
+                    {t(item.labelKey)}
                 </Link>
               ))}
             </nav>
@@ -338,7 +340,7 @@ export function Header() {
                      <Input
                        ref={searchInputRef}
                        type="search"
-                       placeholder="Search transactions, loans, accounts..."
+                       placeholder={t('common.search', 'Search transactions, loans, accounts...')}
                        className="w-full rounded-lg bg-background pl-8 sm:w-[200px] lg:w-[250px] xl:w-[300px] focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                        value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}
@@ -509,15 +511,15 @@ export function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('navigation.profile', 'My Account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href="/settings">
                   <DropdownMenuItem className="cursor-pointer">
-                      <Settings className="mr-2" /> Settings
+                      <Settings className="mr-2" /> {t('navigation.settings')}
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-2" /> Logout
+                  <LogOut className="mr-2" /> {t('navigation.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -529,18 +531,18 @@ export function Header() {
         <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+              <AlertDialogTitle>{t('auth.confirmLogout', 'Confirm Logout')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to logout? You will need to sign in again to access your account.
+                {t('auth.logoutConfirmation', 'Are you sure you want to logout? You will need to sign in again to access your account.')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={confirmLogout}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Logout
+                {t('navigation.logout')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

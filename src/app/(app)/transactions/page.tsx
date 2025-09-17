@@ -47,6 +47,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTranslation } from "@/hooks/use-translation";
 import { useCategories } from "@/contexts/category-context";
 
 const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
@@ -93,6 +94,7 @@ const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
 
 
 export default function TransactionsPage() {
+  const { t } = useTranslation();
   const { transactions, deleteTransaction } = useTransactions();
   const { categories } = useCategories();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -356,7 +358,7 @@ export default function TransactionsPage() {
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="text-lg sm:text-xl">Transactions</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">{t('transactions.title')}</CardTitle>
           </div>
           <div className="flex gap-2 w-full sm:w-auto justify-end">
             <TooltipProvider>
@@ -369,11 +371,11 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden">Add Income</span>
+                      <span className="sm:inline hidden">{t('transactions.addIncome')}</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                      <p>Add Income</p>
+                      <p>{t('transactions.addIncome')}</p>
                   </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -385,11 +387,11 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden">Add Expense</span>
+                      <span className="sm:inline hidden">{t('transactions.addExpense')}</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                      <p>Add Expense</p>
+                      <p>{t('transactions.addExpense')}</p>
                   </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -398,9 +400,9 @@ export default function TransactionsPage() {
         <CardContent>
           <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
             <TabsList className="mb-4 grid w-full grid-cols-3 h-auto">
-              <TabsTrigger value="all" className="flex items-center justify-center p-2 text-xs sm:text-sm">All</TabsTrigger>
-              <TabsTrigger value="income" className="flex items-center justify-center p-2 text-xs sm:text-sm">Income</TabsTrigger>
-              <TabsTrigger value="expense" className="flex items-center justify-center p-2 text-xs sm:text-sm">Expense</TabsTrigger>
+              <TabsTrigger value="all" className="flex items-center justify-center p-2 text-xs sm:text-sm">{t('common.all')}</TabsTrigger>
+              <TabsTrigger value="income" className="flex items-center justify-center p-2 text-xs sm:text-sm">{t('transactions.income')}</TabsTrigger>
+              <TabsTrigger value="expense" className="flex items-center justify-center p-2 text-xs sm:text-sm">{t('transactions.expense')}</TabsTrigger>
             </TabsList>
             {selectedTransactions.length > 0 && (
               <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg mb-4">

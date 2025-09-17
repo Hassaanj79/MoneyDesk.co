@@ -34,8 +34,10 @@ import { useTransactions } from "@/contexts/transaction-context";
 import { useAccounts } from "@/contexts/account-context";
 import { isWithinInterval, parseISO, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function DashboardGrid() {
+  const { t } = useTranslation();
   const { date } = useDateRange();
   const { transactions } = useTransactions();
   const { accounts } = useAccounts();
@@ -109,7 +111,7 @@ export default function DashboardGrid() {
           onClick={() => setShowBalanceBreakdown(true)}
         >
           <BalanceCard
-            title="Total Balance"
+            title={t('dashboard.totalBalance')}
             amount={formatCurrency(totalBalance)}
             icon={Wallet}
           />
@@ -121,7 +123,7 @@ export default function DashboardGrid() {
       id: "income",
       component: (
         <BalanceCard
-          title="Income"
+          title={t('dashboard.totalIncome')}
           amount={formatCurrency(totalIncome)}
           icon={ArrowUp}
           change={incomeChange}
@@ -133,7 +135,7 @@ export default function DashboardGrid() {
       id: "expense",
       component: (
         <BalanceCard
-          title="Expense"
+          title={t('dashboard.totalExpenses')}
           amount={formatCurrency(totalExpense)}
           icon={ArrowDown}
           change={expenseChange}
@@ -205,7 +207,7 @@ export default function DashboardGrid() {
                     onClick={() => setShowBalanceBreakdown(true)}
                   >
                     <BalanceCard
-                      title="Total Balance"
+                      title={t('dashboard.totalBalance')}
                       amount={formatCurrency(totalBalance)}
                       icon={Wallet}
                       iconColor="text-blue-600 dark:text-blue-400"
@@ -215,7 +217,7 @@ export default function DashboardGrid() {
                     onClick={() => setShowIncomeBreakdown(true)}
                   >
                     <BalanceCard
-                      title="Income"
+                      title={t('dashboard.totalIncome')}
                       amount={formatCurrency(totalIncome)}
                       icon={ArrowDown}
                       change={incomeChange}
@@ -226,7 +228,7 @@ export default function DashboardGrid() {
                     onClick={() => setShowExpenseBreakdown(true)}
                   >
                     <BalanceCard
-                      title="Expense"
+                      title={t('dashboard.totalExpenses')}
                       amount={formatCurrency(totalExpense)}
                       icon={ArrowUp}
                       change={expenseChange}

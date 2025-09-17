@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { AppearanceForm } from "@/components/settings/appearance-form"
+import { LanguageSettings } from "@/components/settings/language-settings"
 import { Settings } from "lucide-react"
 
 export function GeneralSettings() {
@@ -34,6 +35,8 @@ export function GeneralSettings() {
           </div>
         </CardContent>
       </Card>
+      
+      <LanguageSettings />
       
       <AppearanceForm />
     </div>
