@@ -115,7 +115,7 @@ export function CategoryManager() {
                 Create a new category for your transactions
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="category-name">Category Name</Label>
                 <Input
@@ -146,7 +146,7 @@ export function CategoryManager() {
                 </Select>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => {
                 setIsAddDialogOpen(false)
                 setErrors({})
@@ -315,7 +315,7 @@ export function CategoryManager() {
             </DialogDescription>
           </DialogHeader>
           {editingCategory && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="edit-category-name">Category Name</Label>
                 <Input
@@ -342,7 +342,7 @@ export function CategoryManager() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditingCategory(null)}>
               Cancel
             </Button>

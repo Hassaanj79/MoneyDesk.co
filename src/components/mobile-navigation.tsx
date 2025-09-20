@@ -35,12 +35,15 @@ export function MobileNavigation() {
               className={cn(
                 "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-colors min-w-0 flex-1",
                 isActive 
-                  ? "text-primary bg-primary/10" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "text-primary bg-primary/10 font-bold" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
               )}
             >
               <Icon className="h-5 w-5 mb-1" />
-              <span className="text-xs font-medium truncate">{item.label}</span>
+              <span className={cn(
+                "text-xs truncate",
+                isActive ? "font-bold" : "font-medium"
+              )}>{item.label}</span>
             </Link>
           );
         })}

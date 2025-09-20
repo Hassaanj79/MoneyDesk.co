@@ -174,7 +174,7 @@ export function AccountsSettings() {
                 Create a new financial account to track your money
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="account-name">Account Name</Label>
                 <Input
@@ -230,7 +230,7 @@ export function AccountsSettings() {
                 {errors.initialBalance && <p className="text-sm text-red-500 mt-1">{errors.initialBalance}</p>}
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => {
                 setIsAddDialogOpen(false)
                 setErrors({})
@@ -366,7 +366,7 @@ export function AccountsSettings() {
             </DialogDescription>
           </DialogHeader>
           {editingAccount && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="edit-account-name">Account Name</Label>
                 <Input
@@ -413,7 +413,7 @@ export function AccountsSettings() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditingAccount(null)}>
               Cancel
             </Button>

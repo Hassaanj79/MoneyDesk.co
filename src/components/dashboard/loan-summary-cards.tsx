@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLoans } from "@/contexts/loan-context";
 import { useCurrency } from "@/hooks/use-currency";
+import { useDateRange } from "@/contexts/date-range-context";
 import { ArrowUp, ArrowDown, HandCoins, CreditCard, AlertTriangle } from "lucide-react";
-import { format, isAfter, isBefore } from "date-fns";
+import { format, isAfter, isBefore, isWithinInterval, parseISO } from "date-fns";
+import { getPreviousPeriod, getComparisonDescription } from "@/lib/utils";
 import { ReceivableBreakdown } from "./receivable-breakdown";
 import { PayableBreakdown } from "./payable-breakdown";
 import { NetPositionBreakdown } from "./net-position-breakdown";
@@ -15,6 +17,7 @@ import { NetPositionBreakdown } from "./net-position-breakdown";
 export function LoanSummaryCards() {
   const { loans } = useLoans();
   const { formatCurrency } = useCurrency();
+  const { date } = useDateRange();
   const [showReceivableBreakdown, setShowReceivableBreakdown] = useState(false);
   const [showPayableBreakdown, setShowPayableBreakdown] = useState(false);
   const [showNetPositionBreakdown, setShowNetPositionBreakdown] = useState(false);
@@ -41,31 +44,33 @@ export function LoanSummaryCards() {
     // Calculate net position (receivable - payable)
     const netPosition = totalReceivable - totalPayable;
     
-    // Calculate monthly change (simplified - you can enhance this)
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    // Calculate period change based on selected date range
+    const currentPeriod = date;
+    const previousPeriod = getPreviousPeriod(date);
     
-    const thisMonthGiven = givenLoans.filter(loan => 
-      isAfter(new Date(loan.startDate), thisMonth)
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const currentPeriodGiven = currentPeriod ? givenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: currentPeriod.from, end: currentPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const lastMonthGiven = givenLoans.filter(loan => 
-      isAfter(new Date(loan.startDate), lastMonth) && isBefore(new Date(loan.startDate), thisMonth)
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const previousPeriodGiven = previousPeriod ? givenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: previousPeriod.from, end: previousPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const thisMonthTaken = takenLoans.filter(loan => 
-      isAfter(new Date(loan.startDate), thisMonth)
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const currentPeriodTaken = currentPeriod ? takenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: currentPeriod.from, end: currentPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const lastMonthTaken = takenLoans.filter(loan => 
-      isAfter(new Date(loan.startDate), lastMonth) && isBefore(new Date(loan.startDate), thisMonth)
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const previousPeriodTaken = previousPeriod ? takenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: previousPeriod.from, end: previousPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const receivableChange = lastMonthGiven === 0 ? (thisMonthGiven > 0 ? "+100%" : "0%") : 
-      `${((thisMonthGiven - lastMonthGiven) / lastMonthGiven * 100).toFixed(1)}%`;
+    const receivableChange = previousPeriodGiven === 0 ? (currentPeriodGiven > 0 ? "New this period" : "No change") : 
+      `${((currentPeriodGiven - previousPeriodGiven) / previousPeriodGiven * 100).toFixed(1)}%`;
     
-    const payableChange = lastMonthTaken === 0 ? (thisMonthTaken > 0 ? "+100%" : "0%") : 
-      `${((thisMonthTaken - lastMonthTaken) / lastMonthTaken * 100).toFixed(1)}%`;
+    const payableChange = previousPeriodTaken === 0 ? (currentPeriodTaken > 0 ? "New this period" : "No change") : 
+      `${((currentPeriodTaken - previousPeriodTaken) / previousPeriodTaken * 100).toFixed(1)}%`;
+    
+    const comparisonDescription = getComparisonDescription(date);
 
     return {
       totalReceivable,
@@ -75,12 +80,13 @@ export function LoanSummaryCards() {
       netPosition,
       receivableChange,
       payableChange,
+      comparisonDescription,
       activeGivenCount: activeGivenLoans.length,
       activeTakenCount: activeTakenLoans.length,
       overdueGivenCount: overdueGivenLoans.length,
       overdueTakenCount: overdueTakenLoans.length,
     };
-  }, [loans]);
+  }, [loans, date]);
 
   return (
     <>
@@ -99,7 +105,7 @@ export function LoanSummaryCards() {
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUp className="h-3 w-3 text-green-600 mr-1" />
               <span className="text-green-600 font-medium">{loanStats.receivableChange}</span>
-              <span className="ml-1">from last month</span>
+              <span className="ml-1">{loanStats.comparisonDescription}</span>
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
               <Badge variant="outline" className="text-xs">
@@ -128,7 +134,7 @@ export function LoanSummaryCards() {
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowDown className="h-3 w-3 text-red-600 mr-1" />
               <span className="text-red-600 font-medium">{loanStats.payableChange}</span>
-              <span className="ml-1">from last month</span>
+              <span className="ml-1">{loanStats.comparisonDescription}</span>
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
               <Badge variant="outline" className="text-xs">

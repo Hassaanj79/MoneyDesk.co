@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Alert, AlertDescription } from "../ui/alert";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required.").min(2, "Name must be at least 2 characters."),
@@ -29,10 +29,11 @@ const formSchema = z.object({
 
 
 export function SignupForm() {
-    const { signup } = useAuth();
+    const { signup, sendVerificationEmail } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState({ email: false });
+    const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,7 +46,13 @@ export function SignupForm() {
     setSuccess(null);
     try {
         await signup(values.email, values.password, values.name);
-        setSuccess("Account created successfully! You can now log in.");
+        // Send verification email after successful signup
+        try {
+          await sendVerificationEmail();
+          setSuccess("Account created successfully! Please check your email to verify your account before logging in.");
+        } catch (verifyErr) {
+          setSuccess("Account created successfully! You can now log in.");
+        }
         form.reset();
     } catch(err: any) {
         if (err.code === 'auth/email-already-in-use') {
@@ -92,7 +99,24 @@ export function SignupForm() {
                     <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
+                            <div className="relative">
+                                <Input 
+                                    type={showPassword ? "text" : "password"} 
+                                    placeholder="Enter your password" 
+                                    {...field} 
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
                         </FormControl>
                         <FormMessage />
                     </FormItem>

@@ -154,7 +154,7 @@ export function BudgetsSettings() {
                 Create a new budget to track your spending
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="budget-name">Budget Name</Label>
                 <Input
@@ -232,7 +232,7 @@ export function BudgetsSettings() {
                 </div>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
               </Button>
@@ -375,7 +375,7 @@ export function BudgetsSettings() {
             </DialogDescription>
           </DialogHeader>
           {editingBudget && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="edit-budget-name">Budget Name</Label>
                 <Input
@@ -454,7 +454,7 @@ export function BudgetsSettings() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditingBudget(null)}>
               Cancel
             </Button>

@@ -35,6 +35,7 @@ import { useAccounts } from "@/contexts/account-context";
 import { isWithinInterval, parseISO, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTranslation } from "@/hooks/use-translation";
+import { getPreviousPeriod, getComparisonDescription } from "@/lib/utils";
 
 export default function DashboardGrid() {
   const { t } = useTranslation();
@@ -46,16 +47,16 @@ export default function DashboardGrid() {
   const [showIncomeBreakdown, setShowIncomeBreakdown] = useState(false);
   const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
 
-  const { totalBalance, totalIncome, totalExpense, incomeChange, expenseChange } = useMemo(() => {
+  const { totalBalance, totalIncome, totalExpense, incomeChange, expenseChange, comparisonDescription } = useMemo(() => {
     const currentPeriodTransactions = transactions.filter(t => 
       date?.from && date?.to ? isWithinInterval(parseISO(t.date), { start: date.from, end: date.to }) : true
     );
 
-    const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
-    const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
-    const lastMonthTransactions = transactions.filter(t => 
-      isWithinInterval(parseISO(t.date), { start: lastMonthStart, end: lastMonthEnd })
-    );
+    // Get the previous period based on the current selected period
+    const previousPeriod = getPreviousPeriod(date);
+    const previousPeriodTransactions = previousPeriod ? transactions.filter(t => 
+      isWithinInterval(parseISO(t.date), { start: previousPeriod.from, end: previousPeriod.to })
+    ) : [];
 
     const currentIncome = currentPeriodTransactions
       .filter(t => t.type === 'income')
@@ -65,22 +66,26 @@ export default function DashboardGrid() {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
     
-    const lastMonthIncome = lastMonthTransactions
+    const previousIncome = previousPeriodTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
       
-    const lastMonthExpense = lastMonthTransactions
+    const previousExpense = previousPeriodTransactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
 
     const calculatePercentageChange = (current: number, previous: number) => {
-        if (previous === 0) return current > 0 ? "+100%" : "0%";
+        if (previous === 0) {
+            if (current > 0) return "New this period";
+            return "No change";
+        }
         const change = ((current - previous) / previous) * 100;
         return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
     }
 
-    const incomeChange = calculatePercentageChange(currentIncome, lastMonthIncome);
-    const expenseChange = calculatePercentageChange(currentExpense, lastMonthExpense);
+    const incomeChange = calculatePercentageChange(currentIncome, previousIncome);
+    const expenseChange = calculatePercentageChange(currentExpense, previousExpense);
+    const comparisonDescription = getComparisonDescription(date);
 
     // Calculate total balance from all accounts
     // For each account, calculate current balance based on initial balance + transactions
@@ -97,7 +102,8 @@ export default function DashboardGrid() {
       totalIncome: currentIncome,
       totalExpense: currentExpense,
       incomeChange,
-      expenseChange
+      expenseChange,
+      comparisonDescription
     };
   }, [transactions, date, accounts]);
 
@@ -127,6 +133,7 @@ export default function DashboardGrid() {
           amount={formatCurrency(totalIncome)}
           icon={ArrowUp}
           change={incomeChange}
+          changeDescription={comparisonDescription}
         />
       ),
       colSpan: "sm:col-span-1 lg:col-span-1",
@@ -139,6 +146,7 @@ export default function DashboardGrid() {
           amount={formatCurrency(totalExpense)}
           icon={ArrowDown}
           change={expenseChange}
+          changeDescription={comparisonDescription}
         />
       ),
       colSpan: "sm:col-span-1 lg:col-span-1",

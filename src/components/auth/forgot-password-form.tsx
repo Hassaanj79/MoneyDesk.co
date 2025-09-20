@@ -19,19 +19,22 @@ import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
 });
 
 export function ForgotPasswordForm() {
-  const { sendPasswordReset } = useAuth();
+  const { sendPasswordReset, sendPasswordResetWithOTP } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetMethod, setResetMethod] = useState<'email' | 'otp'>('email');
 
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
     },
@@ -42,8 +45,13 @@ export function ForgotPasswordForm() {
     setError(null);
     setSuccess(null);
     try {
-      await sendPasswordReset(values.email);
-      setSuccess("If an account with this email exists, a password reset link has been sent.");
+      if (resetMethod === 'otp') {
+        await sendPasswordResetWithOTP(values.email);
+        setSuccess("If an account with this email exists, a password reset link has been sent to your email.");
+      } else {
+        await sendPasswordReset(values.email);
+        setSuccess("If an account with this email exists, a password reset link has been sent.");
+      }
       form.reset();
     } catch (err) {
       setError("Failed to send password reset email. Please try again.");
@@ -80,12 +88,43 @@ export function ForgotPasswordForm() {
                     <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                        <Input type="email" placeholder="john.doe@example.com" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder="john.doe@example.com" 
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setError(null); // Clear any existing errors when user types
+                          }}
+                        />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
+                
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Reset Method</label>
+                  <RadioGroup 
+                    value={resetMethod} 
+                    onValueChange={(value) => setResetMethod(value as 'email' | 'otp')}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="email" id="email" />
+                      <label htmlFor="email" className="text-sm">
+                        Email Link (Traditional)
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="otp" id="otp" />
+                      <label htmlFor="otp" className="text-sm">
+                        Email Link with OTP
+                      </label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Send Reset Link

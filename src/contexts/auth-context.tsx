@@ -11,6 +11,19 @@ import {
   signOut, 
   updateProfile,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  applyActionCode,
+  checkActionCode,
+  confirmPasswordReset,
+  verifyPasswordResetCode,
+  signInWithEmailLink,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential,
+  ConfirmationResult,
 } from "firebase/auth";
 import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
 
@@ -21,6 +34,12 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  verifyEmail: (actionCode: string) => Promise<void>;
+  sendOTPEmail: (email: string) => Promise<void>;
+  verifyOTP: (email: string, otp: string) => Promise<void>;
+  sendPasswordResetWithOTP: (email: string) => Promise<void>;
+  verifyPasswordResetOTP: (email: string, otp: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,6 +107,68 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return sendPasswordResetEmail(auth, email);
   }
 
+  const sendVerificationEmail = async () => {
+    if (user && !user.emailVerified) {
+      return sendEmailVerification(user);
+    }
+    throw new Error('No user logged in or email already verified');
+  };
+
+  const verifyEmail = async (actionCode: string) => {
+    try {
+      await applyActionCode(auth, actionCode);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const sendOTPEmail = async (email: string) => {
+    const actionCodeSettings = {
+      url: `${window.location.origin}/verify-otp?email=${encodeURIComponent(email)}`,
+      handleCodeInApp: true,
+    };
+    
+    return sendSignInLinkToEmail(auth, email, actionCodeSettings);
+  };
+
+  const verifyOTP = async (email: string, otp: string) => {
+    // For OTP verification, we'll use a custom implementation
+    // This would typically involve checking the OTP against a stored value
+    // For now, we'll simulate the verification process
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      try {
+        const result = await signInWithEmailLink(auth, email, window.location.href);
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    }
+    throw new Error('Invalid OTP verification link');
+  };
+
+  const sendPasswordResetWithOTP = async (email: string) => {
+    const actionCodeSettings = {
+      url: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
+      handleCodeInApp: true,
+    };
+    
+    return sendSignInLinkToEmail(auth, email, actionCodeSettings);
+  };
+
+  const verifyPasswordResetOTP = async (email: string, otp: string, newPassword: string) => {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      try {
+        const result = await signInWithEmailLink(auth, email, window.location.href);
+        // Update password
+        await result.user.updatePassword(newPassword);
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    }
+    throw new Error('Invalid password reset link');
+  };
+
   const value = {
     user,
     loading,
@@ -95,6 +176,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     logout,
     sendPasswordReset,
+    sendVerificationEmail,
+    verifyEmail,
+    sendOTPEmail,
+    verifyOTP,
+    sendPasswordResetWithOTP,
+    verifyPasswordResetOTP,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

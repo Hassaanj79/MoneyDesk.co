@@ -18,6 +18,8 @@ type BalanceCardProps = {
 const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, iconColor, changeColor }: BalanceCardProps) => {
   const isPositive = change?.startsWith("+");
   const isNegative = change?.startsWith("-");
+  const isNewThisPeriod = change === "New this period";
+  const isNoChange = change === "No change";
   const isDateRange = title === 'Date Range';
 
   return (
@@ -34,10 +36,12 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, ico
               "text-xs font-medium",
               changeColor || (isPositive && "text-green-700 dark:text-green-400"),
               changeColor || (isNegative && "text-red-700 dark:text-red-400"),
-              !changeColor && !isPositive && !isNegative && "text-muted-foreground",
+              changeColor || (isNewThisPeriod && "text-blue-700 dark:text-blue-400"),
+              changeColor || (isNoChange && "text-muted-foreground"),
+              !changeColor && !isPositive && !isNegative && !isNewThisPeriod && !isNoChange && "text-muted-foreground",
               isDateRange ? "whitespace-nowrap" : ""
             )}>
-              {change} {changeDescription || 'from last month'}
+              {change} {changeDescription || (isNewThisPeriod || isNoChange ? '' : 'from last period')}
             </p>
           ) : (
             <div className="h-5"></div>

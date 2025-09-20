@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { useLoans } from "@/contexts/loan-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
+import { useDateRange } from "@/contexts/date-range-context";
 import { ArrowUp, ArrowDown, HandCoins, CreditCard, AlertTriangle, CheckCircle, Calendar, User, TrendingUp, TrendingDown } from "lucide-react";
-import { format, isBefore } from "date-fns";
+import { format, isBefore, isWithinInterval } from "date-fns";
+import { getPreviousPeriod, getComparisonDescription } from "@/lib/utils";
 
 interface NetPositionBreakdownProps {
   onClose: () => void;
@@ -17,6 +19,7 @@ export function NetPositionBreakdown({ onClose }: NetPositionBreakdownProps) {
   const { loans } = useLoans();
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
+  const { date } = useDateRange();
 
   const netPositionData = useMemo(() => {
     const now = new Date();
@@ -39,31 +42,33 @@ export function NetPositionBreakdown({ onClose }: NetPositionBreakdownProps) {
     const netPosition = totalReceivable - totalPayable;
     const totalOverdue = overdueReceivable + overduePayable;
     
-    // Calculate monthly trends
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    // Calculate period trends based on selected date range
+    const currentPeriod = date;
+    const previousPeriod = getPreviousPeriod(date);
     
-    const thisMonthGiven = givenLoans.filter(loan => 
-      new Date(loan.startDate) >= thisMonth
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const currentPeriodGiven = currentPeriod ? givenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: currentPeriod.from, end: currentPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const lastMonthGiven = givenLoans.filter(loan => 
-      new Date(loan.startDate) >= lastMonth && new Date(loan.startDate) < thisMonth
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const previousPeriodGiven = previousPeriod ? givenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: previousPeriod.from, end: previousPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const thisMonthTaken = takenLoans.filter(loan => 
-      new Date(loan.startDate) >= thisMonth
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const currentPeriodTaken = currentPeriod ? takenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: currentPeriod.from, end: currentPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const lastMonthTaken = takenLoans.filter(loan => 
-      new Date(loan.startDate) >= lastMonth && new Date(loan.startDate) < thisMonth
-    ).reduce((sum, loan) => sum + loan.amount, 0);
+    const previousPeriodTaken = previousPeriod ? takenLoans.filter(loan => 
+      isWithinInterval(new Date(loan.startDate), { start: previousPeriod.from, end: previousPeriod.to })
+    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
     
-    const netThisMonth = thisMonthGiven - thisMonthTaken;
-    const netLastMonth = lastMonthGiven - lastMonthTaken;
+    const netCurrentPeriod = currentPeriodGiven - currentPeriodTaken;
+    const netPreviousPeriod = previousPeriodGiven - previousPeriodTaken;
     
-    const netChange = netLastMonth === 0 ? (netThisMonth > 0 ? "+100%" : "0%") : 
-      `${((netThisMonth - netLastMonth) / Math.abs(netLastMonth) * 100).toFixed(1)}%`;
+    const netChange = netPreviousPeriod === 0 ? (netCurrentPeriod > 0 ? "New this period" : "No change") : 
+      `${((netCurrentPeriod - netPreviousPeriod) / Math.abs(netPreviousPeriod) * 100).toFixed(1)}%`;
+    
+    const comparisonDescription = getComparisonDescription(date);
     
     return {
       totalReceivable,
@@ -76,13 +81,14 @@ export function NetPositionBreakdown({ onClose }: NetPositionBreakdownProps) {
       activeTakenCount: activeTakenLoans.length,
       overdueGivenCount: overdueGivenLoans.length,
       overdueTakenCount: overdueTakenLoans.length,
-      netThisMonth,
-      netLastMonth,
+      netCurrentPeriod,
+      netPreviousPeriod,
       netChange,
+      comparisonDescription,
       givenLoans: activeGivenLoans,
       takenLoans: activeTakenLoans,
     };
-  }, [loans]);
+  }, [loans, date]);
 
   return (
     <div className="space-y-6">
