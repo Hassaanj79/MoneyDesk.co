@@ -20,18 +20,17 @@ interface CategoryContextType {
 const CategoryContext = createContext<CategoryContextType | undefined>(undefined);
 
 const defaultCategories: Omit<Category, 'id'|'userId'>[] = [
-    { name: "Food", type: "expense" },
-    { name: "Shopping", type: "expense" },
-    { name: "Transport", type: "expense" },
-    { name: "Entertainment", type: "expense" },
+    // Income categories
+    { name: "Investment", type: "income" },
     { name: "Salary", type: "income" },
     { name: "Freelance", type: "income" },
-    { name: 'Groceries', type: 'expense' },
-    { name: 'Utilities', type: 'expense' },
-    { name: 'Housing', type: 'expense' },
-    { name: 'Health', type: 'expense' },
-    { name: 'Investment', type: 'income' },
-    { name: 'Gifts', type: 'expense' },
+    { name: "Business", type: "income" },
+    
+    // Expense categories
+    { name: "Shopping", type: "expense" },
+    { name: "Groceries", type: "expense" },
+    { name: "Housing", type: "expense" },
+    { name: "Entertainment", type: "expense" },
 ];
 
 
