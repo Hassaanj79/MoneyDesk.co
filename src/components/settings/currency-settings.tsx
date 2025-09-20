@@ -410,6 +410,7 @@ export function CurrencySettings() {
   const { timezone, setTimezone } = useTimezone()
   const [loading, setLoading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [currentTime, setCurrentTime] = useState(getCurrentTimeInTimezone(timezone))
   
   const [selectedCurrency, setSelectedCurrency] = useState(currency)
   const [selectedCountry, setSelectedCountry] = useState(country)
@@ -453,6 +454,22 @@ export function CurrencySettings() {
     setSelectedCountry(country)
     setSelectedTimezone(timezone)
   }, [currency, country, timezone])
+
+  // Update current time every second
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(getCurrentTimeInTimezone(selectedTimezone))
+    }
+    
+    // Update immediately
+    updateTime()
+    
+    // Set up interval to update every second
+    const interval = setInterval(updateTime, 1000)
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(interval)
+  }, [selectedTimezone])
 
   const handleCurrencyChange = (newCurrency: string) => {
     setSelectedCurrency(newCurrency)
@@ -595,9 +612,13 @@ export function CurrencySettings() {
               </div>
             </div>
             <div className="p-3 bg-white dark:bg-gray-900 rounded-lg">
-              <div className="text-sm text-muted-foreground mb-1">Current Time:</div>
+              <div className="text-sm text-muted-foreground mb-1 flex items-center gap-2">
+                <span>Current Time:</span>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-600 dark:text-green-400">Live</span>
+              </div>
               <div className="text-lg font-mono">
-                {getCurrentTimeInTimezone(selectedTimezone)}
+                {currentTime}
               </div>
             </div>
           </div>
