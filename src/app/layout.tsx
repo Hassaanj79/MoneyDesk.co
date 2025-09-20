@@ -23,10 +23,11 @@ export const metadata: Metadata = {
   description: 'Personal Expense & Income Management SaaS',
   icons: {
     icon: [
-      { url: '/favicon.svg?v=2', type: 'image/svg+xml' },
-      { url: '/favicon.ico?v=2', sizes: 'any' },
+      { url: '/favicon.svg?v=4', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=4', sizes: '16x16 32x32' },
     ],
-    apple: '/apple-touch-icon.png?v=2',
+    apple: '/apple-touch-icon.png?v=4',
+    shortcut: '/favicon.ico?v=4',
   },
 };
 
@@ -41,6 +42,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="icon" href="/favicon.ico?v=4" sizes="16x16 32x32" />
+        <link rel="icon" href="/favicon.svg?v=4" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+        <link rel="shortcut icon" href="/favicon.ico?v=4" />
+        <meta name="msapplication-TileImage" content="/favicon.ico?v=4" />
+        <meta name="msapplication-TileColor" content="#000000" />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider
