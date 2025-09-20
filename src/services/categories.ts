@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase';
 import type { Category } from '@/types';
-import { collection, addDoc, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 
 const getCategoriesCollection = (userId: string) => collection(db, 'users', userId, 'categories');
 
@@ -23,4 +23,15 @@ export const updateCategory = async (userId: string, categoryId: string, categor
 export const deleteCategory = async (userId: string, categoryId: string) => {
     const categoryDoc = doc(db, 'users', userId, 'categories', categoryId);
     return await deleteDoc(categoryDoc);
+};
+
+export const deleteCategoriesBulk = async (userId: string, categoryIds: string[]) => {
+    const batch = writeBatch(db);
+    
+    categoryIds.forEach(categoryId => {
+        const categoryDoc = doc(db, 'users', userId, 'categories', categoryId);
+        batch.delete(categoryDoc);
+    });
+    
+    return await batch.commit();
 };

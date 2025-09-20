@@ -9,11 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useCategories } from "@/contexts/category-context"
-import { Plus, Edit, Trash2, Tag } from "lucide-react"
+import { Plus, Edit, Trash2, Tag, CheckSquare, Square } from "lucide-react"
 import type { Category } from "@/types"
 
 export function CategoryManager() {
-  const { categories, addCategory, updateCategory, deleteCategory, loading } = useCategories()
+  const { categories, addCategory, updateCategory, deleteCategory, deleteCategoriesBulk, loading } = useCategories()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [newCategory, setNewCategory] = useState({
@@ -22,6 +22,8 @@ export function CategoryManager() {
   })
   const [errors, setErrors] = useState<{name?: string}>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false)
 
   const validateForm = () => {
     const newErrors: {name?: string} = {}
@@ -78,6 +80,35 @@ export function CategoryManager() {
     }
   }
 
+  const handleBulkDelete = async () => {
+    try {
+      await deleteCategoriesBulk(Array.from(selectedCategories))
+      setSelectedCategories(new Set())
+      setIsBulkDeleteDialogOpen(false)
+    } catch (error) {
+      console.error('Error deleting categories:', error)
+    }
+  }
+
+  const toggleCategorySelection = (categoryId: string) => {
+    const newSelected = new Set(selectedCategories)
+    if (newSelected.has(categoryId)) {
+      newSelected.delete(categoryId)
+    } else {
+      newSelected.add(categoryId)
+    }
+    setSelectedCategories(newSelected)
+  }
+
+  const selectAllCategories = (categoryList: Category[]) => {
+    const allIds = new Set(categoryList.map(cat => cat.id))
+    setSelectedCategories(allIds)
+  }
+
+  const clearSelection = () => {
+    setSelectedCategories(new Set())
+  }
+
   const incomeCategories = categories.filter(cat => cat.type === 'income')
   const expenseCategories = categories.filter(cat => cat.type === 'expense')
 
@@ -101,78 +132,128 @@ export function CategoryManager() {
             Manage your income and expense categories
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Category</DialogTitle>
-              <DialogDescription>
-                Create a new category for your transactions
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div>
-                <Label htmlFor="category-name">Category Name</Label>
-                <Input
-                  id="category-name"
-                  value={newCategory.name}
-                  onChange={(e) => {
-                    setNewCategory({...newCategory, name: e.target.value})
-                    if (errors.name) setErrors({...errors, name: undefined})
-                  }}
-                  placeholder="Enter category name"
-                  className={errors.name ? 'border-red-500' : ''}
-                />
-                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
-              </div>
-              <div>
-                <Label htmlFor="category-type">Type</Label>
-                <Select
-                  value={newCategory.type}
-                  onValueChange={(value: 'income' | 'expense') => setNewCategory({...newCategory, type: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="expense">Expense</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button variant="outline" onClick={() => {
-                setIsAddDialogOpen(false)
-                setErrors({})
-                setNewCategory({ name: '', type: 'expense' })
-              }}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAddCategory}
-                disabled={isSubmitting || !newCategory.name.trim()}
+        <div className="flex gap-2">
+          {selectedCategories.size > 0 && (
+            <>
+              <Button
+                variant="outline"
+                onClick={clearSelection}
+                className="w-full sm:w-auto"
               >
-                {isSubmitting ? 'Adding...' : 'Add Category'}
+                Clear Selection ({selectedCategories.size})
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <AlertDialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full sm:w-auto">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Selected
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Selected Categories</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete {selectedCategories.size} selected categories? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleBulkDelete}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Delete {selectedCategories.size} Categories
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Category</DialogTitle>
+                <DialogDescription>
+                  Create a new category for your transactions
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="category-name">Category Name</Label>
+                  <Input
+                    id="category-name"
+                    value={newCategory.name}
+                    onChange={(e) => {
+                      setNewCategory({...newCategory, name: e.target.value})
+                      if (errors.name) setErrors({...errors, name: undefined})
+                    }}
+                    placeholder="Enter category name"
+                    className={errors.name ? 'border-red-500' : ''}
+                  />
+                  {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="category-type">Type</Label>
+                  <Select
+                    value={newCategory.type}
+                    onValueChange={(value: 'income' | 'expense') => setNewCategory({...newCategory, type: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="income">Income</SelectItem>
+                      <SelectItem value="expense">Expense</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter className="mt-6">
+                <Button variant="outline" onClick={() => {
+                  setIsAddDialogOpen(false)
+                  setErrors({})
+                  setNewCategory({ name: '', type: 'expense' })
+                }}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAddCategory}
+                  disabled={isSubmitting || !newCategory.name.trim()}
+                >
+                  {isSubmitting ? 'Adding...' : 'Add Category'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Income Categories */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-600">
-              <Tag className="h-5 w-5" />
-              Income Categories
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-green-600">
+                <Tag className="h-5 w-5" />
+                <CardTitle>Income Categories</CardTitle>
+              </div>
+              {incomeCategories.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => selectAllCategories(incomeCategories)}
+                  className="text-xs"
+                >
+                  Select All
+                </Button>
+              )}
+            </div>
             <CardDescription>
               Categories for your income sources
             </CardDescription>
@@ -189,7 +270,19 @@ export function CategoryManager() {
                     key={category.id}
                     className="flex items-center justify-between p-3 rounded-lg border bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
                   >
-                    <span className="font-medium">{category.name}</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleCategorySelection(category.id)}
+                        className="flex items-center justify-center w-5 h-5 rounded border-2 border-gray-300 hover:border-gray-400 transition-colors"
+                      >
+                        {selectedCategories.has(category.id) ? (
+                          <CheckSquare className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Square className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                      <span className="font-medium">{category.name}</span>
+                    </div>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
@@ -238,10 +331,22 @@ export function CategoryManager() {
         {/* Expense Categories */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
-              <Tag className="h-5 w-5" />
-              Expense Categories
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-red-600">
+                <Tag className="h-5 w-5" />
+                <CardTitle>Expense Categories</CardTitle>
+              </div>
+              {expenseCategories.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => selectAllCategories(expenseCategories)}
+                  className="text-xs"
+                >
+                  Select All
+                </Button>
+              )}
+            </div>
             <CardDescription>
               Categories for your expenses
             </CardDescription>
@@ -258,7 +363,19 @@ export function CategoryManager() {
                     key={category.id}
                     className="flex items-center justify-between p-3 rounded-lg border bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
                   >
-                    <span className="font-medium">{category.name}</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleCategorySelection(category.id)}
+                        className="flex items-center justify-center w-5 h-5 rounded border-2 border-gray-300 hover:border-gray-400 transition-colors"
+                      >
+                        {selectedCategories.has(category.id) ? (
+                          <CheckSquare className="h-4 w-4 text-red-600" />
+                        ) : (
+                          <Square className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                      <span className="font-medium">{category.name}</span>
+                    </div>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"

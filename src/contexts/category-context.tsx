@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Category } from '@/types';
 import { useAuth } from './auth-context';
-import { addCategory as addCategoryService, getCategories, updateCategory as updateCategoryService, deleteCategory as deleteCategoryService } from '@/services/categories';
+import { addCategory as addCategoryService, getCategories, updateCategory as updateCategoryService, deleteCategory as deleteCategoryService, deleteCategoriesBulk as deleteCategoriesBulkService } from '@/services/categories';
 import { onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 // import { addNotification, createNotificationMessage } from '@/services/notifications';
@@ -14,6 +14,7 @@ interface CategoryContextType {
   addCategory: (category: Omit<Category, 'id' | 'userId'>) => Promise<string | undefined>;
   updateCategory: (categoryId: string, category: Partial<Omit<Category, 'id' | 'userId'>>) => Promise<void>;
   deleteCategory: (categoryId: string) => Promise<void>;
+  deleteCategoriesBulk: (categoryIds: string[]) => Promise<void>;
   loading: boolean;
 }
 
@@ -155,8 +156,18 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     // });
   };
 
+  const deleteCategoriesBulk = async (categoryIds: string[]) => {
+    if (!user) throw new Error("User not authenticated");
+    if (categoryIds.length === 0) return;
+    
+    await deleteCategoriesBulkService(user.uid, categoryIds);
+    
+    // Show success toast
+    toast.success(`${categoryIds.length} categories deleted successfully!`);
+  };
+
   return (
-    <CategoryContext.Provider value={{ categories, addCategory, updateCategory, deleteCategory, loading }}>
+    <CategoryContext.Provider value={{ categories, addCategory, updateCategory, deleteCategory, deleteCategoriesBulk, loading }}>
       {children}
     </CategoryContext.Provider>
   );
