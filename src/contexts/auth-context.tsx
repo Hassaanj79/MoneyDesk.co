@@ -104,8 +104,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return signOut(auth);
   };
 
-  const sendPasswordReset = (email: string) => {
-    return sendPasswordResetEmail(auth, email);
+  const sendPasswordReset = async (email: string) => {
+    try {
+      console.log('Creating action code settings for email:', email);
+      const resetUrl = createPasswordResetUrl(email);
+      console.log('Reset URL:', resetUrl);
+      
+      const actionCodeSettings = createActionCodeSettings(resetUrl);
+      console.log('Action code settings:', actionCodeSettings);
+      
+      console.log('Sending sign-in link to email...');
+      const result = await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      console.log('Sign-in link sent successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in sendPasswordReset:', error);
+      throw error;
+    }
   }
 
   const sendVerificationEmail = async () => {

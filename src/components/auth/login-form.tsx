@@ -92,11 +92,14 @@ export function LoginForm() {
     setForgotEmailError("");
     
     try {
+      console.log('Sending password reset for email:', forgotEmail);
       await sendPasswordReset(forgotEmail);
+      console.log('Password reset email sent successfully');
       setResetSuccess("If an account exists for this email, a password reset link has been sent.");
       setForgotEmail("");
     } catch (err) {
-      setError("Failed to send password reset email. Please try again.");
+      console.error('Password reset error:', err);
+      setError(`Failed to send password reset email: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(prev => ({...prev, email: false}));
     }
@@ -106,40 +109,73 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-sm mx-auto">
-      <CardHeader>
-        <CardTitle>{isForgotPassword ? "Reset Password" : "Welcome back"}</CardTitle>
-        <CardDescription>
+      <CardHeader className={isForgotPassword ? "pb-4" : ""}>
+        <CardTitle className={isForgotPassword ? "text-2xl font-bold text-center" : ""}>
+          {isForgotPassword ? "Reset Your Password" : "Welcome back"}
+        </CardTitle>
+        <CardDescription className={isForgotPassword ? "text-center text-gray-600 dark:text-gray-400" : ""}>
           {isForgotPassword
-            ? "Enter your email to receive a password reset link."
+            ? "We'll send you a secure link to reset your password"
             : "Sign in to your MoneyDesk account."}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {isForgotPassword ? (
-          <form onSubmit={onForgotPasswordSubmit} className="space-y-4">
-            {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-            {resetSuccess && <Alert variant="default" className="border-green-500/50 text-green-700 dark:text-green-400 [&>svg]:text-green-700 dark:[&>svg]:text-green-400"><AlertDescription>{resetSuccess}</AlertDescription></Alert>}
+          <div className="space-y-6">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {resetSuccess && (
+              <Alert variant="default" className="mb-4 border-green-500/50 text-green-700 dark:text-green-400 [&>svg]:text-green-700 dark:[&>svg]:text-green-400">
+                <AlertDescription>{resetSuccess}</AlertDescription>
+              </Alert>
+            )}
             
-            <div className="space-y-2">
-              <label htmlFor="forgot-email" className="text-sm font-medium">Email</label>
-              <Input 
-                id="forgot-email"
-                type="email" 
-                placeholder="john.doe@example.com" 
-                value={forgotEmail}
-                onChange={handleForgotEmailChange}
-                className={forgotEmailError ? "border-red-500" : ""}
-              />
-              {forgotEmailError && (
-                <p className="text-sm text-red-500">{forgotEmailError}</p>
-              )}
+            <form onSubmit={onForgotPasswordSubmit} className="space-y-5">
+              <div className="space-y-3">
+                <label htmlFor="forgot-email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Email Address
+                </label>
+                <Input 
+                  id="forgot-email"
+                  type="email" 
+                  placeholder="Enter your email address" 
+                  value={forgotEmail}
+                  onChange={handleForgotEmailChange}
+                  className={`h-12 text-base ${forgotEmailError ? "border-red-500 focus:border-red-500" : "focus:border-purple-500"}`}
+                />
+                {forgotEmailError && (
+                  <p className="text-sm text-red-500 font-medium">{forgotEmailError}</p>
+                )}
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-semibold bg-purple-600 hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2" 
+                disabled={loading.email}
+              >
+                {loading.email ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Sending Reset Link...
+                  </>
+                ) : (
+                  "Send Password Reset Link"
+                )}
+              </Button>
+            </form>
+            
+            <div className="text-center">
+              <button 
+                onClick={() => setIsForgotPassword(false)} 
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium underline-offset-4 hover:underline transition-colors"
+              >
+                ← Back to Login
+              </button>
             </div>
-            
-            <Button type="submit" className="w-full" disabled={loading.email}>
-              {loading.email && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Reset Link
-            </Button>
-          </form>
+          </div>
         ) : (
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
@@ -193,20 +229,14 @@ export function LoginForm() {
             </form>
           </Form>
         )}
-        <div className="mt-4 text-center text-sm">
-          {isForgotPassword ? (
-            <button onClick={() => setIsForgotPassword(false)} className="underline">
-              Back to Login
-            </button>
-          ) : (
-            <>
-              Don't have an account?{" "}
-              <Link href="/signup" className="underline">
-                Sign up
-              </Link>
-            </>
-          )}
-        </div>
+        {!isForgotPassword && (
+          <div className="mt-4 text-center text-sm">
+            Don't have an account?{" "}
+            <Link href="/signup" className="underline">
+              Sign up
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
