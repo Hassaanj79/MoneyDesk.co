@@ -1,17 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only access their own data
+    // Admin access - check email in multiple ways
+    function isAdmin() {
+      return request.auth != null && 
+             (request.auth.token.email == 'hassyku786@gmail.com' ||
+              request.auth.token.email == 'HASSYKU786@GMAIL.COM' ||
+              request.auth.token.email == 'Hassyku786@gmail.com');
+    }
+    
+    // TEMPORARY: Allow admin to read ALL documents for debugging
+    match /{document=**} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    
+    // Regular user access
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // User subcollections
       match /{subcollection=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
     
-    // Public categories (if you want to share categories across users)
+    // Public categories
     match /categories/{categoryId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == resource.data.userId;

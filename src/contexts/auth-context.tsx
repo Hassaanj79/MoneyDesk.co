@@ -26,6 +26,7 @@ import {
   ConfirmationResult,
 } from "firebase/auth";
 import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
+import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificationUrl } from '@/lib/auth-config';
 
 interface AuthContextType {
   user: User | null;
@@ -123,10 +124,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const sendOTPEmail = async (email: string) => {
-    const actionCodeSettings = {
-      url: `${window.location.origin}/verify-otp?email=${encodeURIComponent(email)}`,
-      handleCodeInApp: true,
-    };
+    const actionCodeSettings = createActionCodeSettings(
+      createEmailVerificationUrl(email)
+    );
     
     return sendSignInLinkToEmail(auth, email, actionCodeSettings);
   };
@@ -147,10 +147,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const sendPasswordResetWithOTP = async (email: string) => {
-    const actionCodeSettings = {
-      url: `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}`,
-      handleCodeInApp: true,
-    };
+    const actionCodeSettings = createActionCodeSettings(
+      createPasswordResetUrl(email)
+    );
     
     return sendSignInLinkToEmail(auth, email, actionCodeSettings);
   };

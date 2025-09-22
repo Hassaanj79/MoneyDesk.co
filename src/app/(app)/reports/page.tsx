@@ -3,6 +3,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ProtectedRoute } from "@/components/protected-route";
 import {
   Card,
   CardContent,
@@ -150,7 +151,7 @@ const chartConfig = {
   },
 };
 
-export default function ReportsPage() {
+function ReportsPageContent() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
   const { categories } = useCategories();
@@ -1092,5 +1093,13 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <ProtectedRoute module="reports">
+      <ReportsPageContent />
+    </ProtectedRoute>
   );
 }

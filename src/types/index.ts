@@ -93,4 +93,39 @@ export type LoanInstallment = {
   updatedAt: string;
 };
 
+// Admin Panel Types
+export type UserRole = 'admin' | 'user' | 'moderator';
+
+export type ModuleAccess = {
+  dashboard: boolean;
+  transactions: boolean;
+  loans: boolean;
+  reports: boolean;
+  settings: boolean;
+  accounts: boolean;
+  budgets: boolean;
+  categories: boolean;
+};
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  name?: string;
+  role: UserRole;
+  moduleAccess: ModuleAccess;
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+  createdBy?: string;
+};
+
+export type AdminStats = {
+  totalUsers: number;
+  activeUsers: number;
+  newUsersThisMonth: number;
+  totalTransactions: number;
+  totalLoans: number;
+  totalAccounts: number;
+};
+
 // export * from './notification';

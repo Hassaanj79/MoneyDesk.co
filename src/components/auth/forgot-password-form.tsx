@@ -1,18 +1,8 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
@@ -21,56 +11,73 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
-});
-
 export function ForgotPasswordForm() {
   const { sendPasswordReset, sendPasswordResetWithOTP } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetMethod, setResetMethod] = useState<'email' | 'otp'>('email');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
-    mode: "onChange",
-    defaultValues: {
-      email: "",
-    },
-  });
+  const validateEmail = (email: string) => {
+    if (!email) {
+      return "Email is required";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
 
-  async function onForgotPasswordSubmit(values: z.infer<typeof forgotPasswordSchema>) {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    setEmailError('');
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const emailValidationError = validateEmail(email);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
+    setEmailError('');
+    
     try {
       if (resetMethod === 'otp') {
-        await sendPasswordResetWithOTP(values.email);
+        await sendPasswordResetWithOTP(email);
         setSuccess("If an account with this email exists, a password reset link has been sent to your email.");
       } else {
-        await sendPasswordReset(values.email);
+        await sendPasswordReset(email);
         setSuccess("If an account with this email exists, a password reset link has been sent.");
       }
-      form.reset();
+      setEmail('');
     } catch (err) {
+      console.error('Password reset error:', err);
       setError("Failed to send password reset email. Please try again.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-sm">
         <CardHeader>
-            <CardTitle>Forgot Password</CardTitle>
+            <CardTitle>Reset Password</CardTitle>
             <CardDescription>
                 Enter your email to receive a password reset link.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
                     <Alert variant="destructive">
                         <AlertDescription>{error}</AlertDescription>
@@ -81,27 +88,21 @@ export function ForgotPasswordForm() {
                         <AlertDescription>{success}</AlertDescription>
                     </Alert>
                 )}
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder="john.doe@example.com" 
-                          {...field}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            setError(null); // Clear any existing errors when user types
-                          }}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                        id="email"
+                        type="email" 
+                        placeholder="john.doe@example.com" 
+                        value={email}
+                        onChange={handleEmailChange}
+                        className={emailError ? "border-red-500" : ""}
+                    />
+                    {emailError && (
+                        <p className="text-sm text-red-500">{emailError}</p>
+                    )}
+                </div>
                 
                 <div className="space-y-3">
                   <label className="text-sm font-medium">Reset Method</label>
@@ -111,26 +112,29 @@ export function ForgotPasswordForm() {
                     className="flex flex-col space-y-2"
                   >
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="email" id="email" />
-                      <label htmlFor="email" className="text-sm">
+                      <RadioGroupItem value="email" id="email-method" />
+                      <label htmlFor="email-method" className="text-sm">
                         Email Link (Traditional)
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="otp" id="otp" />
-                      <label htmlFor="otp" className="text-sm">
+                      <RadioGroupItem value="otp" id="otp-method" />
+                      <label htmlFor="otp-method" className="text-sm">
                         Email Link with OTP
                       </label>
                     </div>
                   </RadioGroup>
                 </div>
                 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading}
+                >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Send Reset Link
                 </Button>
             </form>
-            </Form>
             <div className="mt-4 text-center text-sm">
                 Remember your password?{" "}
                 <Link href="/login" className="underline">

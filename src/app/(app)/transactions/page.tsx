@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { ProtectedRoute } from "@/components/protected-route";
 import {
   Table,
   TableBody,
@@ -93,7 +94,7 @@ const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
 };
 
 
-export default function TransactionsPage() {
+function TransactionsPageContent() {
   const { t } = useTranslation();
   const { transactions, deleteTransaction } = useTransactions();
   const { categories } = useCategories();
@@ -658,4 +659,10 @@ export default function TransactionsPage() {
   );
 }
 
-    
+export default function TransactionsPage() {
+  return (
+    <ProtectedRoute module="transactions">
+      <TransactionsPageContent />
+    </ProtectedRoute>
+  );
+}

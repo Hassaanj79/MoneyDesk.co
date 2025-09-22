@@ -4,7 +4,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
+import { 
   ArrowRightLeft,
   BarChart3,
   Bell,
@@ -17,6 +17,7 @@ import {
   LogOut,
   HandCoins,
   Settings,
+  Shield,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
@@ -83,6 +84,11 @@ export function Header() {
   const { user, logout } = useAuth();
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+
+  // Check if user has admin access - only your credentials
+  const isAdmin = user?.email && [
+    'hassyku786@gmail.com',
+  ].includes(user.email.toLowerCase());
 
 
   React.useEffect(() => {
@@ -518,6 +524,13 @@ export function Header() {
                       <Settings className="mr-2" /> {t('navigation.settings')}
                   </DropdownMenuItem>
                 </Link>
+                {isAdmin && (
+                  <Link href="/admin">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Shield className="mr-2" /> Admin Panel
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2" /> {t('navigation.logout')}
                 </DropdownMenuItem>

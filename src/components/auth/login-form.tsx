@@ -26,9 +26,6 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
-const forgotPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
-});
 
 
 export function LoginForm() {
@@ -44,10 +41,8 @@ export function LoginForm() {
     defaultValues: { email: "", password: "" },
   });
 
-  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: "" },
-  });
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotEmailError, setForgotEmailError] = useState("");
 
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     setLoading(prev => ({...prev, email: true}));
@@ -61,14 +56,45 @@ export function LoginForm() {
     }
   }
 
-  async function onForgotPasswordSubmit(values: z.infer<typeof forgotPasswordSchema>) {
+  const validateForgotEmail = (email: string) => {
+    if (!email) {
+      return "Email is required";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
+  const handleForgotEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log('Email changed to:', value);
+    setForgotEmail(value);
+    setForgotEmailError("");
+    setError(null);
+  };
+
+  async function onForgotPasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    
+    console.log('Form submitted with email:', forgotEmail);
+    const emailValidationError = validateForgotEmail(forgotEmail);
+    console.log('Validation error:', emailValidationError);
+    
+    if (emailValidationError) {
+      setForgotEmailError(emailValidationError);
+      return;
+    }
+
     setLoading(prev => ({...prev, email: true}));
     setError(null);
     setResetSuccess(null);
+    setForgotEmailError("");
+    
     try {
-      await sendPasswordReset(values.email);
+      await sendPasswordReset(forgotEmail);
       setResetSuccess("If an account exists for this email, a password reset link has been sent.");
-      forgotPasswordForm.reset();
+      setForgotEmail("");
     } catch (err) {
       setError("Failed to send password reset email. Please try again.");
     } finally {
@@ -90,29 +116,30 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         {isForgotPassword ? (
-          <Form {...forgotPasswordForm}>
-            <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
-              {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-              {resetSuccess && <Alert variant="default" className="border-green-500/50 text-green-700 dark:text-green-400 [&>svg]:text-green-700 dark:[&>svg]:text-green-400"><AlertDescription>{resetSuccess}</AlertDescription></Alert>}
-              <FormField
-                control={forgotPasswordForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="john.doe@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form onSubmit={onForgotPasswordSubmit} className="space-y-4">
+            {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+            {resetSuccess && <Alert variant="default" className="border-green-500/50 text-green-700 dark:text-green-400 [&>svg]:text-green-700 dark:[&>svg]:text-green-400"><AlertDescription>{resetSuccess}</AlertDescription></Alert>}
+            
+            <div className="space-y-2">
+              <label htmlFor="forgot-email" className="text-sm font-medium">Email</label>
+              <Input 
+                id="forgot-email"
+                type="email" 
+                placeholder="john.doe@example.com" 
+                value={forgotEmail}
+                onChange={handleForgotEmailChange}
+                className={forgotEmailError ? "border-red-500" : ""}
               />
-              <Button type="submit" className="w-full" disabled={loading.email}>
-                {loading.email && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Send Reset Link
-              </Button>
-            </form>
-          </Form>
+              {forgotEmailError && (
+                <p className="text-sm text-red-500">{forgotEmailError}</p>
+              )}
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={loading.email}>
+              {loading.email && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Send Reset Link
+            </Button>
+          </form>
         ) : (
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { ProtectedRoute } from "@/components/protected-route";
 import {
   Table,
   TableBody,
@@ -49,7 +50,7 @@ import {
 import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 
-export default function LoansPage() {
+function LoansPageContent() {
   const { loans, deleteLoan } = useLoans();
   const { accounts } = useAccounts();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -656,5 +657,13 @@ export default function LoansPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+export default function LoansPage() {
+  return (
+    <ProtectedRoute module="loans">
+      <LoansPageContent />
+    </ProtectedRoute>
   );
 }
