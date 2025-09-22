@@ -17,7 +17,8 @@ export const createActionCodeSettings = (url: string) => ({
 
 // Helper function to create unified auth action URL
 export const createAuthActionUrl = (email: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+  // Use environment variable if available, otherwise use production domain
+  const baseUrl = process.env.NEXT_PUBLIC_APP_DOMAIN || 'moneydesk.co';
   const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
   return `${protocol}://${baseUrl}/auth-action?email=${encodeURIComponent(email)}`;
 };
