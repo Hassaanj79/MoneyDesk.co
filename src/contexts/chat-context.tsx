@@ -114,6 +114,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       // Start listening to new conversation messages
       const unsubscribe = listenToMessages(conversationId, (newMessages) => {
+        console.log('💬 Chat context received messages:', {
+          conversationId,
+          messageCount: newMessages.length,
+          messages: newMessages.map(m => ({
+            id: m.id,
+            senderId: m.senderId,
+            userId: m.userId,
+            senderType: m.senderType,
+            message: m.message?.substring(0, 30) + '...'
+          }))
+        });
         setMessages(newMessages);
       });
       setUnsubscribeMessages(() => unsubscribe);

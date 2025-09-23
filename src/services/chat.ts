@@ -177,23 +177,47 @@ export const listenToMessages = (
   conversationId: string,
   callback: (messages: ChatMessage[]) => void
 ) => {
+  console.log('🔍 Setting up message listener for conversation:', conversationId);
+  
   const messagesQuery = query(
     collection(db, MESSAGES_COLLECTION),
     where('conversationId', '==', conversationId)
   );
 
   return onSnapshot(messagesQuery, (querySnapshot) => {
-    const messages = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
-    })) as ChatMessage[];
+    console.log('📨 Received message update:', {
+      conversationId,
+      docCount: querySnapshot.docs.length,
+      hasError: querySnapshot.metadata.hasPendingWrites
+    });
+    
+    const messages = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('📝 Message data:', {
+        id: doc.id,
+        conversationId: data.conversationId,
+        senderId: data.senderId,
+        userId: data.userId,
+        senderType: data.senderType,
+        message: data.message?.substring(0, 30) + '...'
+      });
+      
+      return {
+        id: doc.id,
+        ...data,
+        timestamp: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
+      };
+    }) as ChatMessage[];
 
     // Sort in memory to avoid index requirement
     const sortedMessages = messages.sort((a, b) => 
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
+    
+    console.log('📤 Sending sorted messages to callback:', sortedMessages.length);
     callback(sortedMessages);
+  }, (error) => {
+    console.error('❌ Error in message listener:', error);
   });
 };
 
