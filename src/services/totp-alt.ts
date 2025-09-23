@@ -1,4 +1,4 @@
-import speakeasy from 'speakeasy';
+import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -26,22 +26,16 @@ export const generateTOTPSecret = async (userId: string, userEmail: string): Pro
   try {
     console.log('Generating TOTP secret for user:', userId, 'email:', userEmail);
     
-    // Generate a new secret with proper configuration
-    const secret = speakeasy.generateSecret({
-      name: `MoneyDesk (${userEmail})`,
-      issuer: 'MoneyDesk',
-      length: 32,
-      symbols: false // Disable symbols to avoid Buffer issues
-    });
+    // Generate a new secret using otplib
+    const secret = authenticator.generateSecret();
+    console.log('Secret generated, length:', secret.length);
 
-    console.log('Secret generated:', { 
-      hasBase32: !!secret.base32, 
-      hasOtpAuthUrl: !!secret.otpauth_url,
-      base32Length: secret.base32?.length 
-    });
+    // Create the OTP auth URL
+    const otpAuthUrl = authenticator.keyuri(userEmail, 'MoneyDesk', secret);
+    console.log('OTP Auth URL created');
 
     // Generate QR code URL
-    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url!);
+    const qrCodeUrl = await QRCode.toDataURL(otpAuthUrl);
     console.log('QR code generated');
 
     // Generate backup codes
@@ -49,7 +43,7 @@ export const generateTOTPSecret = async (userId: string, userEmail: string): Pro
     console.log('Backup codes generated:', backupCodes.length);
 
     const totpData: TOTPSecret = {
-      secret: secret.base32!,
+      secret,
       qrCodeUrl,
       backupCodes,
       isEnabled: false,
@@ -100,12 +94,9 @@ export const verifyTOTPCode = async (userId: string, code: string): Promise<TOTP
 
     // First try to verify as TOTP code
     console.log('Verifying as TOTP code with secret:', totpData.secret);
-    const totpValid = speakeasy.totp.verify({
-      secret: totpData.secret,
-      encoding: 'base32',
+    const totpValid = authenticator.verify({
       token: code,
-      window: 2, // Allow 2 time windows (60 seconds) of tolerance
-      time: Math.floor(Date.now() / 1000) // Explicitly set current time
+      secret: totpData.secret
     });
 
     console.log('TOTP verification result:', totpValid);
@@ -168,12 +159,9 @@ export const enableTOTP = async (userId: string, verificationCode: string): Prom
 
     // Verify the code before enabling
     console.log('Verifying TOTP code with secret:', totpData.secret);
-    const isValid = speakeasy.totp.verify({
-      secret: totpData.secret,
-      encoding: 'base32',
+    const isValid = authenticator.verify({
       token: verificationCode,
-      window: 2,
-      time: Math.floor(Date.now() / 1000) // Explicitly set current time
+      secret: totpData.secret
     });
 
     console.log('TOTP verification result:', isValid);

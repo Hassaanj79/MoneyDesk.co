@@ -15,7 +15,7 @@ import {
   Loader2,
   Key
 } from 'lucide-react';
-import { verifyTOTPCode, type TOTPVerificationResult } from '@/services/totp';
+import { verifyTOTPCode, type TOTPVerificationResult } from '@/services/totp-alt';
 import { toast } from 'sonner';
 
 interface TOTPVerificationProps {

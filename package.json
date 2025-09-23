@@ -56,6 +56,7 @@
     "next": "15.3.3",
     "next-intl": "^4.3.9",
     "next-themes": "^0.3.0",
+    "otplib": "^12.0.1",
     "patch-package": "^8.0.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",

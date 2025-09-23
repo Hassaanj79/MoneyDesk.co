@@ -27,7 +27,7 @@ import {
   disableTOTP,
   regenerateBackupCodes,
   type TOTPSecret 
-} from '@/services/totp';
+} from '@/services/totp-alt';
 import { toast } from 'sonner';
 
 export function TOTPSetup() {

@@ -50,10 +50,35 @@ export function LoginForm() {
     setLoading(prev => ({...prev, email: true}));
     setError(null);
     try {
+      console.log('Login attempt started for:', values.email);
       await login(values.email, values.password);
+      console.log('Login successful');
       // TOTP check removed - only enable when user explicitly turns it on
     } catch (err: any) {
-      setError("Invalid email or password. Please try again.");
+      console.error("Login error details:", {
+        code: err.code,
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      
+      if (err.code === "auth/user-not-found") {
+        setError("No account found with this email address.");
+      } else if (err.code === "auth/wrong-password") {
+        setError("Incorrect password. Please try again.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Please enter a valid email address.");
+      } else if (err.code === "auth/user-disabled") {
+        setError("This account has been disabled. Please contact support.");
+      } else if (err.code === "auth/too-many-requests") {
+        setError("Too many failed attempts. Please try again later.");
+      } else if (err.code === "auth/network-request-failed") {
+        setError("Network error. Please check your internet connection and try again. If the problem persists, please contact support.");
+      } else if (err.code === "auth/invalid-credential") {
+        setError("Invalid email or password. Please check your credentials and try again.");
+      } else {
+        setError(`Login failed: ${err.message || 'Unknown error'}. Please try again or contact support.`);
+      }
     } finally {
       setLoading(prev => ({...prev, email: false}));
     }

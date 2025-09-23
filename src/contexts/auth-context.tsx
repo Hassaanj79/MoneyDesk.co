@@ -89,12 +89,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     console.log('Attempting to login with email:', email);
+    console.log('Firebase auth instance:', auth);
+    console.log('Auth domain:', auth.config.authDomain);
+    console.log('Project ID:', auth.config.projectId);
+    
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', result.user.email);
       return result;
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (error: any) {
+      console.error('Login failed with detailed error:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        customData: error.customData
+      });
       throw error;
     }
   };
