@@ -207,74 +207,17 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     refreshUsers();
     refreshStats();
     
-    // Set up real-time listener for users
-    const setupRealtimeUsers = () => {
-      if (!user?.email) return;
-      
-      console.log('Setting up real-time user listener...');
-      
-      // Listen to the users collection for real-time updates
-      const usersQuery = query(collection(db, 'users'));
-      const unsubscribe = onSnapshot(usersQuery, async (snapshot) => {
-        console.log('Users collection updated, processing snapshot...');
-        console.log('Snapshot size:', snapshot.size);
-        console.log('Snapshot docs:', snapshot.docs.length);
-        
-        try {
-          // Process the snapshot directly instead of calling refreshUsers
-          const users: AdminUser[] = [];
-          
-          for (const userDoc of snapshot.docs) {
-            const userData = userDoc.data();
-            console.log('Processing user:', userDoc.id, userData.email);
-            
-            // Get user's subscription info
-            const subscriptionDoc = await getDoc(doc(db, 'users', userDoc.id, 'subscription', 'current'));
-            const subscription = subscriptionDoc.exists() ? subscriptionDoc.data() : null;
-            console.log('Subscription exists for user', userDoc.id, ':', subscriptionDoc.exists());
-            
-            // Get user's module access from subscription or default
-            const moduleAccess: ModuleAccess = subscription?.features || {
-              dashboard: true,
-              transactions: true,
-              loans: false,
-              reports: false,
-              settings: true,
-              accounts: true,
-              budgets: false,
-              categories: true
-            };
-            
-            users.push({
-              id: userDoc.id,
-              email: userData.email || '',
-              name: userData.name || '',
-              role: userData.role || 'user',
-              moduleAccess,
-              isActive: userData.isActive !== false,
-              createdAt: userData.createdAt || new Date().toISOString(),
-              lastLoginAt: userData.lastLoginAt,
-              createdBy: userData.createdBy
-            });
-          }
-          
-          console.log('Processed users from real-time update:', users.length);
-          setUsers(users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-          
-          // Also refresh stats when users change
-          refreshStats();
-        } catch (error) {
-          console.error('Error processing real-time user update:', error);
-        }
-      }, (error) => {
-        console.error('Real-time listener error:', error);
-        setError('Failed to listen for real-time updates');
-      });
-      
-      return unsubscribe;
-    };
+    // Temporarily disable real-time listeners to isolate issues
+    // Set up a simple interval for refreshing data instead of real-time listeners
+    const interval = setInterval(() => {
+      if (user?.email) {
+        console.log('Refreshing admin data via interval...');
+        refreshUsers();
+        refreshStats();
+      }
+    }, 30000); // Refresh every 30 seconds
     
-    const unsubscribe = setupRealtimeUsers();
+    const unsubscribe = () => clearInterval(interval);
     
     return () => {
       if (unsubscribe) {

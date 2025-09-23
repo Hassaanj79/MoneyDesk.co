@@ -16,10 +16,8 @@ import { LoanInstallmentProvider } from '@/contexts/loan-installment-context';
 import { TimezoneProvider } from '@/contexts/timezone-context';
 import { ModuleAccessProvider } from '@/contexts/module-access-context';
 import { AdminProvider } from '@/contexts/admin-context';
-import { ChatProvider } from '@/contexts/chat-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { DeviceProvider } from '@/contexts/device-context';
-import { ChatWidget } from '@/components/chat/chat-widget';
 import { ToastNotifications } from '@/components/notifications/toast-notifications';
 import { Analytics } from '@vercel/analytics/next';
 
@@ -75,17 +73,14 @@ export default function RootLayout({
                                 <LoanInstallmentProvider>
                                   <TimezoneProvider>
                                         <DateRangeProvider>
-                                          <ChatProvider>
-                                            <NotificationProvider>
-                                              <DeviceProvider>
-                                                {children}
-                                                <ChatWidget />
-                                                <ToastNotifications />
-                                                <Toaster />
-                                                <Analytics />
-                                              </DeviceProvider>
-                                            </NotificationProvider>
-                                          </ChatProvider>
+                                          <NotificationProvider>
+                                            <DeviceProvider>
+                                              {children}
+                                              <ToastNotifications />
+                                              <Toaster />
+                                              <Analytics />
+                                            </DeviceProvider>
+                                          </NotificationProvider>
                                         </DateRangeProvider>
                                   </TimezoneProvider>
                                 </LoanInstallmentProvider>
