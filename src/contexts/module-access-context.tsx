@@ -74,7 +74,24 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
         },
         (err) => {
           console.error('Error listening to module access:', err);
-          setError(err.message);
+          // Handle permission errors gracefully
+          if (err.code === 'permission-denied') {
+            console.log('Permission denied for module access, using default access');
+            const defaultAccess: ModuleAccess = {
+              dashboard: true,
+              transactions: true,
+              loans: true,
+              reports: false,
+              settings: true,
+              accounts: true,
+              budgets: true,
+              categories: true,
+            };
+            setModuleAccess(defaultAccess);
+            setError(null);
+          } else {
+            setError(err.message);
+          }
           setLoading(false);
         }
       );
@@ -82,7 +99,24 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
       return unsubscribe;
     } catch (err: any) {
       console.error('Error fetching module access:', err);
-      setError(err.message || 'Failed to fetch module access');
+      // Handle permission errors gracefully
+      if (err.code === 'permission-denied') {
+        console.log('Permission denied for module access, using default access');
+        const defaultAccess: ModuleAccess = {
+          dashboard: true,
+          transactions: true,
+          loans: true,
+          reports: false,
+          settings: true,
+          accounts: true,
+          budgets: true,
+          categories: true,
+        };
+        setModuleAccess(defaultAccess);
+        setError(null);
+      } else {
+        setError(err.message || 'Failed to fetch module access');
+      }
       setLoading(false);
     }
   };

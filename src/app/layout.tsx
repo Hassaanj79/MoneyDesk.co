@@ -1,26 +1,25 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { DateRangeProvider } from '@/contexts/date-range-context';
 import { ThemeProvider } from '@/components/theme-provider';
-import { TransactionProvider } from '@/contexts/transaction-context';
-// import { NotificationProvider } from '@/contexts/notification-context';
+import { AuthProvider } from '@/contexts/auth-context';
+import { LanguageProvider } from '@/contexts/language-context';
+import { DateRangeProvider } from '@/contexts/date-range-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
 import { CountryProvider } from '@/contexts/country-context';
-import { AuthProvider } from '@/contexts/auth-context';
-import { AccountProvider } from '@/contexts/account-context';
-import { BudgetProvider } from '@/contexts/budget-context';
 import { CategoryProvider } from '@/contexts/category-context';
+import { AccountProvider } from '@/contexts/account-context';
+import { TransactionProvider } from '@/contexts/transaction-context';
+import { BudgetProvider } from '@/contexts/budget-context';
 import { LoanProvider } from '@/contexts/loan-context';
 import { LoanInstallmentProvider } from '@/contexts/loan-installment-context';
 import { TimezoneProvider } from '@/contexts/timezone-context';
-import { LanguageProvider } from '@/contexts/language-context';
-import { AdminProvider } from '@/contexts/admin-context';
 import { ModuleAccessProvider } from '@/contexts/module-access-context';
+import { AdminProvider } from '@/contexts/admin-context';
 import { ChatProvider } from '@/contexts/chat-context';
 import { NotificationProvider } from '@/contexts/notification-context';
-import { RecurringNotifications } from '@/components/recurring-notifications';
 import { ChatWidget } from '@/components/chat/chat-widget';
+import { ToastNotifications } from '@/components/notifications/toast-notifications';
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
@@ -63,39 +62,39 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <AuthProvider>
-              <ChatProvider>
-                <NotificationProvider>
-                  <AdminProvider>
-                    <ModuleAccessProvider>
+              <ModuleAccessProvider>
+                <AdminProvider>
                   <CurrencyProvider>
                     <CountryProvider>
                       <CategoryProvider>
                         <AccountProvider>
                           <TransactionProvider>
-                            <DateRangeProvider>
-                              <BudgetProvider>
-                                <LoanProvider>
-                                  <LoanInstallmentProvider>
-                                    <TimezoneProvider>
-                                      <RecurringNotifications />
-                                      {children}
-                                      <ChatWidget />
-                                      <Toaster />
-                                      <Analytics />
-                                    </TimezoneProvider>
-                                  </LoanInstallmentProvider>
-                                </LoanProvider>
-                              </BudgetProvider>
-                            </DateRangeProvider>
+                            <BudgetProvider>
+                              <LoanProvider>
+                                <LoanInstallmentProvider>
+                                  <TimezoneProvider>
+                                    <DateRangeProvider>
+                                      <ChatProvider>
+                                        <NotificationProvider>
+                                          {children}
+                                          <ChatWidget />
+                                          <ToastNotifications />
+                                          <Toaster />
+                                          <Analytics />
+                                        </NotificationProvider>
+                                      </ChatProvider>
+                                    </DateRangeProvider>
+                                  </TimezoneProvider>
+                                </LoanInstallmentProvider>
+                              </LoanProvider>
+                            </BudgetProvider>
                           </TransactionProvider>
                         </AccountProvider>
                       </CategoryProvider>
                     </CountryProvider>
                   </CurrencyProvider>
-                  </ModuleAccessProvider>
                 </AdminProvider>
-                </NotificationProvider>
-              </ChatProvider>
+              </ModuleAccessProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>

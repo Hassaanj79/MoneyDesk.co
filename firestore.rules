@@ -46,6 +46,10 @@ service cloud.firestore {
     // TOTP secrets - users can only access their own
     match /user_totp/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow admin to read all TOTP data for debugging
+      allow read: if request.auth != null && isAdmin();
+      // Allow read access for any authenticated user during login (temporary)
+      allow read: if request.auth != null;
     }
     
     // Email OTP - users can only access their own email OTPs

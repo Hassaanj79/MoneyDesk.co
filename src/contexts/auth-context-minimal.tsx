@@ -1,14 +1,11 @@
-
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  User, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  User,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
   updateProfile,
   sendPasswordResetEmail,
   sendEmailVerification,
@@ -21,14 +18,15 @@ import {
   isSignInWithEmailLink,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  PhoneAuthProvider,
-  signInWithCredential,
-  ConfirmationResult,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
 } from "firebase/auth";
-import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
+import { auth } from '@/lib/firebase';
 import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificationUrl } from '@/lib/auth-config';
 import { deleteUserAccount } from '@/services/account-deletion';
 import { createEmailOTP, verifyEmailOTP, resendEmailOTP } from '@/services/email-otp';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 interface AuthContextType {
   user: User | null;
@@ -50,10 +48,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProviderMinimal = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Start with loading true
-  const [authInitialized, setAuthInitialized] = useState(false); // Start as not initialized
+  const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -61,12 +59,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setAuthInitialized(false);
     
-    // Set a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       console.log('Auth timeout - setting loading to false');
       setLoading(false);
       setAuthInitialized(true);
-    }, 5000); // 5 second timeout
+    }, 5000);
     
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('Auth state changed:', user ? `User logged in: ${user.email}` : 'No user');
@@ -91,18 +88,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
+    console.log('=== LOGIN START ===');
     console.log('Attempting to login with email:', email);
-    console.log('Firebase auth instance:', auth);
-    console.log('Auth domain:', auth.config.authDomain);
-    console.log('Project ID:', auth.config.projectId);
     
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', result.user.email);
-      
-      // Login successful
-      console.log('Login completed successfully');
-      
+      console.log('=== LOGIN END ===');
       return result;
     } catch (error: any) {
       console.error('Login failed with detailed error:', {
@@ -124,15 +116,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signupWithVerification = async (email: string, password: string, name: string) => {
     try {
-      // Create the user account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
       
-      // Send OTP email immediately
       console.log('Sending OTP email for new user:', email);
-      const verificationUrl = createEmailVerificationUrl(email);
-      const actionCodeSettings = createActionCodeSettings(verificationUrl);
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      await createEmailOTP(email);
       console.log('OTP email sent successfully');
       
       return userCredential;
@@ -145,9 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const resendSignupOTP = async (email: string) => {
     try {
       console.log('Resending OTP email for:', email);
-      const verificationUrl = createEmailVerificationUrl(email);
-      const actionCodeSettings = createActionCodeSettings(verificationUrl);
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      await resendEmailOTP(email);
       console.log('OTP email resent successfully');
     } catch (error) {
       console.error('Error resending OTP:', error);
@@ -167,9 +153,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteAccount = async (password: string) => {
+    if (!user) {
+      throw new Error("No user logged in.");
+    }
     try {
-      await deleteUserAccount(password);
-      // User will be automatically logged out after account deletion
+      await deleteUserAccount(user, password);
     } catch (error) {
       console.error('Error deleting account:', error);
       throw error;
@@ -179,16 +167,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const sendPasswordReset = async (email: string) => {
     try {
       console.log('Sending password reset email to:', email);
-      
-      // Create action code settings with custom URL
       const actionCodeSettings = {
-        url: `https://moneydesk.co/reset-password`,
+        url: `https://${process.env.NEXT_PUBLIC_APP_DOMAIN}/reset-password`,
         handleCodeInApp: false,
       };
-      
-      const result = await sendPasswordResetEmail(auth, email, actionCodeSettings);
-      console.log('Password reset email sent successfully');
-      return result;
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
+      console.log('Password reset email sent successfully.');
     } catch (error) {
       console.error('Error in sendPasswordReset:', error);
       throw error;
@@ -201,7 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('Sending OTP for email verification:', user.email);
         const otp = await createEmailOTP(user.email);
         console.log('Email verification OTP sent successfully');
-        return { otp }; // Return OTP for testing purposes
+        return { otp };
       } catch (error) {
         console.error('Error in sendVerificationEmail:', error);
         throw error;
@@ -212,13 +196,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const verifyEmail = async (email: string, otp: string) => {
     try {
-      // Verify the OTP
       const isValid = await verifyEmailOTP(email, otp);
       if (!isValid) {
         throw new Error('Invalid OTP');
       }
       
-      // If OTP is valid, mark email as verified
       if (user && user.email === email) {
         await updateProfile(user, { emailVerified: true });
       }
@@ -232,7 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('Sending OTP email for:', email);
       const otp = await createEmailOTP(email);
       console.log('OTP email sent successfully');
-      return { otp }; // Return OTP for testing purposes
+      return { otp };
     } catch (error) {
       console.error('Error sending OTP email:', error);
       throw error;
@@ -241,13 +223,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const verifyOTP = async (email: string, otp: string) => {
     try {
-      // Verify the OTP
       const isValid = await verifyEmailOTP(email, otp);
       if (!isValid) {
         throw new Error('Invalid OTP');
       }
-      
-      // If OTP is valid, return success
       return { success: true };
     } catch (error) {
       throw error;
@@ -255,25 +234,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const sendPasswordResetWithOTP = async (email: string) => {
-    const actionCodeSettings = createActionCodeSettings(
-      createPasswordResetUrl(email)
-    );
-    
-    return sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    try {
+      console.log('Sending password reset OTP to:', email);
+      const otp = await createEmailOTP(email);
+      console.log('Password reset OTP sent successfully.');
+      return { otp };
+    } catch (error) {
+      console.error('Error in sendPasswordResetWithOTP:', error);
+      throw error;
+    }
   };
 
   const verifyPasswordResetOTP = async (email: string, otp: string, newPassword: string) => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      try {
-        const result = await signInWithEmailLink(auth, email, window.location.href);
-        // Update password
-        await result.user.updatePassword(newPassword);
-        return result;
-      } catch (error) {
-        throw error;
+    try {
+      const isValid = await verifyEmailOTP(email, otp);
+      if (!isValid) {
+        throw new Error('Invalid OTP');
       }
+      
+      if (auth.currentUser && auth.currentUser.email === email) {
+        await updatePassword(auth.currentUser, newPassword);
+      } else {
+        throw new Error('User not authenticated or email mismatch for password reset.');
+      }
+    } catch (error) {
+      console.error('Error in verifyPasswordResetOTP:', error);
+      throw error;
     }
-    throw new Error('Invalid password reset link');
   };
 
   const value = {
@@ -300,7 +287,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within a AuthProvider");
   }
   return context;
 };

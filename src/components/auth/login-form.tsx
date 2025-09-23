@@ -20,7 +20,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-// TOTP imports removed - only enable when user explicitly turns it on
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
@@ -36,7 +36,6 @@ export function LoginForm() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  // TOTP state removed - only enable when user explicitly turns it on
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -46,15 +45,14 @@ export function LoginForm() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotEmailError, setForgotEmailError] = useState("");
 
-  async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
-    setLoading(prev => ({...prev, email: true}));
-    setError(null);
-    try {
-      console.log('Login attempt started for:', values.email);
-      await login(values.email, values.password);
-      console.log('Login successful');
-      // TOTP check removed - only enable when user explicitly turns it on
-    } catch (err: any) {
+      async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
+        setLoading(prev => ({...prev, email: true}));
+        setError(null);
+        try {
+          console.log('Login attempt started for:', values.email);
+          const result = await login(values.email, values.password);
+          console.log('Login successful:', result);
+        } catch (err: any) {
       console.error("Login error details:", {
         code: err.code,
         message: err.message,
@@ -102,7 +100,6 @@ export function LoginForm() {
     setError(null);
   };
 
-  // TOTP handlers removed - only enable when user explicitly turns it on
 
   async function onForgotPasswordSubmit(e: React.FormEvent) {
     e.preventDefault();

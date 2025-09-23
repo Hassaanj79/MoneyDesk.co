@@ -188,7 +188,7 @@ export type ChatConversation = {
 export type Notification = {
   id: string;
   userId: string;
-  type: 'chat_reply' | 'cancellation_request' | 'admin_alert' | 'system';
+  type: 'chat_reply' | 'cancellation_request' | 'admin_alert' | 'system' | 'transaction' | 'budget' | 'account' | 'loan' | 'security' | 'profile' | 'settings' | 'report' | 'backup' | 'sync' | 'update' | 'maintenance';
   title: string;
   message: string;
   isRead: boolean;
@@ -196,6 +196,11 @@ export type Notification = {
     conversationId?: string;
     cancellationRequestId?: string;
     adminId?: string;
+    transactionId?: string;
+    budgetId?: string;
+    accountId?: string;
+    loanId?: string;
+    reportId?: string;
     [key: string]: any;
   };
   createdAt: string;

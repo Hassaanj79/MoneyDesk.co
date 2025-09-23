@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/tabs"
 import { ProfileForm } from "@/components/settings/profile-form"
 import { AppConfigForm } from "@/components/settings/app-config-form"
-import { GeneralSettings } from "@/components/settings/general-settings"
+import { SecuritySettings } from "@/components/settings/security-settings"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
@@ -36,8 +36,8 @@ export default function SettingsPage() {
             <TabsTrigger value="profile" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="general" className="flex items-center justify-center p-3 text-xs sm:text-sm">
-              <span>General</span>
+            <TabsTrigger value="security" className="flex items-center justify-center p-3 text-xs sm:text-sm">
+              <span>Security</span>
             </TabsTrigger>
             <TabsTrigger value="app-config" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>App Config</span>
@@ -46,8 +46,8 @@ export default function SettingsPage() {
           <TabsContent value="profile">
             <ProfileForm />
           </TabsContent>
-          <TabsContent value="general">
-            <GeneralSettings />
+          <TabsContent value="security">
+            <SecuritySettings />
           </TabsContent>
           <TabsContent value="app-config">
             <AppConfigForm />

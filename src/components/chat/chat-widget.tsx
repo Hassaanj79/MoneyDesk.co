@@ -131,21 +131,20 @@ export function ChatWidget({ className }: ChatWidgetProps) {
     <>
       {/* Floating Chat Button */}
       <div className={cn("fixed bottom-6 right-6 z-50", className)}>
-        <Button
-          onClick={() => setIsOpen(!isOpen)}
-          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg"
-          size="icon"
-        >
-          <MessageSquare className="h-6 w-6" />
+        <div className="relative">
+          <Button
+            onClick={() => setIsOpen(!isOpen)}
+            className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg"
+            size="icon"
+          >
+            <MessageSquare className="h-6 w-6" />
+          </Button>
           {totalUnreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-2 -right-2 h-6 w-6 rounded-full flex items-center justify-center text-xs"
-            >
+            <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-bold shadow-lg border-2 border-white">
               {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
-            </Badge>
+            </div>
           )}
-        </Button>
+        </div>
       </div>
 
       {/* Chat Widget */}

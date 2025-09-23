@@ -7,14 +7,12 @@ import { CurrencySettings } from "./currency-settings"
 import { CategoryManager } from "./category-manager"
 import { AccountsSettings } from "./accounts-settings"
 import { BudgetsSettings } from "./budgets-settings"
-import { GeneralSettings } from "./general-settings"
 import {
   Settings,
   DollarSign,
   Tag,
   CreditCard,
-  Target,
-  Cog
+  Target
 } from "lucide-react"
 
 export function AppConfigForm() {
@@ -31,12 +29,8 @@ export function AppConfigForm() {
                 </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto gap-1">
-              <TabsTrigger value="general" className="flex flex-col items-center gap-1 p-2 text-xs">
-                <Cog className="h-3 w-3" />
-                <span className="truncate">General</span>
-              </TabsTrigger>
+          <Tabs defaultValue="currency" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
               <TabsTrigger value="currency" className="flex flex-col items-center gap-1 p-2 text-xs">
                 <DollarSign className="h-3 w-3" />
                 <span className="truncate">Currency</span>
@@ -54,10 +48,6 @@ export function AppConfigForm() {
                 <span className="truncate">Budgets</span>
               </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="general">
-              <GeneralSettings />
-            </TabsContent>
             
             <TabsContent value="currency">
               <CurrencySettings />
