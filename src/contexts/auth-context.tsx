@@ -29,6 +29,7 @@ import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
 import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificationUrl } from '@/lib/auth-config';
 import { deleteUserAccount } from '@/services/account-deletion';
 import { createEmailOTP, verifyEmailOTP, resendEmailOTP } from '@/services/email-otp';
+import { createOrUpdateDeviceSession, generateDeviceId } from '@/services/device-management';
 
 interface AuthContextType {
   user: User | null;
@@ -99,6 +100,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', result.user.email);
+      
+      // Create device session
+      try {
+        const deviceId = localStorage.getItem('deviceId') || generateDeviceId();
+        localStorage.setItem('deviceId', deviceId);
+        
+        const deviceName = `${navigator.platform} - ${navigator.userAgent.split(' ')[0]}`;
+        const userAgent = navigator.userAgent;
+        
+        // Mock IP and location for now - in production, you'd get this from a service
+        const ipAddress = '127.0.0.1';
+        const location = {
+          city: 'Unknown',
+          country: 'Unknown',
+          region: 'Unknown'
+        };
+        
+        await createOrUpdateDeviceSession(
+          result.user.uid,
+          deviceId,
+          deviceName,
+          userAgent,
+          ipAddress,
+          location,
+          false // Default to not remembered
+        );
+        
+        console.log('Device session created successfully');
+      } catch (deviceError) {
+        console.error('Error creating device session:', deviceError);
+        // Don't fail login if device session creation fails
+      }
       
       // Login successful
       console.log('Login completed successfully');

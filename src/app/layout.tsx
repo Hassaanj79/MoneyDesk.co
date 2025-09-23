@@ -18,6 +18,7 @@ import { ModuleAccessProvider } from '@/contexts/module-access-context';
 import { AdminProvider } from '@/contexts/admin-context';
 import { ChatProvider } from '@/contexts/chat-context';
 import { NotificationProvider } from '@/contexts/notification-context';
+import { DeviceProvider } from '@/contexts/device-context';
 import { ChatWidget } from '@/components/chat/chat-widget';
 import { ToastNotifications } from '@/components/notifications/toast-notifications';
 import { Analytics } from '@vercel/analytics/next';
@@ -73,17 +74,19 @@ export default function RootLayout({
                               <LoanProvider>
                                 <LoanInstallmentProvider>
                                   <TimezoneProvider>
-                                    <DateRangeProvider>
-                                      <ChatProvider>
-                                        <NotificationProvider>
-                                          {children}
-                                          <ChatWidget />
-                                          <ToastNotifications />
-                                          <Toaster />
-                                          <Analytics />
-                                        </NotificationProvider>
-                                      </ChatProvider>
-                                    </DateRangeProvider>
+                                        <DateRangeProvider>
+                                          <ChatProvider>
+                                            <NotificationProvider>
+                                              <DeviceProvider>
+                                                {children}
+                                                <ChatWidget />
+                                                <ToastNotifications />
+                                                <Toaster />
+                                                <Analytics />
+                                              </DeviceProvider>
+                                            </NotificationProvider>
+                                          </ChatProvider>
+                                        </DateRangeProvider>
                                   </TimezoneProvider>
                                 </LoanInstallmentProvider>
                               </LoanProvider>

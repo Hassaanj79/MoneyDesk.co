@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Shield, Key, Smartphone, Eye, EyeOff, Lock, UserCheck, Check, X } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { DeviceManagement } from "./device-management"
 import { toast } from "sonner"
 
 export function SecuritySettings() {
@@ -602,6 +603,9 @@ export function SecuritySettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Device Management */}
+      <DeviceManagement />
 
       {message && (
         <Alert variant={message.type === "error" ? "destructive" : "default"}>
