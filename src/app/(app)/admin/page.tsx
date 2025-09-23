@@ -11,11 +11,13 @@ import {
   CreditCard, 
   Settings, 
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  Mail
 } from 'lucide-react';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { UserManagement } from '@/components/admin/user-management';
 import { SubscriptionManagement } from '@/components/admin/subscription-management';
+import { CancellationInbox } from '@/components/admin/cancellation-inbox';
 import { useAuth } from '@/contexts/auth-context';
 
 // Admin access check - only your credentials allowed
@@ -82,6 +84,12 @@ export default function AdminPage() {
       label: 'Users',
       icon: Users,
       description: 'Manage user accounts'
+    },
+    {
+      id: 'cancellations',
+      label: 'Cancellations',
+      icon: Mail,
+      description: 'User cancellation requests'
     },
     {
       id: 'subscriptions',
@@ -164,6 +172,10 @@ export default function AdminPage() {
 
           <TabsContent value="users" className="space-y-6">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="cancellations" className="space-y-6">
+            <CancellationInbox />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">

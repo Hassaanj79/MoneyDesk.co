@@ -16,28 +16,14 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera, User, Loader2, Trash2, AlertTriangle } from "lucide-react"
+import { Camera, User, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 // import { useNotifications } from "@/contexts/notification-context"
 import { useAuth } from "@/contexts/auth-context"
 import { getUserProfile, updateUserProfile } from "@/services/users"
 import { updateProfile } from "firebase/auth"
-import { deleteUserAccount, getAccountDeletionWarning } from "@/services/account-deletion"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Separator } from "@/components/ui/separator"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters.").optional(),
@@ -50,14 +36,10 @@ const profileFormSchema = z.object({
 })
 
 export function ProfileForm() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   // const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(true);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [password, setPassword] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -170,55 +152,6 @@ export function ProfileForm() {
     return initials.slice(0, 2);
   }
 
-  const handleDeleteAccount = async () => {
-    if (!password.trim()) {
-      // addNotification({
-      //   icon: AlertTriangle,
-      //   title: 'Password Required',
-      //   description: 'Please enter your password to confirm account deletion.',
-      //   variant: 'destructive',
-      // });
-      return;
-    }
-
-    setDeleteLoading(true);
-    
-    try {
-      await deleteUserAccount(password);
-      
-      // addNotification({
-      //   icon: Trash2,
-      //   title: 'Account Deleted',
-      //   description: 'Your account and all data have been permanently deleted.',
-      // });
-
-      // Logout and redirect to login
-      await logout();
-      router.push('/login');
-    } catch (error: any) {
-      console.error('Error deleting account:', error);
-      
-      let errorMessage = 'Failed to delete account. Please try again.';
-      if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password. Please try again.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many failed attempts. Please try again later.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      // addNotification({
-      //   icon: AlertTriangle,
-      //   title: 'Deletion Failed',
-      //   description: errorMessage,
-      //   variant: 'destructive',
-      // });
-    } finally {
-      setDeleteLoading(false);
-      setShowDeleteDialog(false);
-      setPassword("");
-    }
-  };
 
   if (loading) {
     return (
@@ -362,79 +295,6 @@ export function ProfileForm() {
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Update Profile
         </Button>
-
-        <Separator className="my-8" />
-
-        {/* Delete Account Section */}
-        <div className="space-y-4 p-6 border border-destructive/20 rounded-lg bg-destructive/5">
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Danger Zone
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Once you delete your account, there is no going back. Please be certain.
-            </p>
-          </div>
-
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="w-full sm:w-auto">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Account
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-md">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                  <AlertTriangle className="h-5 w-5" />
-                  Delete Account
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  Please review the details below before proceeding.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              
-              <div className="space-y-4">
-                <div className="text-sm whitespace-pre-line leading-relaxed">
-                  {getAccountDeletionWarning()}
-                </div>
-                <div className="space-y-3 pt-2 border-t">
-                  <label className="text-sm font-medium text-foreground">
-                    Enter your password to confirm:
-                  </label>
-                  <Input
-                    type="password"
-                    placeholder="Your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full"
-                    autoComplete="current-password"
-                  />
-                </div>
-              </div>
-              <AlertDialogFooter>
-                <AlertDialogCancel 
-                  onClick={() => {
-                    setPassword("");
-                    setShowDeleteDialog(false);
-                  }}
-                  disabled={deleteLoading}
-                >
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteAccount}
-                  disabled={deleteLoading || !password.trim()}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {deleteLoading ? 'Deleting...' : 'Delete Account'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
       </form>
     </Form>
   )

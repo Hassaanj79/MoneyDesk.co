@@ -132,3 +132,39 @@ MoneyDesk.co Team
     body
   });
 };
+
+export const sendExitSurveyEmail = async (
+  adminEmail: string,
+  surveyData: {
+    name: string;
+    email: string;
+    reason: string;
+    userId: string;
+    submittedAt: string;
+  }
+): Promise<boolean> => {
+  const subject = 'User Account Cancellation - Exit Survey';
+  const body = `
+A user has submitted an exit survey before canceling their account:
+
+User Details:
+• Name: ${surveyData.name}
+• Email: ${surveyData.email}
+• User ID: ${surveyData.userId}
+• Submitted At: ${surveyData.submittedAt}
+
+Reason for Canceling:
+${surveyData.reason}
+
+Please reach out to this user to understand their concerns and potentially retain them as a customer.
+
+Best regards,
+MoneyDesk.co System
+  `;
+
+  return await sendEmail({
+    to: adminEmail,
+    subject,
+    body
+  });
+};

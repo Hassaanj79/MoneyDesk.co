@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required.").min(2, "Name must be at least 2 characters."),
@@ -29,9 +30,9 @@ const formSchema = z.object({
 
 
 export function SignupForm() {
-    const { signup, sendVerificationEmail } = useAuth();
+    const { signupWithVerification } = useAuth();
+    const router = useRouter();
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState({ email: false });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -43,20 +44,18 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(prev => ({...prev, email: true}));
     setError(null);
-    setSuccess(null);
     try {
-        await signup(values.email, values.password, values.name);
-        // Send verification email after successful signup
-        try {
-          await sendVerificationEmail();
-          setSuccess("Account created successfully! Please check your email to verify your account before logging in.");
-        } catch (verifyErr) {
-          setSuccess("Account created successfully! You can now log in.");
-        }
-        form.reset();
+        await signupWithVerification(values.email, values.password, values.name);
+        // Redirect to OTP verification page
+        router.push(`/verify-signup-otp?email=${encodeURIComponent(values.email)}`);
     } catch(err: any) {
+        console.error('Signup error:', err);
         if (err.code === 'auth/email-already-in-use') {
             setError("This email is already in use. Please try another one.");
+        } else if (err.code === 'auth/weak-password') {
+            setError("Password is too weak. Please choose a stronger password.");
+        } else if (err.code === 'auth/invalid-email') {
+            setError("Please enter a valid email address.");
         } else {
             setError("An unexpected error occurred. Please try again.");
         }
@@ -76,7 +75,6 @@ export function SignupForm() {
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-                {success && <Alert><AlertDescription>{success}</AlertDescription></Alert>}
                  <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Name</FormLabel>

@@ -128,4 +128,23 @@ export type AdminStats = {
   totalAccounts: number;
 };
 
+export type CancellationRequest = {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  phone: string;
+  reason: string;
+  status: 'NEW' | 'IN_PROGRESS' | 'RETAINED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+  metadata: {
+    userAgent: string;
+    ip: string;
+    source: 'web' | 'ios' | 'android';
+  };
+  adminNotes?: string;
+  adminId?: string;
+};
+
 // export * from './notification';

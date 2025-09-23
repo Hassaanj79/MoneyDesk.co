@@ -27,13 +27,17 @@ import {
 } from "firebase/auth";
 import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
 import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificationUrl } from '@/lib/auth-config';
+import { deleteUserAccount } from '@/services/account-deletion';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, name: string) => Promise<any>;
+  signupWithVerification: (email: string, password: string, name: string) => Promise<any>;
+  resendSignupOTP: (email: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   verifyEmail: (actionCode: string) => Promise<void>;
@@ -100,8 +104,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return userCredential;
   };
 
+  const signupWithVerification = async (email: string, password: string, name: string) => {
+    try {
+      // Create the user account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      
+      // Send OTP email immediately
+      console.log('Sending OTP email for new user:', email);
+      const verificationUrl = createEmailVerificationUrl(email);
+      const actionCodeSettings = createActionCodeSettings(verificationUrl);
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      console.log('OTP email sent successfully');
+      
+      return userCredential;
+    } catch (error) {
+      console.error('Error in signupWithVerification:', error);
+      throw error;
+    }
+  };
+
+  const resendSignupOTP = async (email: string) => {
+    try {
+      console.log('Resending OTP email for:', email);
+      const verificationUrl = createEmailVerificationUrl(email);
+      const actionCodeSettings = createActionCodeSettings(verificationUrl);
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      console.log('OTP email resent successfully');
+    } catch (error) {
+      console.error('Error resending OTP:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     return signOut(auth);
+  };
+
+  const deleteAccount = async (password: string) => {
+    try {
+      await deleteUserAccount(password);
+      // User will be automatically logged out after account deletion
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      throw error;
+    }
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -125,7 +172,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const sendVerificationEmail = async () => {
     if (user && !user.emailVerified) {
-      return sendEmailVerification(user);
+      try {
+        console.log('Creating action code settings for email verification:', user.email);
+        const verificationUrl = createEmailVerificationUrl(user.email);
+        console.log('Verification URL:', verificationUrl);
+        
+        const actionCodeSettings = createActionCodeSettings(verificationUrl);
+        console.log('Action code settings:', actionCodeSettings);
+        
+        console.log('Sending email verification link...');
+        const result = await sendSignInLinkToEmail(auth, user.email, actionCodeSettings);
+        console.log('Email verification link sent successfully:', result);
+        return result;
+      } catch (error) {
+        console.error('Error in sendVerificationEmail:', error);
+        throw error;
+      }
     }
     throw new Error('No user logged in or email already verified');
   };
@@ -188,7 +250,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     login,
     signup,
+    signupWithVerification,
+    resendSignupOTP,
     logout,
+    deleteAccount,
     sendPasswordReset,
     sendVerificationEmail,
     verifyEmail,

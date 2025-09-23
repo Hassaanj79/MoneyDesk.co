@@ -28,5 +28,19 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
+    
+    // Cancellation requests
+    match /cancellationRequests/{requestId} {
+      // Users can create their own cancellation requests
+      allow create: if request.auth != null && 
+                      request.auth.uid == request.resource.data.userId;
+      
+      // Users can read their own requests, admins can read all
+      allow read: if request.auth != null && 
+                    (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // Only admins can update/delete cancellation requests
+      allow update, delete: if request.auth != null && isAdmin();
+    }
   }
 }
