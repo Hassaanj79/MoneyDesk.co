@@ -9,7 +9,6 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Shield, Key, Smartphone, Eye, EyeOff, Lock, UserCheck, Check, X } from "lucide-react"
-import { DemoNotifications } from "@/components/notifications/demo-notifications"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 
@@ -617,8 +616,6 @@ export function SecuritySettings() {
         </Button>
       </div>
 
-      {/* Demo Notifications */}
-      <DemoNotifications />
     </div>
   )
 }
