@@ -20,6 +20,7 @@ interface AdminContextType {
   stats: AdminStats | null;
   loading: boolean;
   error: string | null;
+  isAdmin: boolean;
   
   // Actions
   refreshUsers: () => Promise<void>;
@@ -42,6 +43,17 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user?.email) {
+      const adminEmails = ['hassyku786@gmail.com', 'HASSYKU786@GMAIL.COM', 'Hassyku786@gmail.com'];
+      setIsAdmin(adminEmails.includes(user.email));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user?.email]);
 
   const refreshUsers = async () => {
     try {
@@ -276,6 +288,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     stats,
     loading,
     error,
+    isAdmin,
     refreshUsers,
     refreshStats,
     updateUserAccess,

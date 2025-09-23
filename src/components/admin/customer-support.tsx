@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useAdmin } from '@/contexts/admin-context';
 import { 
   getAllConversations, 
   listenToAllConversations, 
@@ -39,6 +40,7 @@ import { cn } from '@/lib/utils';
 
 export function CustomerSupport() {
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -58,12 +60,19 @@ export function CustomerSupport() {
 
   // Load conversations
   useEffect(() => {
+    if (!isAdmin) {
+      setError('Access denied. Admin privileges required.');
+      return;
+    }
+
     const loadConversations = async () => {
       setLoading(true);
       try {
         const allConversations = await getAllConversations();
         setConversations(allConversations);
+        setError(null);
       } catch (err: any) {
+        console.error('Error loading conversations:', err);
         setError(err.message || 'Failed to load conversations');
       } finally {
         setLoading(false);
@@ -78,7 +87,7 @@ export function CustomerSupport() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin]);
 
   // Select conversation and load messages
   const selectConversation = async (conversationId: string) => {
@@ -112,7 +121,7 @@ export function CustomerSupport() {
   // Send message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentConversation || !user || sending) return;
+    if (!newMessage.trim() || !currentConversation || !user || sending || !isAdmin) return;
 
     setSending(true);
     try {
@@ -431,13 +440,13 @@ export function CustomerSupport() {
                   <Textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
+                    placeholder={isAdmin ? "Type your message..." : "Admin access required"}
                     className="flex-1 min-h-[60px] font-sans"
-                    disabled={sending}
+                    disabled={sending || !isAdmin}
                   />
                   <Button
                     type="submit"
-                    disabled={!newMessage.trim() || sending}
+                    disabled={!newMessage.trim() || sending || !isAdmin}
                     className="self-end"
                   >
                     {sending ? (

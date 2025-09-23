@@ -48,44 +48,44 @@ export function ToastNotifications() {
   }, [notifications, unreadCount, shownNotifications]);
 
   const showNotificationToast = (notification: any) => {
-  const getIcon = () => {
-    switch (notification.type) {
-      case 'chat_reply':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'cancellation_request':
-        return <UserX className="h-4 w-4" />;
-      case 'admin_alert':
-        return <AlertTriangle className="h-4 w-4" />;
-      case 'system':
-        return <Settings className="h-4 w-4" />;
-      case 'transaction':
-        return <DollarSign className="h-4 w-4" />;
-      case 'budget':
-        return <Target className="h-4 w-4" />;
-      case 'account':
-        return <CreditCard className="h-4 w-4" />;
-      case 'loan':
-        return <TrendingUp className="h-4 w-4" />;
-      case 'security':
-        return <Shield className="h-4 w-4" />;
-      case 'profile':
-        return <User className="h-4 w-4" />;
-      case 'settings':
-        return <Settings className="h-4 w-4" />;
-      case 'report':
-        return <FileText className="h-4 w-4" />;
-      case 'backup':
-        return <Download className="h-4 w-4" />;
-      case 'sync':
-        return <RefreshCw className="h-4 w-4" />;
-      case 'update':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'maintenance':
-        return <Wrench className="h-4 w-4" />;
-      default:
-        return <Bell className="h-4 w-4" />;
-    }
-  };
+    const getIcon = () => {
+      switch (notification.type) {
+        case 'chat_reply':
+          return <MessageSquare className="h-4 w-4" />;
+        case 'cancellation_request':
+          return <UserX className="h-4 w-4" />;
+        case 'admin_alert':
+          return <AlertTriangle className="h-4 w-4" />;
+        case 'system':
+          return <Settings className="h-4 w-4" />;
+        case 'transaction':
+          return <DollarSign className="h-4 w-4" />;
+        case 'budget':
+          return <Target className="h-4 w-4" />;
+        case 'account':
+          return <CreditCard className="h-4 w-4" />;
+        case 'loan':
+          return <TrendingUp className="h-4 w-4" />;
+        case 'security':
+          return <Shield className="h-4 w-4" />;
+        case 'profile':
+          return <User className="h-4 w-4" />;
+        case 'settings':
+          return <Settings className="h-4 w-4" />;
+        case 'report':
+          return <FileText className="h-4 w-4" />;
+        case 'backup':
+          return <Download className="h-4 w-4" />;
+        case 'sync':
+          return <RefreshCw className="h-4 w-4" />;
+        case 'update':
+          return <CheckCircle className="h-4 w-4" />;
+        case 'maintenance':
+          return <Wrench className="h-4 w-4" />;
+        default:
+          return <Bell className="h-4 w-4" />;
+      }
+    };
 
     const getToastType = () => {
       switch (notification.priority) {
