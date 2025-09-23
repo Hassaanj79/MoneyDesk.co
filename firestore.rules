@@ -77,7 +77,9 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                       request.auth.uid == request.resource.data.senderId;
       allow read: if request.auth != null && 
-                    (request.auth.uid == resource.data.senderId || isAdmin());
+                    (request.auth.uid == resource.data.senderId || 
+                     request.auth.uid == resource.data.userId || 
+                     isAdmin());
     }
     
     // Notifications - users can read their own notifications

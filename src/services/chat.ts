@@ -64,12 +64,17 @@ export const sendMessage = async (
   message: string
 ): Promise<string> => {
   try {
+    // Get conversation to find the userId
+    const conversationDoc = await getDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId));
+    const conversationData = conversationDoc.data();
+    
     const messageData = {
       conversationId,
       senderId,
       senderName,
       senderType,
       message,
+      userId: conversationData?.userId || senderId, // Add userId for permission checking
       timestamp: serverTimestamp(),
       isRead: false,
       metadata: {
