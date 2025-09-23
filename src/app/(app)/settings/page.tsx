@@ -19,6 +19,7 @@ import {
 import { ProfileForm } from "@/components/settings/profile-form"
 import { AppConfigForm } from "@/components/settings/app-config-form"
 import { SecuritySettings } from "@/components/settings/security-settings"
+import { AIPrivacyToggle } from "@/components/ai/ai-privacy-toggle"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
@@ -50,7 +51,10 @@ export default function SettingsPage() {
             <SecuritySettings />
           </TabsContent>
           <TabsContent value="app-config">
-            <AppConfigForm />
+            <div className="space-y-6">
+              <AppConfigForm />
+              <AIPrivacyToggle />
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>

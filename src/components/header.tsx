@@ -18,6 +18,7 @@ import {
   HandCoins,
   Settings,
   Shield,
+  Bot,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Logo } from "@/components/icons/logo";
@@ -27,7 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { searchTransactions } from "@/ai/flows/search";
 import type { Transaction } from "@/types";
 import { cn } from "@/lib/utils";
-import { RecapStory } from "@/components/dashboard/recap-story";
+import { AISummaryPanel } from "@/components/ai/ai-summary-panel";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 // import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
@@ -74,7 +75,7 @@ export function Header() {
   }[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchPopoverOpen, setSearchPopoverOpen] = React.useState(false);
-  const [recapOpen, setRecapOpen] = React.useState(false);
+  const [aiSummaryOpen, setAiSummaryOpen] = React.useState(false);
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = React.useState(false);
   const { transactions } = useTransactions();
@@ -516,13 +517,13 @@ export function Header() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setRecapOpen(true)}>
-                    <History className="h-5 w-5" />
-                    <span className="sr-only">View recap</span>
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setAiSummaryOpen(true)}>
+                    <Bot className="h-5 w-5" />
+                    <span className="sr-only">AI Summary</span>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>View recap</p>
+                    <p>AI Summary</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -557,7 +558,7 @@ export function Header() {
             </DropdownMenu>
 
         </div>
-        <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
+        <AISummaryPanel open={aiSummaryOpen} onOpenChange={setAiSummaryOpen} />
         
         {/* Logout Confirmation Dialog */}
         <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
