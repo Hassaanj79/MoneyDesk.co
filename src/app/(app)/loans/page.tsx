@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { ProtectedRoute } from "@/components/protected-route";
+import { ModuleAccessGuard } from "@/components/module-access-guard";
+import { useModuleAccess } from "@/contexts/module-access-context";
 import {
   Table,
   TableBody,
@@ -53,6 +55,7 @@ import { useAccounts } from "@/contexts/account-context";
 function LoansPageContent() {
   const { loans, deleteLoan } = useLoans();
   const { accounts } = useAccounts();
+  const { moduleAccess, userSubscription } = useModuleAccess();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -233,7 +236,20 @@ function LoansPageContent() {
   }, [loans]);
 
   return (
-    <>
+    <ModuleAccessGuard 
+      module="loans" 
+      userModuleAccess={moduleAccess || {
+        dashboard: true,
+        transactions: true,
+        loans: false,
+        reports: false,
+        settings: true,
+        accounts: true,
+        budgets: false,
+        categories: true
+      }}
+      userSubscription={userSubscription}
+    >
       {/* Loan Summary */}
       <Card className="mb-3">
         <CardHeader>
@@ -656,7 +672,7 @@ function LoansPageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </ModuleAccessGuard>
   );
 }
 

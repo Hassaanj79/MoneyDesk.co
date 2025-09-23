@@ -8,6 +8,10 @@ import type { ModuleAccess } from '@/types';
 
 interface ModuleAccessContextType {
   moduleAccess: ModuleAccess | null;
+  userSubscription: {
+    tier: 'free' | 'premium' | 'enterprise';
+    status: 'active' | 'inactive' | 'cancelled' | 'expired';
+  } | null;
   loading: boolean;
   error: string | null;
   hasAccess: (module: keyof ModuleAccess) => boolean;
@@ -19,6 +23,10 @@ const ModuleAccessContext = createContext<ModuleAccessContextType | undefined>(u
 export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [moduleAccess, setModuleAccess] = useState<ModuleAccess | null>(null);
+  const [userSubscription, setUserSubscription] = useState<{
+    tier: 'free' | 'premium' | 'enterprise';
+    status: 'active' | 'inactive' | 'cancelled' | 'expired';
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,28 +55,38 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
               const defaultAccess: ModuleAccess = {
                 dashboard: true,
                 transactions: true,
-                loans: true,
+                loans: false,
                 reports: false,
                 settings: true,
                 accounts: true,
-                budgets: true,
+                budgets: false,
                 categories: true,
               };
               setModuleAccess(defaultAccess);
             }
+            
+            // Set subscription information
+            setUserSubscription({
+              tier: subscriptionData.tier || 'free',
+              status: subscriptionData.status || 'active'
+            });
           } else {
             // No subscription document, use default access
             const defaultAccess: ModuleAccess = {
               dashboard: true,
               transactions: true,
-              loans: true,
+              loans: false,
               reports: false,
               settings: true,
               accounts: true,
-              budgets: true,
+              budgets: false,
               categories: true,
             };
             setModuleAccess(defaultAccess);
+            setUserSubscription({
+              tier: 'free',
+              status: 'active'
+            });
           }
           setLoading(false);
         },
@@ -147,6 +165,7 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
 
   const value = {
     moduleAccess,
+    userSubscription,
     loading,
     error,
     hasAccess,

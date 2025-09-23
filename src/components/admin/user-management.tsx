@@ -45,6 +45,8 @@ import {
 import { useAdmin } from '@/contexts/admin-context';
 import type { AdminUser, ModuleAccess, SubscriptionTier } from '@/types';
 import { format } from 'date-fns';
+import { ModuleManagement } from './module-management';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function UserManagement() {
   const { users, loading, error, updateUserAccess, updateSubscription, updateUserAccessAndSubscription, toggleUser, removeUser, refreshUsers } = useAdmin();
@@ -373,7 +375,7 @@ export function UserManagement() {
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit User: {selectedUser?.name || selectedUser?.email}</DialogTitle>
             <DialogDescription>
@@ -381,78 +383,100 @@ export function UserManagement() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6">
-            {/* Subscription Settings */}
-            <div className="space-y-4">
-              <h4 className="font-medium">Subscription</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Tier</label>
-                  <Select 
-                    value={editingSubscription.tier} 
-                    onValueChange={(value: SubscriptionTier) => 
-                      setEditingSubscription(prev => ({ ...prev, tier: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Select 
-                    value={editingSubscription.status} 
-                    onValueChange={(value: 'active' | 'inactive' | 'cancelled' | 'expired') => 
-                      setEditingSubscription(prev => ({ ...prev, status: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                      <SelectItem value="expired">Expired</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Module Access */}
-            <div className="space-y-4">
-              <h4 className="font-medium">Module Access</h4>
-              <div className="grid grid-cols-2 gap-4">
-                {Object.entries(editingModuleAccess).map(([module, hasAccess]) => (
-                  <div key={module} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={module}
-                      checked={hasAccess}
-                      onCheckedChange={(checked) =>
-                        setEditingModuleAccess(prev => ({
-                          ...prev,
-                          [module]: checked as boolean
-                        }))
-                      }
-                    />
-                    <label
-                      htmlFor={module}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {module.charAt(0).toUpperCase() + module.slice(1)}
-                    </label>
+          {selectedUser && (
+            <Tabs defaultValue="modules" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="modules">Module Access</TabsTrigger>
+                <TabsTrigger value="subscription">Subscription</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="modules" className="space-y-4">
+                <ModuleManagement
+                  userId={selectedUser.id}
+                  userEmail={selectedUser.email}
+                  userName={selectedUser.name || selectedUser.email}
+                  currentModuleAccess={selectedUser.moduleAccess}
+                  userSubscription={{
+                    tier: getTierFromModuleAccess(selectedUser.moduleAccess),
+                    status: 'active'
+                  }}
+                />
+              </TabsContent>
+              
+              <TabsContent value="subscription" className="space-y-6">
+                {/* Subscription Settings */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Subscription Settings</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Tier</label>
+                      <Select 
+                        value={editingSubscription.tier} 
+                        onValueChange={(value: SubscriptionTier) => 
+                          setEditingSubscription(prev => ({ ...prev, tier: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Status</label>
+                      <Select 
+                        value={editingSubscription.status} 
+                        onValueChange={(value: 'active' | 'inactive' | 'cancelled' | 'expired') => 
+                          setEditingSubscription(prev => ({ ...prev, status: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                </div>
+
+                {/* Legacy Module Access (for backward compatibility) */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Quick Module Access</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {Object.entries(editingModuleAccess).map(([module, hasAccess]) => (
+                      <div key={module} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={module}
+                          checked={hasAccess}
+                          onCheckedChange={(checked) =>
+                            setEditingModuleAccess(prev => ({
+                              ...prev,
+                              [module]: checked as boolean
+                            }))
+                          }
+                        />
+                        <label
+                          htmlFor={module}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {module.charAt(0).toUpperCase() + module.slice(1)}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>

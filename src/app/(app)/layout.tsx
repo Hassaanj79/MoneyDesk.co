@@ -15,12 +15,17 @@ export default function AuthenticatedLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // TEMPORARILY BYPASS AUTHENTICATION FOR ADMIN PAGE
+    const isAdminPage = window.location.pathname === '/admin';
+    if (!loading && !user && !isAdminPage) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  // TEMPORARILY BYPASS LOADING FOR ADMIN PAGE
+  const isAdminPage = typeof window !== 'undefined' && window.location.pathname === '/admin';
+  
+  if (loading && !isAdminPage) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
         <div className="text-center">
@@ -31,7 +36,7 @@ export default function AuthenticatedLayout({
     );
   }
 
-  if (!user) {
+  if (!user && !isAdminPage) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
         <div className="text-center">

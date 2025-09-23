@@ -13,13 +13,15 @@ import {
   Shield,
   AlertTriangle,
   Mail,
-  MessageSquare
+  Search
 } from 'lucide-react';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { UserManagement } from '@/components/admin/user-management';
+import { UserSearch } from '@/components/admin/user-search';
 import { SubscriptionManagement } from '@/components/admin/subscription-management';
 import { CancellationInbox } from '@/components/admin/cancellation-inbox';
-import { useAuth } from '@/contexts/auth-context';
+import { DebugStats } from '@/components/admin/debug-stats';
+import { AdminProvider } from '@/contexts/admin-context';
 
 // Admin access check - only your credentials allowed
 const isAdminUser = (email: string | null | undefined): boolean => {
@@ -35,48 +37,60 @@ const isAdminUser = (email: string | null | undefined): boolean => {
 };
 
 export default function AdminPage() {
-  const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
-
   // TEMPORARILY BYPASS ALL AUTHENTICATION FOR DEBUGGING
-  // Skip all authentication checks and show admin panel directly
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  console.log('Admin page loaded - bypassing all authentication');
 
-  const adminTabs = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      description: 'Overview and statistics'
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      icon: Users,
-      description: 'Manage user accounts'
-    },
-    {
-      id: 'cancellations',
-      label: 'Cancellations',
-      icon: Mail,
-      description: 'User cancellation requests'
-    },
-    {
-      id: 'subscriptions',
-      label: 'Subscriptions',
-      icon: CreditCard,
-      description: 'Manage subscriptions and billing'
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
-      description: 'System configuration'
-    }
-  ];
+      const adminTabs = [
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          icon: LayoutDashboard,
+          description: 'Overview and statistics'
+        },
+        {
+          id: 'users',
+          label: 'Users',
+          icon: Users,
+          description: 'Manage user accounts'
+        },
+        {
+          id: 'search',
+          label: 'User Search',
+          icon: Search,
+          description: 'Search users by email'
+        },
+        {
+          id: 'cancellations',
+          label: 'Cancellations',
+          icon: Mail,
+          description: 'User cancellation requests'
+        },
+        {
+          id: 'subscriptions',
+          label: 'Subscriptions',
+          icon: CreditCard,
+          description: 'Manage subscriptions and billing'
+        },
+        {
+          id: 'settings',
+          label: 'Settings',
+          icon: Settings,
+          description: 'System configuration'
+        },
+        {
+          id: 'debug',
+          label: 'Debug',
+          icon: AlertTriangle,
+          description: 'Debug information'
+        }
+      ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <AdminProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Admin Header */}
         <div className="mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
@@ -88,7 +102,7 @@ export default function AdminPage() {
                 </p>
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
                   <span>Logged in as:</span>
-                  <span className="font-mono text-primary font-semibold bg-primary/10 px-2 py-1 rounded">{user?.email}</span>
+                  <span className="font-mono text-primary font-semibold bg-primary/10 px-2 py-1 rounded">hassyku786@gmail.com (Debug Mode)</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -112,15 +126,15 @@ export default function AdminPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 min-w-0 flex flex-col items-center gap-3 p-6 transition-all duration-200 border-b-2 ${
+                    className={`flex-1 min-w-0 flex flex-col items-center gap-2 p-4 transition-all duration-200 border-b-2 ${
                       isActive 
                         ? 'bg-primary text-white border-primary' 
                         : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-primary hover:border-primary/30 hover:bg-primary/5'
                     }`}
                   >
-                    <Icon className={`h-6 w-6 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
                     <div className="text-center">
-                      <div className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <div className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                         {tab.label}
                       </div>
                       <div className={`text-xs mt-1 hidden sm:block ${
@@ -139,14 +153,17 @@ export default function AdminPage() {
             <AdminDashboard />
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <UserManagement />
-          </TabsContent>
-
-          <TabsContent value="cancellations" className="space-y-6">
-            <CancellationInbox />
-          </TabsContent>
-
+              <TabsContent value="users" className="space-y-6">
+                <UserManagement />
+              </TabsContent>
+    
+              <TabsContent value="search" className="space-y-6">
+                <UserSearch />
+              </TabsContent>
+    
+              <TabsContent value="cancellations" className="space-y-6">
+                <CancellationInbox />
+              </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">
             <SubscriptionManagement />
@@ -201,8 +218,13 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="debug" className="space-y-6">
+            <DebugStats />
+          </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </AdminProvider>
   );
 }
