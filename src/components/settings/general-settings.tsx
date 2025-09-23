@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { AppearanceForm } from "@/components/settings/appearance-form"
 import { LanguageSettings } from "@/components/settings/language-settings"
+import { TOTPSetup } from "@/components/settings/totp-setup"
 import { Settings } from "lucide-react"
 
 export function GeneralSettings() {
@@ -39,6 +40,8 @@ export function GeneralSettings() {
       <LanguageSettings />
       
       <AppearanceForm />
+      
+      <TOTPSetup />
     </div>
   )
 }

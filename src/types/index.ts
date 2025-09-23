@@ -147,4 +147,60 @@ export type CancellationRequest = {
   adminId?: string;
 };
 
+export type ChatMessage = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderType: 'user' | 'admin';
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  metadata?: {
+    userAgent?: string;
+    ip?: string;
+  };
+};
+
+export type ChatConversation = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  status: 'active' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  subject?: string;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unreadCount: number;
+  assignedAdminId?: string;
+  assignedAdminName?: string;
+  createdAt: string;
+  updatedAt: string;
+  tags?: string[];
+  metadata?: {
+    userAgent: string;
+    ip: string;
+    source: 'web' | 'ios' | 'android';
+  };
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  type: 'chat_reply' | 'cancellation_request' | 'admin_alert' | 'system';
+  title: string;
+  message: string;
+  isRead: boolean;
+  data?: {
+    conversationId?: string;
+    cancellationRequestId?: string;
+    adminId?: string;
+    [key: string]: any;
+  };
+  createdAt: string;
+  expiresAt?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+};
+
 // export * from './notification';

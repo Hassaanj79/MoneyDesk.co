@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera, User, Loader2 } from "lucide-react"
+import { Camera, User, Loader2, MessageSquare } from "lucide-react"
+import { CancelAccountForm } from "@/components/settings/cancel-account-form"
 import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 // import { useNotifications } from "@/contexts/notification-context"
@@ -40,6 +41,7 @@ export function ProfileForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   // const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(true);
+  const [showCancelForm, setShowCancelForm] = useState(false);
   
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -296,6 +298,33 @@ export function ProfileForm() {
             Update Profile
         </Button>
       </form>
+      
+      {/* Cancel Account Section */}
+      <div className="mt-8 pt-6 border-t border-border">
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-foreground">Account Actions</h3>
+          <p className="text-sm text-muted-foreground">
+            Need help with your account? We're here to assist you.
+          </p>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900/20"
+              onClick={() => setShowCancelForm(!showCancelForm)}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Cancel Account
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Cancel Account Form - Show when button is clicked */}
+      {showCancelForm && (
+        <div className="mt-6">
+          <CancelAccountForm />
+        </div>
+      )}
     </Form>
   )
 }

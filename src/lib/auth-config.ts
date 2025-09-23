@@ -3,7 +3,7 @@
 
 export const AUTH_CONFIG = {
   // Your app's domain for email links
-  domain: process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000',
+  domain: process.env.NEXT_PUBLIC_APP_DOMAIN || 'moneydesk.co',
 };
 
 // Helper function to create action code settings for web app
@@ -19,7 +19,7 @@ export const createActionCodeSettings = (url: string) => ({
 export const createAuthActionUrl = (email: string) => {
   // Use environment variable if available, otherwise use production domain
   const baseUrl = process.env.NEXT_PUBLIC_APP_DOMAIN || 'moneydesk.co';
-  const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
+  const protocol = 'https';
   return `${protocol}://${baseUrl}/auth-action?email=${encodeURIComponent(email)}`;
 };
 

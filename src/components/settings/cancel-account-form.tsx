@@ -83,17 +83,17 @@ export function CancelAccountForm() {
 
     // Validation
     if (!formData.phone.trim()) {
-      setError("Contact number is required");
+      setError("Phone number is required");
       return;
     }
 
     if (!validatePhone(formData.phone)) {
-      setError("Please enter a valid contact number in international format (e.g., +1234567890)");
+      setError("Please enter a valid phone number in international format (e.g., +1234567890)");
       return;
     }
 
     if (!formData.reason.trim()) {
-      setError("Please describe how we can help you");
+      setError("Please provide a reason for cancellation");
       return;
     }
 
@@ -171,10 +171,10 @@ export function CancelAccountForm() {
           <DialogHeader>
             <DialogTitle className="text-green-600 dark:text-green-400 flex items-center font-sans">
               <CheckCircle className="mr-2 h-5 w-5" />
-              Message sent
+              Cancellation Request Submitted
             </DialogTitle>
             <DialogDescription className="font-sans">
-              Thank you for reaching out! We've received your message and will get back to you as soon as possible.
+              Your cancellation request has been submitted successfully. Our team will review it and contact you within 24 hours to process your account cancellation.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -190,12 +190,12 @@ export function CancelAccountForm() {
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle className="text-foreground flex items-center font-sans">
+        <CardTitle className="text-orange-600 flex items-center font-sans">
           <MessageSquare className="mr-2 h-5 w-5" />
-          Account Support
+          Request Account Cancellation
         </CardTitle>
         <CardDescription className="font-sans">
-          Need help with your account? We're here to assist you with any questions or concerns.
+          We're sorry to see you go. Please provide the following information to process your cancellation request.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -242,7 +242,7 @@ export function CancelAccountForm() {
           <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2 font-sans">
               <Phone className="h-4 w-4" />
-              Contact number *
+              Phone number *
             </Label>
             <PhoneInput
               id="phone"
@@ -267,13 +267,13 @@ export function CancelAccountForm() {
           <div className="space-y-2">
             <Label htmlFor="reason" className="flex items-center gap-2 font-sans">
               <MessageSquare className="h-4 w-4" />
-              How can we help? *
+              Reason for cancellation *
             </Label>
             <Textarea
               id="reason"
               value={formData.reason}
               onChange={(e) => handleInputChange('reason', e.target.value)}
-              placeholder="Please describe your question or concern, and we'll get back to you as soon as possible."
+              placeholder="Please tell us why you're cancelling your account. Your feedback helps us improve our service."
               rows={4}
               className="border-input focus:border-primary focus:ring-1 focus:ring-primary focus:ring-offset-1 font-sans"
               required
@@ -292,10 +292,10 @@ export function CancelAccountForm() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending message...
+                Submitting request...
               </>
             ) : (
-              'Send message'
+              'Submit Request'
             )}
           </Button>
         </form>

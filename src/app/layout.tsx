@@ -17,7 +17,10 @@ import { TimezoneProvider } from '@/contexts/timezone-context';
 import { LanguageProvider } from '@/contexts/language-context';
 import { AdminProvider } from '@/contexts/admin-context';
 import { ModuleAccessProvider } from '@/contexts/module-access-context';
+import { ChatProvider } from '@/contexts/chat-context';
+import { NotificationProvider } from '@/contexts/notification-context';
 import { RecurringNotifications } from '@/components/recurring-notifications';
+import { ChatWidget } from '@/components/chat/chat-widget';
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
@@ -60,8 +63,10 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <AuthProvider>
-              <AdminProvider>
-                <ModuleAccessProvider>
+              <ChatProvider>
+                <NotificationProvider>
+                  <AdminProvider>
+                    <ModuleAccessProvider>
                   <CurrencyProvider>
                     <CountryProvider>
                       <CategoryProvider>
@@ -74,6 +79,7 @@ export default function RootLayout({
                                     <TimezoneProvider>
                                       <RecurringNotifications />
                                       {children}
+                                      <ChatWidget />
                                       <Toaster />
                                       <Analytics />
                                     </TimezoneProvider>
@@ -86,8 +92,10 @@ export default function RootLayout({
                       </CategoryProvider>
                     </CountryProvider>
                   </CurrencyProvider>
-                </ModuleAccessProvider>
-              </AdminProvider>
+                  </ModuleAccessProvider>
+                </AdminProvider>
+                </NotificationProvider>
+              </ChatProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>

@@ -19,6 +19,7 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { useDateRange } from "@/contexts/date-range-context";
@@ -84,6 +85,7 @@ export function Header() {
   const { user, logout } = useAuth();
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+  const [logoutLoading, setLogoutLoading] = React.useState(false);
 
   // Check if user has admin access - only your credentials
   const isAdmin = user?.email && [
@@ -261,13 +263,25 @@ export function Header() {
     setShowLogoutDialog(true);
   };
 
-  const confirmLogout = () => {
-    logout();
-    setShowLogoutDialog(false);
+  const confirmLogout = async () => {
+    if (logoutLoading) return; // Prevent multiple clicks
+    
+    setLogoutLoading(true);
+    try {
+      console.log('Starting logout process...');
+      await logout();
+      console.log('Logout completed successfully');
+      setShowLogoutDialog(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // You could add a toast notification here if you have one
+    } finally {
+      setLogoutLoading(false);
+    }
   };
   
   const HeaderContent = (
-     <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40">
+     <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40 overflow-visible">
         {/* Logo - always visible */}
         <Link
           href="/"
@@ -328,7 +342,7 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 lg:gap-2">
+        <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 lg:gap-2 pr-4">
             {/* Date Range Picker - hidden on mobile */}
             <div className="hidden md:block ml-auto">
                 <DateRangePicker date={date} onDateChange={setDate} />
@@ -494,6 +508,11 @@ export function Header() {
                  </PopoverContent>
             </Popover>
             
+            {/* Notification Bell */}
+            <div className="ml-2">
+              <NotificationBell />
+            </div>
+            
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -553,9 +572,17 @@ export function Header() {
               <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={confirmLogout}
+                disabled={logoutLoading}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {t('navigation.logout')}
+                {logoutLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging out...
+                  </>
+                ) : (
+                  t('navigation.logout')
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

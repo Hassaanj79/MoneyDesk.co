@@ -2,6 +2,7 @@
 
 "use client"
 
+import { useState } from "react"
 import {
   Card,
   CardContent,
@@ -17,9 +18,10 @@ import {
 } from "@/components/ui/tabs"
 import { ProfileForm } from "@/components/settings/profile-form"
 import { AppConfigForm } from "@/components/settings/app-config-form"
-import { CancelAccountForm } from "@/components/settings/cancel-account-form"
+import { GeneralSettings } from "@/components/settings/general-settings"
 
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("profile")
   return (
     <Card>
       <CardHeader>
@@ -29,26 +31,26 @@ export default function SettingsPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="profile" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>Profile</span>
             </TabsTrigger>
+            <TabsTrigger value="general" className="flex items-center justify-center p-3 text-xs sm:text-sm">
+              <span>General</span>
+            </TabsTrigger>
             <TabsTrigger value="app-config" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>App Config</span>
-            </TabsTrigger>
-            <TabsTrigger value="cancel" className="flex items-center justify-center p-3 text-xs sm:text-sm text-muted-foreground hover:text-foreground">
-              <span>Account</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="profile">
             <ProfileForm />
           </TabsContent>
+          <TabsContent value="general">
+            <GeneralSettings />
+          </TabsContent>
           <TabsContent value="app-config">
             <AppConfigForm />
-          </TabsContent>
-          <TabsContent value="cancel">
-            <CancelAccountForm />
           </TabsContent>
         </Tabs>
       </CardContent>

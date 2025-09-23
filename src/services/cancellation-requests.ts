@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { CancellationRequest } from '@/types';
+import { createCancellationRequestNotification } from './notifications';
 
 const CANCELLATION_REQUESTS_COLLECTION = 'cancellationRequests';
 
@@ -34,6 +35,19 @@ export const createCancellationRequest = async (requestData: Omit<CancellationRe
     
     const docRef = await addDoc(collection(db, CANCELLATION_REQUESTS_COLLECTION), dataToSave);
     console.log('Document created with ID:', docRef.id);
+    
+    // Create notification for admin about new cancellation request
+    try {
+      await createCancellationRequestNotification(
+        'admin', // This should be replaced with actual admin ID
+        docRef.id,
+        requestData.name
+      );
+    } catch (notificationError) {
+      console.error('Failed to create cancellation request notification:', notificationError);
+      // Don't throw here as the request was created successfully
+    }
+    
     return docRef.id;
   } catch (error) {
     console.error('Error creating cancellation request:', error);

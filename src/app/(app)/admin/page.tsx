@@ -12,12 +12,14 @@ import {
   Settings, 
   Shield,
   AlertTriangle,
-  Mail
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { UserManagement } from '@/components/admin/user-management';
 import { SubscriptionManagement } from '@/components/admin/subscription-management';
 import { CancellationInbox } from '@/components/admin/cancellation-inbox';
+import { CustomerSupport } from '@/components/admin/customer-support';
 import { useAuth } from '@/contexts/auth-context';
 
 // Admin access check - only your credentials allowed
@@ -90,6 +92,12 @@ export default function AdminPage() {
       label: 'Cancellations',
       icon: Mail,
       description: 'User cancellation requests'
+    },
+    {
+      id: 'support',
+      label: 'Customer Support',
+      icon: MessageSquare,
+      description: 'Live chat support system'
     },
     {
       id: 'subscriptions',
@@ -176,6 +184,10 @@ export default function AdminPage() {
 
           <TabsContent value="cancellations" className="space-y-6">
             <CancellationInbox />
+          </TabsContent>
+
+          <TabsContent value="support" className="space-y-6">
+            <CustomerSupport />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">

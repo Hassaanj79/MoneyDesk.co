@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from "@/contexts/auth-context";
-import { Loader2, CheckCircle, XCircle, Mail, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, CheckCircle, XCircle, Mail, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { toast } from 'sonner';
 
-export function EmailVerification() {
-  const { verifyEmail, sendVerificationEmail, user } = useAuth();
+export function EmailOTPVerification() {
+  const { verifyEmail, sendOTPEmail } = useAuth();
+  const searchParams = useSearchParams();
   const [otp, setOtp] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +23,11 @@ export function EmailVerification() {
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
 
   useEffect(() => {
-    // Auto-send OTP when component loads
-    if (user && !user.emailVerified) {
-      handleSendOTP();
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
     }
-  }, [user]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -46,34 +49,16 @@ export function EmailVerification() {
     setError(null);
   };
 
-  const handleSendOTP = async () => {
-    if (!user) return;
-    
-    setResendLoading(true);
-    setError(null);
-
-    try {
-      await sendVerificationEmail();
-      setTimeLeft(600); // Reset timer to 10 minutes
-      toast.success('Verification code sent to your email');
-    } catch (error: any) {
-      console.error('Send OTP error:', error);
-      setError('Failed to send verification code. Please try again.');
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!otp || otp.length !== 6) {
-      setError('Please enter a valid 6-digit code');
+      setError('Please enter a valid 6-digit OTP');
       return;
     }
 
-    if (!user?.email) {
-      setError('User email not found');
+    if (!email) {
+      setError('Email not found');
       return;
     }
 
@@ -81,20 +66,41 @@ export function EmailVerification() {
     setError(null);
 
     try {
-      await verifyEmail(user.email, otp);
+      await verifyEmail(email, otp);
       setSuccess(true);
       toast.success('Email verified successfully!');
     } catch (error: any) {
       console.error('OTP verification error:', error);
       if (error.message.includes('expired')) {
-        setError('Code has expired. Please request a new one.');
+        setError('OTP has expired. Please request a new one.');
       } else if (error.message.includes('attempts')) {
-        setError('Maximum attempts exceeded. Please request a new code.');
+        setError('Maximum attempts exceeded. Please request a new OTP.');
       } else {
-        setError('Invalid code. Please check and try again.');
+        setError('Invalid OTP. Please check and try again.');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) {
+      setError('Email not found');
+      return;
+    }
+
+    setResendLoading(true);
+    setError(null);
+
+    try {
+      await sendOTPEmail(email);
+      setTimeLeft(600); // Reset timer to 10 minutes
+      toast.success('New OTP sent to your email');
+    } catch (error: any) {
+      console.error('Resend OTP error:', error);
+      setError('Failed to resend OTP. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -133,7 +139,7 @@ export function EmailVerification() {
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Verify Your Email</CardTitle>
           <CardDescription>
-            Enter the 6-digit code sent to {user?.email || 'your email'}
+            Enter the 6-digit code sent to {email || 'your email'}
           </CardDescription>
         </CardHeader>
         
@@ -193,7 +199,7 @@ export function EmailVerification() {
             <div className="text-center">
               <Button
                 variant="outline"
-                onClick={handleSendOTP}
+                onClick={handleResend}
                 disabled={resendLoading}
                 className="w-full"
               >
@@ -214,7 +220,7 @@ export function EmailVerification() {
             <div className="text-center text-sm text-gray-600">
               Didn't receive the code? Check your spam folder or{' '}
               <button
-                onClick={handleSendOTP}
+                onClick={handleResend}
                 disabled={resendLoading}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
