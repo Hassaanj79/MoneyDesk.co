@@ -133,6 +133,94 @@ MoneyDesk.co Team
   });
 };
 
+export const sendPasswordResetEmail = async (
+  userEmail: string,
+  userName: string,
+  resetLink: string
+): Promise<boolean> => {
+  const subject = 'Password Reset Request - MoneyDesk.co';
+  const body = `
+Hello ${userName},
+
+You have requested a password reset for your MoneyDesk.co account.
+
+To reset your password, please click the link below:
+${resetLink}
+
+This link will expire in 1 hour for security reasons.
+
+If you did not request this password reset, please ignore this email and your password will remain unchanged.
+
+For security reasons, please do not share this link with anyone.
+
+If you have any questions or need assistance, please contact our support team.
+
+Best regards,
+MoneyDesk.co Team
+  `;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset - MoneyDesk.co</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .button { display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .button:hover { background: #5a6fd8; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        .security-note { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 Password Reset Request</h1>
+        <p>MoneyDesk.co</p>
+    </div>
+    <div class="content">
+        <h2>Hello ${userName},</h2>
+        <p>You have requested a password reset for your MoneyDesk.co account.</p>
+        
+        <p>To reset your password, please click the button below:</p>
+        
+        <div style="text-align: center;">
+            <a href="${resetLink}" class="button">Reset My Password</a>
+        </div>
+        
+        <div class="security-note">
+            <strong>⚠️ Security Notice:</strong>
+            <ul>
+                <li>This link will expire in 1 hour for security reasons</li>
+                <li>If you did not request this password reset, please ignore this email</li>
+                <li>Do not share this link with anyone</li>
+            </ul>
+        </div>
+        
+        <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace;">${resetLink}</p>
+        
+        <p>If you have any questions or need assistance, please contact our support team.</p>
+    </div>
+    <div class="footer">
+        <p>Best regards,<br>MoneyDesk.co Team</p>
+        <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>
+  `;
+
+  return await sendEmail({
+    to: userEmail,
+    subject,
+    body,
+    html
+  });
+};
+
 export const sendExitSurveyEmail = async (
   adminEmail: string,
   surveyData: {

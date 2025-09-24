@@ -10,15 +10,17 @@ import {
   toggleUserStatus, 
   deleteUser
 } from '@/services/admin';
-import type { AdminUser, AdminStats, ModuleAccess, SubscriptionTier, UserSubscription } from '@/types';
+import { getAllCancellationRequests } from '@/services/cancellation-requests';
+import type { AdminUser, AdminStats, ModuleAccess, SubscriptionTier, UserSubscription, CancellationRequest } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { collection, query, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, getDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface AdminContextType {
       // State
       users: AdminUser[];
       stats: AdminStats | null;
+      cancellationRequests: CancellationRequest[];
       loading: boolean;
       error: string | null;
       isAdmin: boolean;
@@ -26,6 +28,7 @@ interface AdminContextType {
       // Actions
       refreshUsers: () => Promise<void>;
       refreshStats: () => Promise<void>;
+      refreshCancellationRequests: () => Promise<void>;
       searchUserByEmail: (email: string) => Promise<AdminUser | null>;
       updateUserAccess: (userId: string, moduleAccess: ModuleAccess) => Promise<void>;
       updateSubscription: (userId: string, tier: SubscriptionTier, status: 'active' | 'inactive' | 'cancelled' | 'expired', endDate?: string, customModuleAccess?: ModuleAccess) => Promise<void>;
@@ -43,6 +46,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [cancellationRequests, setCancellationRequests] = useState<CancellationRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -95,6 +99,20 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
         } catch (err: any) {
           setError(err.message || 'Failed to fetch stats');
           console.error('Error fetching stats:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const refreshCancellationRequests = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const cancellationData = await getAllCancellationRequests();
+          setCancellationRequests(cancellationData);
+        } catch (err: any) {
+          setError(err.message || 'Failed to fetch cancellation requests');
+          console.error('Error fetching cancellation requests:', err);
         } finally {
           setLoading(false);
         }
@@ -217,32 +235,115 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   // Load initial data and set up real-time listeners
   useEffect(() => {
-    // TEMPORARILY BYPASS AUTHENTICATION FOR DEBUGGING
-    // This allows us to fetch admin data without authentication
-    console.log('Bypassing authentication - fetching admin data...');
-    refreshUsers();
-    refreshStats();
+    console.log('Setting up real-time admin data listeners...');
     
-    // Set up a simple interval for refreshing data
-    const interval = setInterval(() => {
-      console.log('Refreshing admin data via interval...');
-      refreshUsers();
-      refreshStats();
-    }, 30000); // Refresh every 30 seconds
+        // Initial data load
+        refreshUsers();
+        refreshStats();
+        refreshCancellationRequests();
+    
+    // Set up real-time listeners for users collection
+    const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    const unsubscribeUsers = onSnapshot(usersQuery, 
+      (snapshot) => {
+        console.log('Real-time users update received:', snapshot.size, 'users');
+        const users: AdminUser[] = [];
+        
+        snapshot.forEach(async (userDoc) => {
+          const userData = userDoc.data();
+          
+          // Get user's subscription info
+          try {
+            const subscriptionDoc = await getDoc(doc(db, 'users', userDoc.id, 'subscription', 'current'));
+            const subscription = subscriptionDoc.exists() ? subscriptionDoc.data() : null;
+            
+            // Get user's module access from subscription or default
+            const moduleAccess: ModuleAccess = subscription?.features || {
+              dashboard: true,
+              transactions: true,
+              loans: false,
+              reports: false,
+              settings: true,
+              accounts: true,
+              budgets: false,
+              categories: true
+            };
+            
+            // Create user record
+            const adminUser: AdminUser = {
+              id: userDoc.id,
+              email: userData.email || '',
+              name: userData.name || '',
+              role: userData.role || 'user',
+              moduleAccess,
+              isActive: userData.isActive !== false,
+              createdAt: userData.createdAt || new Date().toISOString(),
+              lastLoginAt: userData.lastLoginAt,
+              createdBy: userData.createdBy
+            };
+            
+            users.push(adminUser);
+          } catch (error) {
+            console.error(`Error processing user ${userDoc.id}:`, error);
+          }
+        });
+        
+        // Update state with new users data
+        setUsers(users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      },
+      (error) => {
+        console.error('Error in real-time users listener:', error);
+        setError('Failed to sync user data in real-time');
+      }
+        );
+        
+        // Set up real-time listener for cancellation requests
+        const cancellationQuery = query(collection(db, 'cancellationRequests'), orderBy('createdAt', 'desc'));
+        const unsubscribeCancellations = onSnapshot(cancellationQuery, 
+          (snapshot) => {
+            console.log('Real-time cancellation requests update received:', snapshot.size, 'requests');
+            const requests: CancellationRequest[] = [];
+            
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              requests.push({
+                id: doc.id,
+                ...data
+              } as CancellationRequest);
+            });
+            
+            setCancellationRequests(requests);
+          },
+          (error) => {
+            console.error('Error in real-time cancellation requests listener:', error);
+            setError('Failed to sync cancellation requests in real-time');
+          }
+        );
+        
+        // Set up real-time listener for admin stats (refresh every 2 minutes)
+        const statsInterval = setInterval(() => {
+          console.log('Refreshing admin stats...');
+          refreshStats();
+        }, 120000); // 2 minutes
     
     return () => {
-      clearInterval(interval);
+      console.log('Cleaning up admin real-time listeners...');
+      unsubscribeUsers();
+      unsubscribeCancellations();
+      clearInterval(statsInterval);
     };
   }, []);
 
       const value: AdminContextType = {
         users,
         stats,
+        cancellationRequests,
         loading,
         error,
         isAdmin,
         refreshUsers,
         refreshStats,
+        refreshCancellationRequests,
         searchUserByEmail,
         updateUserAccess,
         updateSubscription,

@@ -15,10 +15,10 @@ import {
   Mail,
   Search
 } from 'lucide-react';
-import { AdminDashboard } from '@/components/admin/admin-dashboard';
-import { UserManagement } from '@/components/admin/user-management';
+import { EnhancedAdminDashboard } from '@/components/admin/enhanced-admin-dashboard';
 import { UserSearch } from '@/components/admin/user-search';
-import { SubscriptionManagement } from '@/components/admin/subscription-management';
+import { EnhancedSubscriptionManagement } from '@/components/admin/enhanced-subscription-management';
+import { AuthUsersManagement } from '@/components/admin/auth-users-management';
 import { CancellationInbox } from '@/components/admin/cancellation-inbox';
 import { DebugStats } from '@/components/admin/debug-stats';
 import { AdminProvider } from '@/contexts/admin-context';
@@ -50,16 +50,16 @@ export default function AdminPage() {
           description: 'Overview and statistics'
         },
         {
-          id: 'users',
-          label: 'Users',
-          icon: Users,
-          description: 'Manage user accounts'
-        },
-        {
           id: 'search',
           label: 'User Search',
           icon: Search,
           description: 'Search users by email'
+        },
+        {
+          id: 'auth-users',
+          label: 'Auth Users',
+          icon: Users,
+          description: 'Firebase Authentication users'
         },
         {
           id: 'cancellations',
@@ -150,15 +150,15 @@ export default function AdminPage() {
           </div>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <AdminDashboard />
+            <EnhancedAdminDashboard />
           </TabsContent>
 
-              <TabsContent value="users" className="space-y-6">
-                <UserManagement />
-              </TabsContent>
-    
               <TabsContent value="search" className="space-y-6">
                 <UserSearch />
+              </TabsContent>
+    
+              <TabsContent value="auth-users" className="space-y-6">
+                <AuthUsersManagement />
               </TabsContent>
     
               <TabsContent value="cancellations" className="space-y-6">
@@ -166,7 +166,7 @@ export default function AdminPage() {
               </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">
-            <SubscriptionManagement />
+            <EnhancedSubscriptionManagement />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
