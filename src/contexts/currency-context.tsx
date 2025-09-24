@@ -33,12 +33,23 @@ export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
           setCurrencyState(data.currency || 'USD');
         } else {
           // Initialize with default settings if no settings exist
-          const defaultSettings = await initializeUserSettings(user.uid);
-          setCurrencyState(defaultSettings.currency);
+          try {
+            const defaultSettings = await initializeUserSettings(user.uid);
+            setCurrencyState(defaultSettings.currency);
+          } catch (initError) {
+            console.log('Could not initialize user settings, using default currency');
+            setCurrencyState('USD');
+          }
         }
         setLoading(false);
       }, (error) => {
         console.error('Error fetching currency settings:', error);
+        // Don't show permission errors in console for missing documents
+        if (error.code !== 'permission-denied') {
+          console.error('Currency settings error:', error.message);
+        }
+        // Set default currency even on error
+        setCurrencyState('USD');
         setLoading(false);
       });
 

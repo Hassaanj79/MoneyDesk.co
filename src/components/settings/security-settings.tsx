@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Shield, Key, Smartphone, Eye, EyeOff, Lock, UserCheck, Check, X } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Loader2, Shield, Key, Eye, EyeOff, Lock, UserCheck, Check, X, HelpCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { DeviceManagement } from "./device-management"
 import { toast } from "sonner"
@@ -20,6 +22,15 @@ export function SecuritySettings() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  
+  // Security Questions state
+  const [securityQuestionsOpen, setSecurityQuestionsOpen] = useState(false)
+  const [securityQuestionsLoading, setSecurityQuestionsLoading] = useState(false)
+  const [securityQuestions, setSecurityQuestions] = useState([
+    { question: "", answer: "" },
+    { question: "", answer: "" },
+    { question: "", answer: "" }
+  ])
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -69,6 +80,25 @@ export function SecuritySettings() {
   }
 
   const [passwordSuggestions] = useState(generatePasswordSuggestions())
+
+  // Predefined security questions
+  const predefinedQuestions = [
+    "What was the name of your first pet?",
+    "What was the name of the street you grew up on?",
+    "What was your mother's maiden name?",
+    "What was the name of your first school?",
+    "What was your childhood nickname?",
+    "What was the make of your first car?",
+    "What was your favorite food as a child?",
+    "What was the name of your first teacher?",
+    "What city were you born in?",
+    "What was your favorite book as a child?",
+    "What was the name of your first employer?",
+    "What was your favorite movie as a child?",
+    "What was the name of your best friend in high school?",
+    "What was your favorite subject in school?",
+    "What was the name of your first crush?"
+  ]
 
   const handlePasswordChange = (field: string, value: string) => {
     setPasswordData(prev => ({
@@ -198,6 +228,54 @@ export function SecuritySettings() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Security Questions handlers
+  const handleSecurityQuestionChange = (index: number, field: 'question' | 'answer', value: string) => {
+    setSecurityQuestions(prev => prev.map((q, i) => 
+      i === index ? { ...q, [field]: value } : q
+    ))
+  }
+
+  const handleSaveSecurityQuestions = async () => {
+    // Validation
+    const hasEmptyQuestions = securityQuestions.some(q => !q.question.trim() || !q.answer.trim())
+    if (hasEmptyQuestions) {
+      toast.error("Please fill in all security questions and answers")
+      return
+    }
+
+    // Check for duplicate questions
+    const questions = securityQuestions.map(q => q.question.trim())
+    const uniqueQuestions = new Set(questions)
+    if (uniqueQuestions.size !== questions.length) {
+      toast.error("Please select different questions for each security question")
+      return
+    }
+
+    setSecurityQuestionsLoading(true)
+    
+    try {
+      // Simulate API call - in real app, save to Firebase
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      toast.success("Security questions saved successfully!")
+      setSecurityQuestionsOpen(false)
+      
+      // Reset form
+      setSecurityQuestions([
+        { question: "", answer: "" },
+        { question: "", answer: "" },
+        { question: "", answer: "" }
+      ])
+      
+      console.log("Security questions saved:", securityQuestions)
+    } catch (error) {
+      toast.error("Failed to save security questions")
+      console.error("Error saving security questions:", error)
+    } finally {
+      setSecurityQuestionsLoading(false)
     }
   }
 
@@ -492,43 +570,6 @@ export function SecuritySettings() {
         </CardContent>
       </Card>
 
-      {/* Device Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5" />
-            Device Management
-          </CardTitle>
-          <CardDescription>
-            Manage your connected devices and active sessions
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Active Sessions</Label>
-              <p className="text-sm text-muted-foreground">
-                You have 2 active sessions
-              </p>
-            </div>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Remember Me</Label>
-              <p className="text-sm text-muted-foreground">
-                Stay logged in on this device
-              </p>
-            </div>
-            <Switch />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Privacy Settings */}
       <Card>
@@ -597,14 +638,88 @@ export function SecuritySettings() {
                 Set up security questions for account recovery
               </p>
             </div>
-            <Button variant="outline" size="sm">
-              Setup
-            </Button>
+            <Dialog open={securityQuestionsOpen} onOpenChange={setSecurityQuestionsOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Setup
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5" />
+                    Setup Security Questions
+                  </DialogTitle>
+                  <DialogDescription>
+                    Choose 3 security questions and provide answers. These will be used for account recovery.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 py-4">
+                  {securityQuestions.map((question, index) => (
+                    <div key={index} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-500">Question {index + 1}</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`question-${index}`}>Select a question</Label>
+                        <Select
+                          value={question.question}
+                          onValueChange={(value) => handleSecurityQuestionChange(index, 'question', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a security question..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {predefinedQuestions.map((q, qIndex) => (
+                              <SelectItem key={qIndex} value={q}>
+                                {q}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`answer-${index}`}>Your answer</Label>
+                        <Input
+                          id={`answer-${index}`}
+                          type="text"
+                          placeholder="Enter your answer..."
+                          value={question.answer}
+                          onChange={(e) => handleSecurityQuestionChange(index, 'answer', e.target.value)}
+                        />
+                      </div>
+                      
+                      {index < securityQuestions.length - 1 && <Separator />}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSecurityQuestionsOpen(false)}
+                    disabled={securityQuestionsLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSaveSecurityQuestions}
+                    disabled={securityQuestionsLoading}
+                  >
+                    {securityQuestionsLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Security Questions
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
 
-      {/* Device Management */}
+      {/* Device Management Component */}
       <DeviceManagement />
 
       {message && (

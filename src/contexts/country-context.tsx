@@ -31,12 +31,23 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
           setCountryState(data.country || 'US');
         } else {
           // Initialize with default settings if no settings exist
-          const defaultSettings = await initializeUserSettings(user.uid);
-          setCountryState(defaultSettings.country);
+          try {
+            const defaultSettings = await initializeUserSettings(user.uid);
+            setCountryState(defaultSettings.country);
+          } catch (initError) {
+            console.log('Could not initialize user settings, using default country');
+            setCountryState('US');
+          }
         }
         setLoading(false);
       }, (error) => {
         console.error('Error fetching country settings:', error);
+        // Don't show permission errors in console for missing documents
+        if (error.code !== 'permission-denied') {
+          console.error('Country settings error:', error.message);
+        }
+        // Set default country even on error
+        setCountryState('US');
         setLoading(false);
       });
 

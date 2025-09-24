@@ -34,12 +34,23 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
           setTimezoneState(data.timezone || 'America/New_York')
         } else {
           // Initialize with default settings if no settings exist
-          const defaultSettings = await initializeUserSettings(user.uid)
-          setTimezoneState(defaultSettings.timezone)
+          try {
+            const defaultSettings = await initializeUserSettings(user.uid)
+            setTimezoneState(defaultSettings.timezone)
+          } catch (initError) {
+            console.log('Could not initialize user settings, using default timezone')
+            setTimezoneState('America/New_York')
+          }
         }
         setLoading(false)
       }, (error) => {
         console.error('Error fetching timezone settings:', error)
+        // Don't show permission errors in console for missing documents
+        if (error.code !== 'permission-denied') {
+          console.error('Timezone settings error:', error.message)
+        }
+        // Set default timezone even on error
+        setTimezoneState('America/New_York')
         setLoading(false)
       })
 

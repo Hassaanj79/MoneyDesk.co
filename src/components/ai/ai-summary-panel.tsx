@@ -23,7 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { NotesViewer } from './notes-viewer';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+// import { NotesViewer } from './notes-viewer';
 import { useDateRange } from '@/contexts/date-range-context';
 import { useTransactions } from '@/contexts/transaction-context';
 import { useCategories } from '@/contexts/category-context';
@@ -61,7 +62,8 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiEnabled, setAiEnabled] = useState(false);
-  const [showNotesViewer, setShowNotesViewer] = useState(false);
+  // const [showNotesViewer, setShowNotesViewer] = useState(false);
+  const [noteAlreadyExists, setNoteAlreadyExists] = useState(false);
 
   // Filter transactions for the selected date range
   const filteredTransactions = React.useMemo(() => {
@@ -87,6 +89,23 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
       generateInsights();
     }
   }, [open, date.from, date.to, aiEnabled]);
+
+  // Check for existing notes when date range or insights change
+  useEffect(() => {
+    if (insights && date.from && date.to && user?.uid) {
+      const noteData = {
+        userId: user.uid,
+        dateRange: {
+          from: date.from.toISOString(),
+          to: date.to.toISOString(),
+        }
+      };
+      const existingNote = checkForDuplicateNote(noteData);
+      setNoteAlreadyExists(!!existingNote);
+    } else {
+      setNoteAlreadyExists(false);
+    }
+  }, [insights, date.from, date.to, user?.uid]);
 
   const generateInsights = async () => {
     setLoading(true);
@@ -323,6 +342,24 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
     }
   };
 
+  const checkForDuplicateNote = (noteData: any) => {
+    try {
+      const localNotes = JSON.parse(localStorage.getItem('financial-notes') || '[]');
+      
+      // Check if a note with the same date range and user already exists
+      const duplicate = localNotes.find((note: any) => 
+        note.userId === noteData.userId &&
+        note.dateRange.from === noteData.dateRange.from &&
+        note.dateRange.to === noteData.dateRange.to
+      );
+      
+      return duplicate;
+    } catch (error) {
+      console.error('Error checking for duplicate notes:', error);
+      return null;
+    }
+  };
+
   const saveAsNote = async () => {
     if (!insights) return;
     
@@ -336,7 +373,18 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
       userId: user?.uid || 'anonymous'
     };
 
+    // Check for duplicate notes
+    const existingNote = checkForDuplicateNote(noteData);
+    if (existingNote) {
+      toast.error('A note for this date range already exists. Please choose a different date range or delete the existing note first.');
+      return;
+    }
+
     try {
+      // Ensure we have a valid token before making the request
+      const { ensureValidToken } = useAuth();
+      await ensureValidToken();
+
       const response = await fetch('/api/financial-notes', {
         method: 'POST',
         headers: {
@@ -357,8 +405,10 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
           });
           localStorage.setItem('financial-notes', JSON.stringify(localNotes));
           toast.success('Summary saved locally');
+          setNoteAlreadyExists(true);
         } else {
           toast.success('Summary saved as note');
+          setNoteAlreadyExists(true);
         }
       } else {
         throw new Error('Failed to save note');
@@ -374,6 +424,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
         });
         localStorage.setItem('financial-notes', JSON.stringify(localNotes));
         toast.success('Summary saved locally');
+        setNoteAlreadyExists(true);
       } catch (localErr) {
         console.error('Failed to save locally:', localErr);
         toast.error('Failed to save note');
@@ -389,53 +440,97 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-blue-600" />
-            <CardTitle>AI Financial Summary</CardTitle>
+            <CardTitle>Financial Analysis</CardTitle>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowNotesViewer(true)}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              View Notes
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={generateInsights}
-              disabled={loading}
-            >
-              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-            </Button>
-            {insights && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyToClipboard}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={saveAsNote}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save as Note
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-            >
-              ×
-            </Button>
-          </div>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowNotesViewer(true)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button> */}
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center">
+                  <p>View Notes</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={generateInsights}
+                    disabled={loading}
+                    className="h-8 w-8 p-0"
+                  >
+                    <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center">
+                  <p>Refresh Analysis</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              {insights && (
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyToClipboard}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="center">
+                      <p>Copy to Clipboard</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={saveAsNote}
+                        disabled={noteAlreadyExists}
+                        className={cn("h-8 w-8 p-0", noteAlreadyExists && "opacity-50 cursor-not-allowed")}
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="center">
+                      <p>{noteAlreadyExists ? "Already Saved" : "Save as Note"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              )}
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onOpenChange(false)}
+                    className="h-8 w-8 p-0"
+                  >
+                    ×
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center">
+                  <p>Close</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </CardHeader>
         
         <CardContent className="space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
@@ -499,7 +594,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
                   <TrendingUp className="h-4 w-4 text-blue-600" />
                   <h3 className="font-semibold">Summary</h3>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">
                   {insights.summary}
                 </p>
               </div>
@@ -573,37 +668,16 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-2"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveAsNote}
-                  className="flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Save as Note
-                </Button>
-              </div>
             </>
           ) : null}
         </CardContent>
       </Card>
       
       {/* Notes Viewer */}
-      <NotesViewer 
+      {/* <NotesViewer 
         isOpen={showNotesViewer} 
         onClose={() => setShowNotesViewer(false)} 
-      />
+      /> */}
     </div>
   );
 }

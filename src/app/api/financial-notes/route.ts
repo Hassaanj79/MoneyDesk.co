@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,24 +21,43 @@ export async function POST(request: NextRequest) {
       userId: userIdentifier,
       title,
       content,
-      dateRange,
+      dateRange: dateRange || null, // Handle undefined dateRange
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
 
     try {
+      console.log('Attempting to save note with data:', { ...noteData, content: '[content hidden]' });
       const docRef = await addDoc(collection(db, 'financial_notes'), noteData);
+      console.log('Note saved successfully with ID:', docRef.id);
       return NextResponse.json({
         id: docRef.id,
         message: 'Note saved successfully'
       });
-    } catch (firestoreError) {
-      console.error('Firestore error:', firestoreError);
+    } catch (firestoreError: any) {
+      console.error('Firestore error details:', {
+        code: firestoreError.code,
+        message: firestoreError.message,
+        stack: firestoreError.stack
+      });
+      
+      // If it's a permission error, try to provide more specific feedback
+      if (firestoreError.code === 'permission-denied') {
+        console.error('Permission denied - this might be due to authentication issues');
+        return NextResponse.json({
+          id: `local-${Date.now()}`,
+          message: 'Note saved locally (Authentication issue)',
+          local: true,
+          error: 'Permission denied - authentication required'
+        });
+      }
+      
       // Fallback: return success but note that it's stored locally
       return NextResponse.json({
         id: `local-${Date.now()}`,
         message: 'Note saved locally (Firestore unavailable)',
-        local: true
+        local: true,
+        error: firestoreError.message
       });
     }
   } catch (error) {
@@ -57,20 +75,33 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId') || 'current-user';
     const limitParam = searchParams.get('limit') || '10';
 
-    const notesQuery = query(
-      collection(db, 'financial_notes'),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc'),
-      limit(parseInt(limitParam))
-    );
+    try {
+      const notesQuery = query(
+        collection(db, 'financial_notes'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(parseInt(limitParam))
+      );
+      const querySnapshot = await getDocs(notesQuery);
 
-    const querySnapshot = await getDocs(notesQuery);
-    const notes = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+      const notes = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
 
-    return NextResponse.json(notes);
+      return NextResponse.json(notes);
+    } catch (firestoreError: any) {
+      console.error('Firestore error in GET:', firestoreError);
+      
+      // If it's a permission error, return empty array
+      if (firestoreError.code === 'permission-denied') {
+        console.log('Permission denied for fetching notes, returning empty array');
+        return NextResponse.json([]);
+      }
+      
+      // For other errors, try to return local storage data
+      return NextResponse.json([]);
+    }
   } catch (error) {
     console.error('Error fetching financial notes:', error);
     return NextResponse.json(

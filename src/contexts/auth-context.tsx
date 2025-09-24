@@ -30,6 +30,7 @@ import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificati
 import { deleteUserAccount } from '@/services/account-deletion';
 import { createEmailOTP, verifyEmailOTP, resendEmailOTP } from '@/services/email-otp';
 import { createOrUpdateDeviceSession, generateDeviceId } from '@/services/device-management';
+import { firebaseAuthService } from '@/services/firebase-auth';
 
 interface AuthContextType {
   user: User | null;
@@ -47,6 +48,8 @@ interface AuthContextType {
   verifyOTP: (email: string, otp: string) => Promise<any>;
   sendPasswordResetWithOTP: (email: string) => Promise<void>;
   verifyPasswordResetOTP: (email: string, otp: string, newPassword: string) => Promise<void>;
+  refreshToken: () => Promise<string | null>;
+  ensureValidToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -191,7 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       console.log('Logging out user...');
-      await signOut(auth);
+      await firebaseAuthService.signOut();
       console.log('User logged out successfully');
     } catch (error) {
       console.error('Error during logout:', error);
@@ -325,6 +328,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     verifyOTP,
     sendPasswordResetWithOTP,
     verifyPasswordResetOTP,
+    refreshToken: firebaseAuthService.refreshToken.bind(firebaseAuthService),
+    ensureValidToken: firebaseAuthService.ensureValidToken.bind(firebaseAuthService),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

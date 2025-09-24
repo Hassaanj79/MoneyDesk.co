@@ -35,7 +35,6 @@ interface FinancialNote {
     to: string;
   };
   createdAt: string;
-  userId: string;
 }
 
 interface NotesViewerProps {
@@ -53,52 +52,87 @@ export function NotesViewer({ isOpen, onClose }: NotesViewerProps) {
     }
   }, [isOpen]);
 
-  const loadNotes = () => {
+  const loadNotes = async () => {
     setLoading(true);
     try {
-      // Load from localStorage
-      const localNotes = JSON.parse(localStorage.getItem('financial-notes') || '[]');
-      setNotes(localNotes.sort((a: FinancialNote, b: FinancialNote) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ));
+      // Try to load from API first
+      const response = await fetch('/api/financial-notes?limit=50');
+      if (response.ok) {
+        const apiNotes = await response.json();
+        setNotes(apiNotes);
+      } else {
+        throw new Error('API failed');
+      }
     } catch (error) {
-      console.error('Error loading notes:', error);
-      toast.error('Failed to load notes');
+      // Fallback to localStorage
+      console.log('Loading notes from localStorage...');
+      const localNotes = JSON.parse(localStorage.getItem('financial-notes') || '[]');
+      setNotes(localNotes);
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteNote = (noteId: string) => {
+  const deleteNote = async (noteId: string) => {
     try {
-      const updatedNotes = notes.filter(note => note.id !== noteId);
-      setNotes(updatedNotes);
-      localStorage.setItem('financial-notes', JSON.stringify(updatedNotes));
-      toast.success('Note deleted');
+      // Try to delete from API first
+      const response = await fetch(`/api/financial-notes/${noteId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        setNotes(prev => prev.filter(note => note.id !== noteId));
+        toast.success('Note deleted successfully');
+      } else {
+        throw new Error('API delete failed');
+      }
     } catch (error) {
-      console.error('Error deleting note:', error);
-      toast.error('Failed to delete note');
+      // Fallback to localStorage
+      const localNotes = JSON.parse(localStorage.getItem('financial-notes') || '[]');
+      const updatedNotes = localNotes.filter((note: FinancialNote) => note.id !== noteId);
+      localStorage.setItem('financial-notes', JSON.stringify(updatedNotes));
+      setNotes(updatedNotes);
+      toast.success('Note deleted from local storage');
     }
   };
 
-  const exportNote = (note: FinancialNote) => {
-    try {
-      const text = `${note.title}\n\n${note.content.summary}\n\nHighlights:\n${note.content.highlights.map(h => `• ${h}`).join('\n')}\n\nRecommendations:\n${note.content.recommendations.map(r => `• ${r.title}: ${r.description}`).join('\n')}\n\n"${note.content.quote}"`;
-      
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${note.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.success('Note exported');
-    } catch (error) {
-      console.error('Error exporting note:', error);
-      toast.error('Failed to export note');
+  const downloadNote = (note: FinancialNote) => {
+    const content = `Financial Analysis - ${note.title}
+
+Date Range: ${new Date(note.dateRange.from).toLocaleDateString()} - ${new Date(note.dateRange.to).toLocaleDateString()}
+
+Summary:
+${note.content.summary}
+
+Key Highlights:
+${note.content.highlights.map(h => `• ${h}`).join('\n')}
+
+Recommendations:
+${note.content.recommendations.map(r => `• ${r.title}: ${r.description}`).join('\n')}
+
+Inspiration: "${note.content.quote}"
+
+Generated on: ${new Date(note.createdAt).toLocaleString()}`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `financial-analysis-${note.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Note downloaded successfully');
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'destructive';
+      case 'medium': return 'default';
+      case 'low': return 'secondary';
+      default: return 'secondary';
     }
   };
 
@@ -106,25 +140,25 @@ export function NotesViewer({ isOpen, onClose }: NotesViewerProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
+      <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <CardHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Financial Notes
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              </CardTitle>
+              <CardDescription>
                 Your saved AI financial summaries and insights
-              </p>
+              </CardDescription>
             </div>
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
           </div>
-        </div>
+        </CardHeader>
         
-        <div className="flex-1 overflow-hidden p-0 min-h-0">
+        <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-8 px-6">
               <div className="text-center">
@@ -133,81 +167,75 @@ export function NotesViewer({ isOpen, onClose }: NotesViewerProps) {
               </div>
             </div>
           ) : notes.length === 0 ? (
-            <div className="text-center py-8 px-6">
-              <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No notes yet
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Save AI summaries as notes to view them here later.
-              </p>
+            <div className="flex items-center justify-center py-8 px-6">
+              <div className="text-center">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No notes yet</h3>
+                <p className="text-sm text-muted-foreground">
+                  Save AI financial summaries to see them here
+                </p>
+              </div>
             </div>
           ) : (
-            <div 
-              className="h-full overflow-y-auto"
-              style={{ maxHeight: 'calc(90vh - 120px)', overflowY: 'auto' }}
-            >
-              <div className="space-y-4 p-6">
+            <div className="h-full overflow-y-auto p-6">
+              <div className="space-y-4">
                 {notes.map((note) => (
-                  <Card key={note.id} className="border-l-4 border-l-blue-500">
-                    <CardHeader className="pb-3">
+                  <Card key={note.id} className="p-4">
+                    <div className="space-y-4">
+                      {/* Header */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <CardTitle className="text-lg">{note.title}</CardTitle>
-                          <CardDescription className="flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(note.dateRange.from).toLocaleDateString()} - {new Date(note.dateRange.to).toLocaleDateString()}
-                            <span className="text-xs text-muted-foreground">
-                              • Saved {new Date(note.createdAt).toLocaleDateString()}
+                          <h3 className="font-semibold text-lg mb-1">{note.title}</h3>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                              {new Date(note.dateRange.from).toLocaleDateString()} - {new Date(note.dateRange.to).toLocaleDateString()}
                             </span>
-                          </CardDescription>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => exportNote(note)}
-                            className="h-8 w-8 p-0"
+                            onClick={() => downloadNote(note)}
                           >
                             <Download className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => deleteNote(note.id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                    </CardHeader>
-                    
-                    <CardContent className="pt-0">
+
+                      <Separator />
+
                       {/* Summary */}
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="h-4 w-4 text-blue-600" />
-                          <h4 className="font-semibold text-sm">Summary</h4>
+                          <h4 className="font-medium">Summary</h4>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                           {note.content.summary}
                         </p>
                       </div>
 
-                      <Separator className="my-4" />
-
                       {/* Highlights */}
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Target className="h-4 w-4 text-green-600" />
-                          <h4 className="font-semibold text-sm">Key Highlights</h4>
+                          <h4 className="font-medium">Key Highlights</h4>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           {note.content.highlights.map((highlight, index) => (
                             <div key={index} className="flex items-start gap-2">
                               <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-2 flex-shrink-0" />
-                              <span className="text-sm text-gray-600 dark:text-gray-300">
+                              <span className="text-sm text-muted-foreground">
                                 {highlight}
                               </span>
                             </div>
@@ -215,27 +243,22 @@ export function NotesViewer({ isOpen, onClose }: NotesViewerProps) {
                         </div>
                       </div>
 
-                      <Separator className="my-4" />
-
                       {/* Recommendations */}
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Lightbulb className="h-4 w-4 text-yellow-600" />
-                          <h4 className="font-semibold text-sm">Recommendations</h4>
+                          <h4 className="font-medium">Recommendations</h4>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {note.content.recommendations.map((rec, index) => (
                             <div key={index} className="border-l-2 border-l-yellow-500 pl-3">
                               <div className="flex items-center gap-2 mb-1">
                                 <h5 className="font-medium text-sm">{rec.title}</h5>
-                                <Badge 
-                                  variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}
-                                  className="text-xs"
-                                >
+                                <Badge variant={getPriorityColor(rec.priority)} className="text-xs">
                                   {rec.priority}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                              <p className="text-sm text-muted-foreground">
                                 {rec.description}
                               </p>
                             </div>
@@ -243,26 +266,26 @@ export function NotesViewer({ isOpen, onClose }: NotesViewerProps) {
                         </div>
                       </div>
 
-                      <Separator className="my-4" />
-
                       {/* Quote */}
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Quote className="h-4 w-4 text-purple-600" />
-                          <h4 className="font-semibold text-sm">Inspiration</h4>
+                          <h4 className="font-medium">Daily Inspiration</h4>
                         </div>
-                        <p className="text-sm italic text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                          "{note.content.quote}"
-                        </p>
+                        <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border-l-4 border-l-purple-500">
+                          <p className="text-sm italic text-purple-800 dark:text-purple-200">
+                            "{note.content.quote}"
+                          </p>
+                        </div>
                       </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 ))}
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
