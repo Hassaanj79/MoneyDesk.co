@@ -16,6 +16,7 @@ import {
   Search
 } from 'lucide-react';
 import { EnhancedAdminDashboard } from '@/components/admin/enhanced-admin-dashboard';
+import { FallbackAdminDashboard } from '@/components/admin/fallback-admin-dashboard';
 import { UserSearch } from '@/components/admin/user-search';
 import { EnhancedSubscriptionManagement } from '@/components/admin/enhanced-subscription-management';
 import { AuthUsersManagement } from '@/components/admin/auth-users-management';
@@ -39,6 +40,7 @@ const isAdminUser = (email: string | null | undefined): boolean => {
 export default function AdminPage() {
   // TEMPORARILY BYPASS ALL AUTHENTICATION FOR DEBUGGING
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [useFallback, setUseFallback] = useState(false);
   
   console.log('Admin page loaded - bypassing all authentication');
 
@@ -150,7 +152,20 @@ export default function AdminPage() {
           </div>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <EnhancedAdminDashboard />
+            {useFallback ? (
+              <FallbackAdminDashboard />
+            ) : (
+              <EnhancedAdminDashboard />
+            )}
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setUseFallback(!useFallback)}
+                className="text-sm"
+              >
+                {useFallback ? 'Use Enhanced Dashboard' : 'Use Fallback Dashboard'}
+              </Button>
+            </div>
           </TabsContent>
 
               <TabsContent value="search" className="space-y-6">

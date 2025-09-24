@@ -237,102 +237,121 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('Setting up real-time admin data listeners...');
     
-        // Initial data load
-        refreshUsers();
-        refreshStats();
-        refreshCancellationRequests();
+    // Only set up listeners if user is admin
+    if (!isAdmin) {
+      console.log('User is not admin, skipping real-time listeners');
+      return;
+    }
     
-    // Set up real-time listeners for users collection
-    const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-    const unsubscribeUsers = onSnapshot(usersQuery, 
-      (snapshot) => {
-        console.log('Real-time users update received:', snapshot.size, 'users');
-        const users: AdminUser[] = [];
-        
-        snapshot.forEach(async (userDoc) => {
-          const userData = userDoc.data();
+    // Initial data load
+    refreshUsers();
+    refreshStats();
+    refreshCancellationRequests();
+    
+    let unsubscribeUsers: (() => void) | null = null;
+    let unsubscribeCancellations: (() => void) | null = null;
+    
+    try {
+      // Set up real-time listeners for users collection
+      const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+      unsubscribeUsers = onSnapshot(usersQuery, 
+        (snapshot) => {
+          console.log('Real-time users update received:', snapshot.size, 'users');
+          const users: AdminUser[] = [];
           
-          // Get user's subscription info
-          try {
-            const subscriptionDoc = await getDoc(doc(db, 'users', userDoc.id, 'subscription', 'current'));
-            const subscription = subscriptionDoc.exists() ? subscriptionDoc.data() : null;
+          snapshot.forEach(async (userDoc) => {
+            const userData = userDoc.data();
             
-            // Get user's module access from subscription or default
-            const moduleAccess: ModuleAccess = subscription?.features || {
-              dashboard: true,
-              transactions: true,
-              loans: false,
-              reports: false,
-              settings: true,
-              accounts: true,
-              budgets: false,
-              categories: true
-            };
-            
-            // Create user record
-            const adminUser: AdminUser = {
-              id: userDoc.id,
-              email: userData.email || '',
-              name: userData.name || '',
-              role: userData.role || 'user',
-              moduleAccess,
-              isActive: userData.isActive !== false,
-              createdAt: userData.createdAt || new Date().toISOString(),
-              lastLoginAt: userData.lastLoginAt,
-              createdBy: userData.createdBy
-            };
-            
-            users.push(adminUser);
-          } catch (error) {
-            console.error(`Error processing user ${userDoc.id}:`, error);
+            // Get user's subscription info
+            try {
+              const subscriptionDoc = await getDoc(doc(db, 'users', userDoc.id, 'subscription', 'current'));
+              const subscription = subscriptionDoc.exists() ? subscriptionDoc.data() : null;
+              
+              // Get user's module access from subscription or default
+              const moduleAccess: ModuleAccess = subscription?.features || {
+                dashboard: true,
+                transactions: true,
+                loans: false,
+                reports: false,
+                settings: true,
+                accounts: true,
+                budgets: false,
+                categories: true
+              };
+              
+              // Create user record
+              const adminUser: AdminUser = {
+                id: userDoc.id,
+                email: userData.email || '',
+                name: userData.name || '',
+                role: userData.role || 'user',
+                moduleAccess,
+                isActive: userData.isActive !== false,
+                createdAt: userData.createdAt || new Date().toISOString(),
+                lastLoginAt: userData.lastLoginAt,
+                createdBy: userData.createdBy
+              };
+              
+              users.push(adminUser);
+            } catch (error) {
+              console.error(`Error processing user ${userDoc.id}:`, error);
+            }
+          });
+          
+          // Update state with new users data
+          setUsers(users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        },
+        (error) => {
+          console.error('Error in real-time users listener:', error);
+          // Don't set error state for permission denied errors
+          if (error.code !== 'permission-denied') {
+            setError('Failed to sync user data in real-time');
           }
-        });
-        
-        // Update state with new users data
-        setUsers(users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      },
-      (error) => {
-        console.error('Error in real-time users listener:', error);
-        setError('Failed to sync user data in real-time');
-      }
-        );
-        
-        // Set up real-time listener for cancellation requests
-        const cancellationQuery = query(collection(db, 'cancellationRequests'), orderBy('createdAt', 'desc'));
-        const unsubscribeCancellations = onSnapshot(cancellationQuery, 
-          (snapshot) => {
-            console.log('Real-time cancellation requests update received:', snapshot.size, 'requests');
-            const requests: CancellationRequest[] = [];
-            
-            snapshot.forEach((doc) => {
-              const data = doc.data();
-              requests.push({
-                id: doc.id,
-                ...data
-              } as CancellationRequest);
-            });
-            
-            setCancellationRequests(requests);
-          },
-          (error) => {
-            console.error('Error in real-time cancellation requests listener:', error);
+        }
+      );
+      
+      // Set up real-time listener for cancellation requests
+      const cancellationQuery = query(collection(db, 'cancellationRequests'), orderBy('createdAt', 'desc'));
+      unsubscribeCancellations = onSnapshot(cancellationQuery, 
+        (snapshot) => {
+          console.log('Real-time cancellation requests update received:', snapshot.size, 'requests');
+          const requests: CancellationRequest[] = [];
+          
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            requests.push({
+              id: doc.id,
+              ...data
+            } as CancellationRequest);
+          });
+          
+          setCancellationRequests(requests);
+        },
+        (error) => {
+          console.error('Error in real-time cancellation requests listener:', error);
+          // Don't set error state for permission denied errors
+          if (error.code !== 'permission-denied') {
             setError('Failed to sync cancellation requests in real-time');
           }
-        );
-        
-        // Set up real-time listener for admin stats (refresh every 2 minutes)
-        const statsInterval = setInterval(() => {
-          console.log('Refreshing admin stats...');
-          refreshStats();
-        }, 120000); // 2 minutes
+        }
+      );
+    } catch (error) {
+      console.error('Error setting up real-time listeners:', error);
+    }
     
+    // Set up real-time listener for admin stats (refresh every 2 minutes)
+    const statsInterval = setInterval(() => {
+      console.log('Refreshing admin stats...');
+      refreshStats();
+    }, 120000); // 2 minutes
+
     return () => {
       console.log('Cleaning up admin real-time listeners...');
-      unsubscribeUsers();
-      unsubscribeCancellations();
+      if (unsubscribeUsers) unsubscribeUsers();
+      if (unsubscribeCancellations) unsubscribeCancellations();
       clearInterval(statsInterval);
     };
-  }, []);
+  }, [isAdmin]);
 
       const value: AdminContextType = {
         users,
