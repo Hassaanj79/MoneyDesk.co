@@ -2,7 +2,8 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   Card,
   CardContent,
@@ -22,7 +23,16 @@ import { SecuritySettings } from "@/components/settings/security-settings"
 import { AIPrivacyToggle } from "@/components/ai/ai-privacy-toggle"
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("profile")
+
+  // Handle URL parameters for direct navigation
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && ['profile', 'security', 'app-config'].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
   return (
     <Card>
       <CardHeader>

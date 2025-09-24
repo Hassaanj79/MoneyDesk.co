@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CurrencySettings } from "./currency-settings"
@@ -16,6 +17,17 @@ import {
 } from "lucide-react"
 
 export function AppConfigForm() {
+  const searchParams = useSearchParams()
+  const [activeSubTab, setActiveSubTab] = useState("currency")
+
+  // Handle URL parameters for direct navigation to subtabs
+  useEffect(() => {
+    const subtab = searchParams.get('subtab')
+    if (subtab && ['currency', 'categories', 'accounts', 'budgets'].includes(subtab)) {
+      setActiveSubTab(subtab)
+    }
+  }, [searchParams])
+
   return (
     <div className="space-y-6">
       <Card>
@@ -29,7 +41,7 @@ export function AppConfigForm() {
                 </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="currency" className="space-y-6">
+          <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
               <TabsTrigger value="currency" className="flex flex-col items-center gap-1 p-2 text-xs">
                 <DollarSign className="h-3 w-3" />

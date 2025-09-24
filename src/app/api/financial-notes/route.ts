@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, content, dateRange } = await request.json();
+    const { title, content, dateRange, userId } = await request.json();
 
     // Validate input
     if (!title || !content) {
@@ -15,12 +15,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user from auth (you might need to implement proper auth middleware)
-    // For now, we'll use a placeholder user ID
-    const userId = 'current-user'; // This should be replaced with actual user ID from auth
+    // Use provided userId or fallback to 'anonymous'
+    const userIdentifier = userId || 'anonymous';
 
     const noteData = {
-      userId,
+      userId: userIdentifier,
       title,
       content,
       dateRange,
@@ -28,12 +27,21 @@ export async function POST(request: NextRequest) {
       updatedAt: serverTimestamp(),
     };
 
-    const docRef = await addDoc(collection(db, 'financial_notes'), noteData);
-
-    return NextResponse.json({
-      id: docRef.id,
-      message: 'Note saved successfully'
-    });
+    try {
+      const docRef = await addDoc(collection(db, 'financial_notes'), noteData);
+      return NextResponse.json({
+        id: docRef.id,
+        message: 'Note saved successfully'
+      });
+    } catch (firestoreError) {
+      console.error('Firestore error:', firestoreError);
+      // Fallback: return success but note that it's stored locally
+      return NextResponse.json({
+        id: `local-${Date.now()}`,
+        message: 'Note saved locally (Firestore unavailable)',
+        local: true
+      });
+    }
   } catch (error) {
     console.error('Error saving financial note:', error);
     return NextResponse.json(

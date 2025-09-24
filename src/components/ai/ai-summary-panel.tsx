@@ -14,12 +14,16 @@ import {
   Lightbulb,
   Quote,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { NotesViewer } from './notes-viewer';
 import { useDateRange } from '@/contexts/date-range-context';
 import { useTransactions } from '@/contexts/transaction-context';
 import { useCategories } from '@/contexts/category-context';
@@ -35,7 +39,6 @@ interface AIInsight {
   recommendations: {
     title: string;
     description: string;
-    action?: string;
     priority: 'low' | 'medium' | 'high';
   }[];
   quote: string;
@@ -58,6 +61,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [showNotesViewer, setShowNotesViewer] = useState(false);
 
   // Filter transactions for the selected date range
   const filteredTransactions = React.useMemo(() => {
@@ -160,29 +164,151 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
     const aggregates = calculateAggregates(filteredTransactions, categories);
     const dateRangeStr = `${date.from?.toLocaleDateString()} - ${date.to?.toLocaleDateString()}`;
     
+    // Generate actionable recommendations based on data
+    const recommendations = generateActionableRecommendations(aggregates, categories);
+    
     return {
       summary: `During ${dateRangeStr}, you had ${currency}${aggregates.totalIncome.toFixed(2)} in income and ${currency}${aggregates.totalExpenses.toFixed(2)} in expenses, resulting in a ${aggregates.netIncome >= 0 ? 'positive' : 'negative'} net income of ${currency}${Math.abs(aggregates.netIncome).toFixed(2)}.`,
       highlights: [
         `Total of ${aggregates.transactionCount} transactions processed`,
-        `Top spending category: ${aggregates.topCategories[0]?.name || 'N/A'}`,
+        `Top spending category: ${aggregates.topCategories[0]?.name || 'N/A'} (${currency}${aggregates.topCategories[0]?.amount.toFixed(2) || '0.00'})`,
         `Average transaction: ${currency}${aggregates.averageTransaction.toFixed(2)}`,
         aggregates.netIncome >= 0 ? 'Positive cash flow this period' : 'Negative cash flow this period'
       ],
-      recommendations: [
+      recommendations,
+      quote: getInspirationalQuote(aggregates.netIncome)
+    };
+  };
+
+  const generateActionableRecommendations = (aggregates: any, categories: any[]) => {
+    const recommendations = [];
+    
+    // High spending category recommendation
+    if (aggregates.topCategories[0]) {
+      const topCategory = aggregates.topCategories[0];
+      const categoryAmount = topCategory.amount;
+      const totalExpenses = aggregates.totalExpenses;
+      const percentage = (categoryAmount / totalExpenses) * 100;
+      
+      if (percentage > 30) {
+        recommendations.push({
+          title: 'Set Budget for High Spending Category',
+          description: `${topCategory.name} accounts for ${percentage.toFixed(1)}% of your expenses (${currency}${categoryAmount.toFixed(2)}). Set a monthly budget limit to control this spending.`,
+          priority: 'high' as const
+        });
+      } else if (percentage > 20) {
+        recommendations.push({
+          title: 'Monitor Top Spending Category',
+          description: `${topCategory.name} is your highest expense at ${currency}${categoryAmount.toFixed(2)}. Consider if this spending aligns with your financial goals.`,
+          priority: 'medium' as const
+        });
+      }
+    }
+    
+    // Negative cash flow recommendation
+    if (aggregates.netIncome < 0) {
+      const deficit = Math.abs(aggregates.netIncome);
+      recommendations.push({
+        title: 'Address Negative Cash Flow',
+        description: `You spent ${currency}${deficit.toFixed(2)} more than you earned. Review your expenses and consider reducing non-essential spending.`,
+        priority: 'high' as const
+      });
+    }
+    
+    // High transaction count recommendation
+    if (aggregates.transactionCount > 50) {
+      recommendations.push({
+        title: 'Consolidate Small Transactions',
+        description: `You made ${aggregates.transactionCount} transactions this period. Consider batching small purchases to reduce transaction fees and better track spending.`,
+        priority: 'medium' as const
+      });
+    }
+    
+    // Low transaction count recommendation
+    if (aggregates.transactionCount < 5 && aggregates.totalExpenses > 0) {
+      recommendations.push({
+        title: 'Improve Transaction Tracking',
+        description: 'You have few recorded transactions. Make sure to log all expenses to get accurate financial insights.',
+        priority: 'medium' as const
+      });
+    }
+    
+    // Savings opportunity
+    if (aggregates.netIncome > 0) {
+      const savingsRate = (aggregates.netIncome / aggregates.totalIncome) * 100;
+      if (savingsRate < 10) {
+        recommendations.push({
+          title: 'Increase Savings Rate',
+          description: `You're saving ${savingsRate.toFixed(1)}% of your income. Aim for at least 20% to build a strong financial foundation.`,
+          priority: 'medium' as const
+        });
+      } else if (savingsRate > 20) {
+        recommendations.push({
+          title: 'Great Savings Rate!',
+          description: `Excellent! You're saving ${savingsRate.toFixed(1)}% of your income. Consider investing these savings for long-term growth.`,
+          priority: 'low' as const
+        });
+      }
+    }
+    
+    // Default recommendations if none generated
+    if (recommendations.length === 0) {
+      recommendations.push(
         {
-          title: 'Review Top Categories',
-          description: `Consider setting a budget for ${aggregates.topCategories[0]?.name || 'your highest spending category'}.`,
+          title: 'Set Monthly Budget',
+          description: 'Create a monthly budget to track your income and expenses more effectively.',
           priority: 'medium' as const
         },
         {
-          title: 'Track Spending Patterns',
-          description: 'Monitor your spending trends to identify areas for improvement.',
+          title: 'Review Spending Categories',
+          description: 'Regularly review your spending categories to identify areas for optimization.',
           priority: 'low' as const
         }
-      ],
-      quote: 'A penny saved is a penny earned.'
-    };
+      );
+    }
+    
+    return recommendations.slice(0, 4); // Limit to 4 recommendations
   };
+
+  const getInspirationalQuote = (netIncome: number) => {
+    const quotes = [
+      "The best time to plant a tree was 20 years ago. The second best time is now.",
+      "A budget is telling your money where to go instead of wondering where it went.",
+      "It's not how much money you make, but how much money you keep.",
+      "The habit of saving is itself an education; it fosters every virtue.",
+      "Do not save what is left after spending, but spend what is left after saving.",
+      "Financial peace isn't the acquisition of stuff. It's learning to live on less than you make.",
+      "The goal isn't more money. The goal is living life on your terms.",
+      "Small amounts saved daily add up to huge investments in the end."
+    ];
+    
+    // Return different quotes based on financial situation
+    if (netIncome < 0) {
+      return quotes[1]; // Budget quote
+    } else if (netIncome > 0) {
+      return quotes[4]; // Saving quote
+    } else {
+      return quotes[0]; // General motivational quote
+    }
+  };
+
+  const handleAIToggle = (enabled: boolean) => {
+    if (user?.uid) {
+      localStorage.setItem(`ai-enabled-${user.uid}`, enabled.toString());
+      setAiEnabled(enabled);
+      
+      if (enabled) {
+        toast.success('AI features enabled! Generating insights...');
+        // Generate insights immediately after enabling
+        setTimeout(() => {
+          generateInsights();
+        }, 500);
+      } else {
+        toast.info('AI features disabled');
+      }
+    }
+  };
+
 
   const copyToClipboard = async () => {
     if (!insights) return;
@@ -200,29 +326,58 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
   const saveAsNote = async () => {
     if (!insights) return;
     
+    const noteData = {
+      title: `AI Summary - ${date.from?.toLocaleDateString()} to ${date.to?.toLocaleDateString()}`,
+      content: insights,
+      dateRange: {
+        from: date.from?.toISOString(),
+        to: date.to?.toISOString(),
+      },
+      userId: user?.uid || 'anonymous'
+    };
+
     try {
       const response = await fetch('/api/financial-notes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: `AI Summary - ${date.from?.toLocaleDateString()} to ${date.to?.toLocaleDateString()}`,
-          content: insights,
-          dateRange: {
-            from: date.from?.toISOString(),
-            to: date.to?.toISOString(),
-          },
-        }),
+        body: JSON.stringify(noteData),
       });
 
       if (response.ok) {
-        toast.success('Summary saved as note');
+        const result = await response.json();
+        if (result.local) {
+          // Save to localStorage as fallback
+          const localNotes = JSON.parse(localStorage.getItem('financial-notes') || '[]');
+          localNotes.push({
+            id: result.id,
+            ...noteData,
+            createdAt: new Date().toISOString()
+          });
+          localStorage.setItem('financial-notes', JSON.stringify(localNotes));
+          toast.success('Summary saved locally');
+        } else {
+          toast.success('Summary saved as note');
+        }
       } else {
         throw new Error('Failed to save note');
       }
     } catch (err) {
-      toast.error('Failed to save note');
+      // Fallback to localStorage
+      try {
+        const localNotes = JSON.parse(localStorage.getItem('financial-notes') || '[]');
+        localNotes.push({
+          id: `local-${Date.now()}`,
+          ...noteData,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('financial-notes', JSON.stringify(localNotes));
+        toast.success('Summary saved locally');
+      } catch (localErr) {
+        console.error('Failed to save locally:', localErr);
+        toast.error('Failed to save note');
+      }
     }
   };
 
@@ -240,11 +395,39 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setShowNotesViewer(true)}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              View Notes
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={generateInsights}
               disabled={loading}
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </Button>
+            {insights && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyToClipboard}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={saveAsNote}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save as Note
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -272,15 +455,31 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 AI Features Disabled
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                Enable AI summaries in Settings to get personalized financial insights.
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                Enable AI summaries to get personalized financial insights and recommendations.
               </p>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/settings'}
-              >
-                Go to Settings
-              </Button>
+              
+              {/* AI Toggle Switch */}
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Label htmlFor="ai-toggle" className="text-sm font-medium">
+                  Enable AI Summaries
+                </Label>
+                <Switch
+                  id="ai-toggle"
+                  checked={aiEnabled}
+                  onCheckedChange={handleAIToggle}
+                />
+              </div>
+              
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                You can also manage this setting in{' '}
+                <button
+                  onClick={() => window.location.href = '/settings'}
+                  className="underline hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  Settings
+                </button>
+              </div>
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="text-center py-8">
@@ -399,6 +598,12 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
           ) : null}
         </CardContent>
       </Card>
+      
+      {/* Notes Viewer */}
+      <NotesViewer 
+        isOpen={showNotesViewer} 
+        onClose={() => setShowNotesViewer(false)} 
+      />
     </div>
   );
 }

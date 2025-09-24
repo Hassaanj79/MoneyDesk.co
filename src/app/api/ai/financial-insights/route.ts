@@ -16,7 +16,6 @@ interface AIInsight {
   recommendations: {
     title: string;
     description: string;
-    action?: string;
     priority: 'low' | 'medium' | 'high';
   }[];
   quote: string;
@@ -176,53 +175,102 @@ function generateRecommendations(
   aggregates: FinancialAggregates,
   currency: string
 ): Array<{ title: string; description: string; priority: 'low' | 'medium' | 'high' }> {
-  const { totalIncome, totalExpenses, netIncome, topCategories, averageTransaction } = aggregates;
+  const { totalIncome, totalExpenses, netIncome, topCategories, averageTransaction, transactionCount } = aggregates;
   const recommendations: Array<{ title: string; description: string; priority: 'low' | 'medium' | 'high' }> = [];
 
   // Negative cash flow recommendation
   if (netIncome < 0) {
+    const deficit = Math.abs(netIncome);
     recommendations.push({
       title: 'Address Negative Cash Flow',
-      description: `You're spending ${currency}${Math.abs(netIncome).toFixed(2)} more than you're earning. Consider reducing expenses or increasing income.`,
+      description: `You're spending ${currency}${deficit.toFixed(2)} more than you're earning. Review your expenses and identify areas to cut back.`,
       priority: 'high'
     });
   }
 
-  // Top category spending recommendation
-  if (topCategories.length > 0 && topCategories[0].amount > totalExpenses * 0.3) {
-    recommendations.push({
-      title: 'Review High Spending Category',
-      description: `${topCategories[0].name} represents ${((topCategories[0].amount / totalExpenses) * 100).toFixed(1)}% of your expenses. Consider setting a budget limit.`,
-      priority: 'medium'
-    });
+  // High spending category recommendation
+  if (topCategories.length > 0) {
+    const topCategory = topCategories[0];
+    const percentage = (topCategory.amount / totalExpenses) * 100;
+    
+    if (percentage > 40) {
+      recommendations.push({
+        title: 'Set Budget for High Spending Category',
+        description: `${topCategory.name} accounts for ${percentage.toFixed(1)}% of your expenses (${currency}${topCategory.amount.toFixed(2)}). This is unusually high and needs attention.`,
+        priority: 'high'
+      });
+    } else if (percentage > 25) {
+      recommendations.push({
+        title: 'Monitor Top Spending Category',
+        description: `${topCategory.name} is your highest expense at ${currency}${topCategory.amount.toFixed(2)} (${percentage.toFixed(1)}% of total). Consider setting a monthly limit.`,
+        priority: 'medium'
+      });
+    }
   }
 
-  // Savings recommendation for positive cash flow
+  // Savings optimization for positive cash flow
   if (netIncome > 0) {
+    const savingsRate = (netIncome / totalIncome) * 100;
+    if (savingsRate < 10) {
+      recommendations.push({
+        title: 'Increase Savings Rate',
+        description: `You're saving ${savingsRate.toFixed(1)}% of your income (${currency}${netIncome.toFixed(2)}). Aim for at least 20% to build wealth.`,
+        priority: 'medium'
+      });
+    } else if (savingsRate > 20) {
+      recommendations.push({
+        title: 'Excellent Savings Rate!',
+        description: `Outstanding! You're saving ${savingsRate.toFixed(1)}% of your income. Consider investing these savings for long-term growth.`,
+        priority: 'low'
+      });
+    } else {
+      recommendations.push({
+        title: 'Good Savings Progress',
+        description: `You're saving ${savingsRate.toFixed(1)}% of your income. Consider increasing this to 20% for better financial security.`,
+        priority: 'medium'
+      });
+    }
+  }
+
+  // Transaction frequency recommendations
+  if (transactionCount > 100) {
     recommendations.push({
-      title: 'Optimize Savings',
-      description: `You have ${currency}${netIncome.toFixed(2)} in surplus. Consider allocating this to savings or investments.`,
+      title: 'Consolidate Small Transactions',
+      description: `You made ${transactionCount} transactions this period. Consider batching small purchases to reduce fees and improve tracking.`,
+      priority: 'medium'
+    });
+  } else if (transactionCount < 5 && totalExpenses > 0) {
+    recommendations.push({
+      title: 'Improve Transaction Tracking',
+      description: 'You have very few recorded transactions. Make sure to log all expenses for accurate financial insights.',
       priority: 'medium'
     });
   }
 
-  // Transaction frequency recommendation
-  if (aggregates.transactionCount > 50) {
+  // High average transaction recommendation
+  if (averageTransaction > 500) {
     recommendations.push({
-      title: 'Monitor Transaction Frequency',
-      description: 'You have many transactions this period. Consider consolidating or reviewing recurring payments.',
-      priority: 'low'
+      title: 'Review Large Transactions',
+      description: `Your average transaction is ${currency}${averageTransaction.toFixed(2)}. Review if these large purchases align with your financial goals.`,
+      priority: 'medium'
     });
   }
 
-  // General budgeting recommendation
-  if (recommendations.length < 3) {
-    recommendations.push({
-      title: 'Set Category Budgets',
-      description: 'Create budget limits for your top spending categories to better control expenses.',
-      priority: 'low'
-    });
+  // Default recommendations if none generated
+  if (recommendations.length === 0) {
+    recommendations.push(
+      {
+        title: 'Set Monthly Budget',
+        description: 'Create a comprehensive monthly budget to track income and expenses effectively.',
+        priority: 'medium'
+      },
+      {
+        title: 'Review Spending Categories',
+        description: 'Regularly review your spending categories to identify optimization opportunities.',
+        priority: 'low'
+      }
+    );
   }
 
-  return recommendations.slice(0, 5); // Limit to 5 recommendations
+  return recommendations.slice(0, 4); // Limit to 4 recommendations
 }
