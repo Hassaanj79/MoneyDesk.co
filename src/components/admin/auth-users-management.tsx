@@ -83,18 +83,23 @@ export function AuthUsersManagement() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Loading auth users...');
       const response = await fetchAllAuthUsers();
       setAuthUsers(response.users);
       console.log('Loaded auth users:', response.users.length);
       
-      // Show a subtle notification if using fallback data
+      // Show a notification if using fallback data
       if (response.users.some(user => user.uid.startsWith('fallback-'))) {
-        toast.info('Using demo authentication data. Configure Firebase Admin SDK for real user data.');
+        toast.warning('Using demo authentication data. Configure Firebase Admin SDK for real user data.');
+        setError('Using demo data - Firebase Admin SDK not configured properly');
+      } else {
+        toast.success(`Loaded ${response.users.length} real authentication users`);
+        setError(null);
       }
     } catch (err: any) {
-      // The service now returns fallback data instead of throwing, so this should rarely happen
       setError(err.message || 'Failed to load authentication users');
       console.error('Error loading auth users:', err);
+      toast.error('Failed to load authentication users: ' + err.message);
     } finally {
       setLoading(false);
     }

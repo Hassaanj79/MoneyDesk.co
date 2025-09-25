@@ -27,28 +27,45 @@ export interface AuthUsersResponse {
 
 export const fetchAllAuthUsers = async (): Promise<AuthUsersResponse> => {
   try {
+    console.log('Fetching auth users from API...');
     const response = await fetch('/api/admin/users', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        // Add authorization header if needed
-        'Authorization': 'Bearer admin-token', // This is a placeholder
       },
     });
 
+    console.log('API response status:', response.status);
+    
     if (!response.ok) {
-      // If the API fails, return mock data instead of throwing
-      console.warn(`API request failed (${response.status}): ${response.statusText}, using fallback data`);
-      return getFallbackAuthUsers();
+      console.warn(`API request failed (${response.status}): ${response.statusText}`);
+      const errorText = await response.text();
+      console.warn('Error response:', errorText);
+      
+      // Only use fallback data if it's a server error, not auth issues
+      if (response.status >= 500) {
+        console.log('Server error, using fallback data');
+        return getFallbackAuthUsers();
+      } else {
+        // For auth errors, throw to show proper error
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
     }
 
     const data: AuthUsersResponse = await response.json();
+    console.log('Successfully fetched auth users:', data.users.length);
     return data;
   } catch (error: any) {
     console.error('Error fetching auth users:', error);
-    // Return fallback data instead of throwing
-    console.log('Using fallback authentication users data');
-    return getFallbackAuthUsers();
+    
+    // Only use fallback data for network errors, not API errors
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.log('Network error, using fallback data');
+      return getFallbackAuthUsers();
+    }
+    
+    // For other errors, re-throw to show proper error message
+    throw error;
   }
 };
 
