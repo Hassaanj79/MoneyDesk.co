@@ -25,6 +25,11 @@ function initializeFirebaseAdmin() {
             throw new Error('Invalid service account key: missing required fields');
           }
           
+          // Fix the private key format for Vercel
+          if (serviceAccount.private_key && !serviceAccount.private_key.includes('\\n')) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+          }
+          
           adminApp = initializeApp({
             credential: cert(serviceAccount),
             projectId: serviceAccount.project_id || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "chirpchat-yi7xn",
