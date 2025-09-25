@@ -24,17 +24,12 @@ import { CancellationInbox } from '@/components/admin/cancellation-inbox';
 import { DebugStats } from '@/components/admin/debug-stats';
 import { AdminProvider } from '@/contexts/admin-context';
 
-// Admin access check - only your credentials allowed
+// Admin access check - only hassyku786@gmail.com allowed
 const isAdminUser = (email: string | null | undefined): boolean => {
   if (!email) return false;
   
-  // Only your specific email is allowed
-  const adminEmails = [
-    'hassyku786@gmail.com',
-    // Add your other email if needed
-  ];
-  
-  return adminEmails.includes(email.toLowerCase());
+  // Only hassyku786@gmail.com is allowed
+  return email.toLowerCase() === 'hassyku786@gmail.com';
 };
 
 export default function AdminPage() {
@@ -56,14 +51,8 @@ export default function AdminPage() {
           return;
         }
         
-        // Check if user is admin
-        const adminEmails = [
-          'hassyku786@gmail.com',
-          'HASSYKU786@GMAIL.COM',
-          'Hassyku786@gmail.com'
-        ];
-        
-        const isAdmin = adminEmails.includes(userEmail.toLowerCase());
+        // Check if user is admin - only hassyku786@gmail.com allowed
+        const isAdmin = userEmail.toLowerCase() === 'hassyku786@gmail.com';
         setIsAuthorized(isAdmin);
         
         if (!isAdmin) {

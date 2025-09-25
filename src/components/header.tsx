@@ -88,10 +88,8 @@ export function Header() {
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
   const [logoutLoading, setLogoutLoading] = React.useState(false);
 
-  // Check if user has admin access - only your credentials
-  const isAdmin = user?.email && [
-    'hassyku786@gmail.com',
-  ].includes(user.email.toLowerCase());
+  // Check if user has admin access - only hassyku786@gmail.com allowed
+  const isAdmin = user?.email && user.email.toLowerCase() === 'hassyku786@gmail.com';
 
 
   React.useEffect(() => {

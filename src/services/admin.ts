@@ -24,10 +24,9 @@ import {
   sendUserStatusUpdateEmail 
 } from './email';
 
-// Admin access control - only your credentials allowed
+// Admin access control - only hassyku786@gmail.com allowed
 const ADMIN_EMAILS = [
-  'hassyku786@gmail.com',
-  // Add your other email if needed
+  'hassyku786@gmail.com'
 ];
 
 const checkAdminAccess = (userEmail: string | null | undefined): boolean => {

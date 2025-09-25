@@ -51,11 +51,10 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if user is admin
+  // Check if user is admin - only hassyku786@gmail.com allowed
   useEffect(() => {
     if (user?.email) {
-      const adminEmails = ['hassyku786@gmail.com', 'HASSYKU786@GMAIL.COM', 'Hassyku786@gmail.com'];
-      setIsAdmin(adminEmails.includes(user.email));
+      setIsAdmin(user.email.toLowerCase() === 'hassyku786@gmail.com');
     } else {
       setIsAdmin(false);
     }
