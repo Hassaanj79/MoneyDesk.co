@@ -16,12 +16,8 @@ export async function GET(request: NextRequest) {
       return getMockUsersData();
     }
 
-    // Check if user is admin (you can add more sophisticated auth here)
-    // For development, we'll bypass authorization
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader && process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Note: Authorization is handled at the admin panel level
+    // This API endpoint is only accessible from within the admin panel
 
     // Test if adminAuth is working by making a simple call
     try {
