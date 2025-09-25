@@ -83,25 +83,32 @@ export function AuthUsersManagement() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading auth users...');
+      console.log('🔄 Loading auth users...');
       const response = await fetchAllAuthUsers();
+      console.log('📊 Response received:', response);
+      console.log('👥 Users count:', response.users.length);
+      console.log('🔍 First user sample:', response.users[0]);
+      
       setAuthUsers(response.users);
-      console.log('Loaded auth users:', response.users.length);
+      console.log('✅ State updated with users:', response.users.length);
       
       // Show a notification if using fallback data
       if (response.users.some(user => user.uid.startsWith('fallback-'))) {
+        console.log('⚠️ Using fallback data detected');
         toast.warning('Using demo authentication data. Configure Firebase Admin SDK for real user data.');
         setError('Using demo data - Firebase Admin SDK not configured properly');
       } else {
+        console.log('🎉 Using real Firebase data');
         toast.success(`Loaded ${response.users.length} real authentication users`);
         setError(null);
       }
     } catch (err: any) {
+      console.error('❌ Error loading auth users:', err);
       setError(err.message || 'Failed to load authentication users');
-      console.error('Error loading auth users:', err);
       toast.error('Failed to load authentication users: ' + err.message);
     } finally {
       setLoading(false);
+      console.log('🏁 Loading completed');
     }
   };
 
@@ -313,6 +320,16 @@ export function AuthUsersManagement() {
       </Card>
     );
   }
+
+  // Debug logging
+  console.log('🎨 Rendering AuthUsersManagement component');
+  console.log('📊 Current state:', { 
+    authUsersCount: authUsers.length, 
+    loading, 
+    error,
+    filteredUsersCount: filteredUsers.length 
+  });
+  console.log('👥 Auth users:', authUsers.slice(0, 3)); // First 3 users
 
   return (
     <div className="space-y-6">
