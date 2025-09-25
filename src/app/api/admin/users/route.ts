@@ -3,6 +3,13 @@ import { adminAuth } from '@/lib/firebase-admin';
 
 export async function GET(request: NextRequest) {
   try {
+    // Log environment information for debugging
+    console.log('Environment check:');
+    console.log('- NODE_ENV:', process.env.NODE_ENV);
+    console.log('- FIREBASE_SERVICE_ACCOUNT_KEY exists:', !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    console.log('- NEXT_PUBLIC_FIREBASE_PROJECT_ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+    console.log('- adminAuth available:', !!adminAuth);
+    
     // Check if Firebase Admin SDK is available and initialized
     if (!adminAuth) {
       console.log('Firebase Admin SDK not available, returning mock data');

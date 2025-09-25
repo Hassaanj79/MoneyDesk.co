@@ -36,6 +36,7 @@ function initializeFirebaseAdmin() {
         }
       } else {
         // Try to initialize with Application Default Credentials (ADC)
+        // This works in production environments like Vercel
         adminApp = initializeApp({
           projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "chirpchat-yi7xn",
         });
