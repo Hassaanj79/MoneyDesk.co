@@ -23,6 +23,7 @@ import { AuthUsersManagement } from '@/components/admin/auth-users-management';
 import { CancellationInbox } from '@/components/admin/cancellation-inbox';
 import { DebugStats } from '@/components/admin/debug-stats';
 import { AdminProvider } from '@/contexts/admin-context';
+import { useRouter } from 'next/navigation';
 
 // Admin access check - only hassyku786@gmail.com allowed
 const isAdminUser = (email: string | null | undefined): boolean => {
@@ -33,6 +34,7 @@ const isAdminUser = (email: string | null | undefined): boolean => {
 };
 
 export default function AdminPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [useFallback, setUseFallback] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -46,17 +48,22 @@ export default function AdminPage() {
         const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
         
         if (!userEmail) {
-          setIsAuthorized(false);
-          setLoading(false);
+          console.log('No user email found - redirecting to admin login');
+          router.push('/admin/login');
           return;
         }
         
         // Check if user is admin - only hassyku786@gmail.com allowed
+        console.log('Checking admin access for email:', userEmail);
         const isAdmin = userEmail.toLowerCase() === 'hassyku786@gmail.com';
+        console.log('Is admin?', isAdmin);
         setIsAuthorized(isAdmin);
         
         if (!isAdmin) {
-          console.log('Access denied: User is not an admin');
+          console.log('Access denied: User is not an admin - redirecting to admin login');
+          router.push('/admin/login');
+        } else {
+          console.log('Access granted: User is admin');
         }
       } catch (error) {
         console.error('Error checking admin authorization:', error);
@@ -94,12 +101,21 @@ export default function AdminPage() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               You don't have permission to access the admin panel. Please contact the administrator.
             </p>
-            <Button 
-              onClick={() => window.location.href = '/'}
-              className="w-full"
-            >
-              Return to Dashboard
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => router.push('/admin/login')}
+                className="w-full"
+              >
+                Go to Admin Login
+              </Button>
+              <Button 
+                onClick={() => router.push('/')}
+                variant="outline"
+                className="w-full"
+              >
+                Return to Main App
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -305,3 +321,4 @@ export default function AdminPage() {
     </AdminProvider>
   );
 }
+

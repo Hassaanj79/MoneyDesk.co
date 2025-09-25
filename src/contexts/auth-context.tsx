@@ -79,6 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       setAuthInitialized(true);
       
+      // Store user email in localStorage for admin access
+      if (user?.email) {
+        localStorage.setItem('userEmail', user.email);
+      } else {
+        localStorage.removeItem('userEmail');
+      }
+      
       // User state updated
       console.log('User state updated');
     }, (error) => {
@@ -195,6 +202,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Logging out user...');
       await firebaseAuthService.signOut();
+      // Clear user email from localStorage
+      localStorage.removeItem('userEmail');
       console.log('User logged out successfully');
     } catch (error) {
       console.error('Error during logout:', error);
