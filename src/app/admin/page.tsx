@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -38,11 +38,84 @@ const isAdminUser = (email: string | null | undefined): boolean => {
 };
 
 export default function AdminPage() {
-  // TEMPORARILY BYPASS ALL AUTHENTICATION FOR DEBUGGING
   const [activeTab, setActiveTab] = useState('dashboard');
   const [useFallback, setUseFallback] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  console.log('Admin page loaded - bypassing all authentication');
+  // Check admin authorization
+  useEffect(() => {
+    const checkAdminAuth = async () => {
+      try {
+        // Get current user from localStorage or session
+        const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+        
+        if (!userEmail) {
+          setIsAuthorized(false);
+          setLoading(false);
+          return;
+        }
+        
+        // Check if user is admin
+        const adminEmails = [
+          'hassyku786@gmail.com',
+          'HASSYKU786@GMAIL.COM',
+          'Hassyku786@gmail.com'
+        ];
+        
+        const isAdmin = adminEmails.includes(userEmail.toLowerCase());
+        setIsAuthorized(isAdmin);
+        
+        if (!isAdmin) {
+          console.log('Access denied: User is not an admin');
+        }
+      } catch (error) {
+        console.error('Error checking admin authorization:', error);
+        setIsAuthorized(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAdminAuth();
+  }, []);
+  
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show unauthorized access message
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="h-8 w-8 text-red-600 dark:text-red-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              You don't have permission to access the admin panel. Please contact the administrator.
+            </p>
+            <Button 
+              onClick={() => window.location.href = '/'}
+              className="w-full"
+            >
+              Return to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
       const adminTabs = [
         {
@@ -104,7 +177,7 @@ export default function AdminPage() {
                 </p>
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
                   <span>Logged in as:</span>
-                  <span className="font-mono text-primary font-semibold bg-primary/10 px-2 py-1 rounded">hassyku786@gmail.com (Debug Mode)</span>
+                  <span className="font-mono text-primary font-semibold bg-primary/10 px-2 py-1 rounded">Admin User</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
