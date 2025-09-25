@@ -98,25 +98,32 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const receiptPreview = form.watch("receipt");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { receipt, ...transactionData } = values;
+    try {
+      const { receipt, ...transactionData } = values;
 
-    await addTransaction({
-      ...transactionData,
-      date: format(values.date, "yyyy-MM-dd"),
-    });
+      const transactionPayload = {
+        ...transactionData,
+        date: format(values.date, "yyyy-MM-dd"),
+      };
 
-    // addNotification({
-    //   type: 'transaction_created',
-    //   title: `Transaction Added`,
-    //   message: `${values.description} for ${formatCurrency(values.amount)} has been saved.`,
-    //   navigationPath: '/transactions',
-    //   navigationParams: { id: transactionId },
-    //   relatedEntityId: transactionId,
-    //   relatedEntityType: 'transaction'
-    // });
+      await addTransaction(transactionPayload);
 
-    onSuccess?.();
-    form.reset();
+      // addNotification({
+      //   type: 'transaction_created',
+      //   title: `Transaction Added`,
+      //   message: `${values.name} for ${formatCurrency(values.amount)} has been saved.`,
+      //   navigationPath: '/transactions',
+      //   navigationParams: { id: transactionId },
+      //   relatedEntityId: transactionId,
+      //   relatedEntityType: 'transaction'
+      // });
+
+      onSuccess?.();
+      form.reset();
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      toast.error('Failed to add transaction. Please try again.');
+    }
   }
 
   const handlePhotoSelect = (photoDataUrl: string) => {

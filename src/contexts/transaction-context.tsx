@@ -88,7 +88,15 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
             createdAt: createdAt,
           } as Transaction);
         });
-        setTransactions(userTransactions);
+        // Remove duplicates based on ID
+        const uniqueTransactions = userTransactions.reduce((acc, transaction) => {
+          if (!acc.find(t => t.id === transaction.id)) {
+            acc.push(transaction);
+          }
+          return acc;
+        }, [] as Transaction[]);
+        
+        setTransactions(uniqueTransactions);
         setLoading(false);
       }, (error) => {
         console.error("Error fetching transactions:", error);
@@ -104,6 +112,7 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
 
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
+    
     const newDoc = await addTransactionService(user.uid, transaction);
     
     // Update account balance after adding transaction
@@ -117,14 +126,22 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       };
       
       // Immediately add to local state for instant UI update
-      setTransactions(prev => [newTransaction, ...prev]);
+      setTransactions(prev => {
+        // Check if transaction already exists to prevent duplicates
+        const exists = prev.some(t => t.id === newTransaction.id);
+        if (exists) {
+          console.log('Transaction already exists in state, skipping duplicate');
+          return prev;
+        }
+        return [newTransaction, ...prev];
+      });
       
       // Update account balance immediately with the new transaction
       await updateAccountBalance(transaction.accountId, newTransaction);
       
       // Show success toast
       toast.success(`${transaction.type === 'income' ? 'Income' : 'Expense'} added successfully!`, {
-        description: `${transaction.description} - ${transaction.amount}`
+        description: `${transaction.name} - ${transaction.amount}`
       });
       
       // Create notification (disabled)

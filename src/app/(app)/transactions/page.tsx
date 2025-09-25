@@ -453,7 +453,7 @@ function TransactionsPageContent() {
                   filteredTransactions.map((transaction) => {
                     const nextDueDate = getNextRecurrenceDate(transaction);
                     return (
-                    <TableRow key={transaction.id} className="cursor-pointer">
+                    <TableRow key={`${transaction.id}-${transaction.createdAt?.getTime() || transaction.date}`} className="cursor-pointer">
                       <TableCell className="w-12">
                         <input
                           type="checkbox"
