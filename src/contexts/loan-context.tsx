@@ -25,28 +25,22 @@ export const LoanProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user) {
-      console.log('🔄 Loading loans for user:', user.email, 'UID:', user.uid);
       setLoading(true);
       const q = getLoans(user.uid);
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        console.log('📊 Loans snapshot received:', querySnapshot.size, 'loans');
         const userLoans: Loan[] = [];
         querySnapshot.forEach((doc) => {
-          const loanData = { id: doc.id, ...doc.data() } as Loan;
-          console.log('📋 Loan data:', loanData);
-          userLoans.push(loanData);
+          userLoans.push({ id: doc.id, ...doc.data() } as Loan);
         });
-        console.log('✅ Setting loans:', userLoans.length, 'loans');
         setLoans(userLoans);
         setLoading(false);
       }, (error) => {
-        console.error("❌ Error fetching loans:", error);
+        console.error("Error fetching loans:", error);
         setLoading(false);
       });
 
       return () => unsubscribe();
     } else {
-      console.log('👤 No user, clearing loans');
       setLoans([]);
       setLoading(false);
     }
