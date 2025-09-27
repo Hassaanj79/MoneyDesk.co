@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,10 +9,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find the user ID for hassyku786@gmail.com
-    const usersRef = collection(db, 'users');
-    const usersQuery = query(usersRef, where('email', '==', 'hassyku786@gmail.com'));
-    const usersSnapshot = await getDocs(usersQuery);
+    // Find the user ID for hassyku786@gmail.com using Admin SDK
+    const usersSnapshot = await adminDb.collection('users')
+      .where('email', '==', 'hassyku786@gmail.com')
+      .get();
     
     if (usersSnapshot.empty) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -23,8 +22,7 @@ export async function POST(request: NextRequest) {
     const userId = userDoc.id;
     
     // Check existing loans
-    const loansRef = collection(db, 'users', userId, 'loans');
-    const loansSnapshot = await getDocs(loansRef);
+    const loansSnapshot = await adminDb.collection('users').doc(userId).collection('loans').get();
     
     if (loansSnapshot.size > 0) {
       return NextResponse.json({ 
@@ -95,7 +93,7 @@ export async function POST(request: NextRequest) {
     const createdLoans = [];
     for (const loan of sampleLoans) {
       try {
-        const docRef = await addDoc(loansRef, loan);
+        const docRef = await adminDb.collection('users').doc(userId).collection('loans').add(loan);
         createdLoans.push({ id: docRef.id, ...loan });
       } catch (error) {
         console.error('Error creating loan:', error);
