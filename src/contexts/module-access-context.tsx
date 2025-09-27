@@ -159,6 +159,11 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const hasAccess = (module: keyof ModuleAccess): boolean => {
+    // Give full access to admin account (hassyku786@gmail.com)
+    if (user?.email === 'hassyku786@gmail.com') {
+      return true;
+    }
+    
     if (!moduleAccess) return false;
     return moduleAccess[module] === true;
   };

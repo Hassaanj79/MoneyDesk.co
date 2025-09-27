@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/auth-context';
 import { 
   Lock, 
   Crown, 
@@ -83,7 +84,11 @@ export function ModuleAccessGuard({
   userSubscription,
   className = ""
 }: ModuleAccessGuardProps) {
-  const hasAccess = userModuleAccess[module];
+  const { user } = useAuth();
+  
+  // Give full access to admin account (hassyku786@gmail.com)
+  const isAdmin = user?.email === 'hassyku786@gmail.com';
+  const hasAccess = isAdmin || userModuleAccess[module];
   const moduleData = moduleInfo[module];
   const Icon = moduleData.icon;
 
