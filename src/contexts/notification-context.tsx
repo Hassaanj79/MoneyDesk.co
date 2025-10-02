@@ -113,9 +113,22 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     // Start new listener
-    const unsubscribeFn = listenToUserNotifications(user.uid, (newNotifications) => {
-      setNotifications(newNotifications);
-    });
+    const unsubscribeFn = listenToUserNotifications(
+      user.uid, 
+      (newNotifications) => {
+        setNotifications(newNotifications);
+      },
+      (error) => {
+        // Handle permission errors gracefully
+        if (error.code === 'permission-denied') {
+          console.log('Permission denied for notifications, using empty array');
+          setNotifications([]);
+          setError(null);
+        } else {
+          setError(error.message || 'Failed to load notifications');
+        }
+      }
+    );
 
     setUnsubscribe(() => unsubscribeFn);
   }, [user]);

@@ -24,6 +24,9 @@ import {
   PhoneAuthProvider,
   signInWithCredential,
   ConfirmationResult,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
 import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificationUrl } from '@/lib/auth-config';
@@ -31,13 +34,14 @@ import { deleteUserAccount } from '@/services/account-deletion';
 import { createEmailOTP, verifyEmailOTP, resendEmailOTP } from '@/services/email-otp';
 import { createOrUpdateDeviceSession, generateDeviceId } from '@/services/device-management';
 import { firebaseAuthService } from '@/services/firebase-auth';
+import { updateUserProfile } from '@/services/users';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
-  signup: (email: string, password: string, name: string) => Promise<any>;
-  signupWithVerification: (email: string, password: string, name: string) => Promise<any>;
+  signup: (email: string, password: string, name: string, phone?: string) => Promise<any>;
+  signupWithVerification: (email: string, password: string, name: string, phone?: string) => Promise<any>;
   resendSignupOTP: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
@@ -48,6 +52,8 @@ interface AuthContextType {
   verifyOTP: (email: string, otp: string) => Promise<any>;
   sendPasswordResetWithOTP: (email: string) => Promise<void>;
   verifyPasswordResetOTP: (email: string, otp: string, newPassword: string) => Promise<void>;
+  signInWithGoogle: () => Promise<any>;
+  signInWithApple: () => Promise<any>;
   refreshToken: () => Promise<string | null>;
   ensureValidToken: () => Promise<string | null>;
 }
@@ -70,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('Auth timeout - setting loading to false');
       setLoading(false);
       setAuthInitialized(true);
-    }, 5000); // 5 second timeout
+    }, 2000); // 2 second timeout
     
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('Auth state changed:', user ? `User logged in: ${user.email}` : 'No user');
@@ -87,12 +93,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // User state updated
-      console.log('User state updated');
+      console.log('User state updated, loading set to false');
     }, (error) => {
       console.error('Firebase auth error:', error);
       clearTimeout(timeout);
       setLoading(false);
       setAuthInitialized(true);
+      console.log('Auth error handled, loading set to false');
     });
     
     return () => {
@@ -159,17 +166,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, phone?: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
+    
+    // Store phone number in user profile if provided
+    if (phone) {
+      try {
+        await updateUserProfile(userCredential.user.uid, { phone });
+        console.log('Phone number stored in user profile');
+      } catch (error) {
+        console.error('Error storing phone number:', error);
+        // Don't throw error - phone storage is optional
+      }
+    }
+    
     return userCredential;
   };
 
-  const signupWithVerification = async (email: string, password: string, name: string) => {
+  const signupWithVerification = async (email: string, password: string, name: string, phone?: string) => {
     try {
       // Create the user account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
+      
+      // Store phone number in user profile if provided
+      if (phone) {
+        try {
+          await updateUserProfile(userCredential.user.uid, { phone });
+          console.log('Phone number stored in user profile');
+        } catch (error) {
+          console.error('Error storing phone number:', error);
+          // Don't throw error - phone storage is optional
+        }
+      }
       
       // Send OTP email immediately
       console.log('Sending OTP email for new user:', email);
@@ -321,6 +351,107 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     throw new Error('Invalid password reset link');
   };
 
+  // OAuth Providers
+  const googleProvider = new GoogleAuthProvider();
+  // Add additional scopes for better profile data
+  googleProvider.addScope('profile');
+  googleProvider.addScope('email');
+  
+  const appleProvider = new OAuthProvider('apple.com');
+
+  // Google Sign-In
+  const signInWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Store comprehensive user profile data from Google
+      try {
+        const profileData = {
+          name: user.displayName || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          phone: user.phoneNumber || '',
+          photoURL: user.photoURL || '',
+          provider: 'google' as const,
+          // Additional Google-specific data
+          emailVerified: user.emailVerified || false,
+          lastSignInTime: new Date().toISOString()
+        };
+        
+        await updateUserProfile(user.uid, profileData);
+        console.log('Google user profile stored successfully:', {
+          name: profileData.name,
+          email: profileData.email,
+          photoURL: profileData.photoURL
+        });
+      } catch (error) {
+        console.error('Error storing Google user profile:', error);
+        // Don't throw error - profile storage is optional
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  };
+
+  // Apple Sign-In
+  const signInWithApple = async () => {
+    try {
+      // Configure Apple provider with proper settings
+      appleProvider.addScope('email');
+      appleProvider.addScope('name');
+      
+      // Set custom parameters for Apple sign-in
+      appleProvider.setCustomParameters({
+        locale: 'en_US'
+      });
+      
+      const result = await signInWithPopup(auth, appleProvider);
+      const user = result.user;
+      
+      // Store comprehensive user profile data from Apple
+      try {
+        const profileData = {
+          name: user.displayName || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          phone: user.phoneNumber || '',
+          photoURL: user.photoURL || '',
+          provider: 'apple' as const,
+          // Additional Apple-specific data
+          emailVerified: user.emailVerified || false,
+          lastSignInTime: new Date().toISOString()
+        };
+        
+        await updateUserProfile(user.uid, profileData);
+        console.log('Apple user profile stored successfully:', {
+          name: profileData.name,
+          email: profileData.email,
+          photoURL: profileData.photoURL
+        });
+      } catch (error) {
+        console.error('Error storing Apple user profile:', error);
+        // Don't throw error - profile storage is optional
+      }
+      
+      return result;
+    } catch (error: any) {
+      console.error('Error signing in with Apple:', error);
+      
+      // Handle specific Apple sign-in errors
+      if (error.code === 'auth/operation-not-allowed') {
+        throw new Error('Apple sign-in is not enabled. Please contact support.');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your connection and try again.');
+      } else {
+        throw new Error(error.message || 'Failed to sign in with Apple. Please try again.');
+      }
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -337,6 +468,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     verifyOTP,
     sendPasswordResetWithOTP,
     verifyPasswordResetOTP,
+    signInWithGoogle,
+    signInWithApple,
     refreshToken: firebaseAuthService.refreshToken.bind(firebaseAuthService),
     ensureValidToken: firebaseAuthService.ensureValidToken.bind(firebaseAuthService),
   };

@@ -16,17 +16,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2, Eye, EyeOff, Phone, CheckCircle, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { GoogleSignInButton } from "./google-signin-button";
+import { AppleSignInButton } from "./apple-signin-button";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required.").min(2, "Name must be at least 2 characters."),
   email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
-  phone: z.string().min(1, "Phone number is required."),
+  phone: z.string()
+    .min(1, "Phone number is required.")
+    .min(10, "Phone number must be at least 10 digits.")
+    .regex(/^\+[1-9]\d{1,14}$/, "Please enter a valid phone number with country code (e.g., +1234567890)."),
   password: z.string()
     .min(1, "Password is required.")
     .min(8, "Password must be at least 8 characters.")
@@ -73,7 +79,7 @@ export function SignupForm() {
     setLoading(prev => ({...prev, email: true}));
     setError(null);
     try {
-        await signupWithVerification(values.email, values.password, values.name);
+        await signupWithVerification(values.email, values.password, values.name, values.phone);
         // Redirect to OTP verification page
         router.push(`/verify-signup-otp?email=${encodeURIComponent(values.email)}`);
     } catch(err: any) {
@@ -84,6 +90,8 @@ export function SignupForm() {
             setError("Password is too weak. Please choose a stronger password.");
         } else if (err.code === 'auth/invalid-email') {
             setError("Please enter a valid email address.");
+        } else if (err.message && err.message.includes('phone')) {
+            setError("Please enter a valid phone number with country code.");
         } else {
             setError("An unexpected error occurred. Please try again.");
         }
@@ -241,6 +249,39 @@ export function SignupForm() {
                 </Button>
             </form>
             </Form>
+            
+            <div className="mt-6">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <Separator className="w-full" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                            Or continue with
+                        </span>
+                    </div>
+                </div>
+                
+                <div className="mt-6 space-y-3">
+                    <GoogleSignInButton
+                        onSuccess={() => {
+                            router.push('/');
+                        }}
+                        onError={(error) => {
+                            setError(error.message || "Failed to sign in with Google");
+                        }}
+                    />
+                    <AppleSignInButton
+                        onSuccess={() => {
+                            router.push('/');
+                        }}
+                        onError={(error) => {
+                            setError(error.message || "Failed to sign in with Apple");
+                        }}
+                    />
+                </div>
+            </div>
+            
             <div className="mt-4 text-center text-sm">
                 Already have an account?{" "}
                 <Link href="/login" className="underline">

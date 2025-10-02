@@ -11,14 +11,21 @@ service cloud.firestore {
     
     // Regular user access and admin access to users collection
     match /users/{userId} {
+      // Users can read/write their own data, admins can read all
       allow read, write: if request.auth != null && request.auth.uid == userId;
       allow read: if request.auth != null && isAdmin();
+      // Allow users to create their own user document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow server-side creation for user profiles
+      allow create: if request.resource.data.userId == userId;
       
       match /{subcollection=**} {
+        // Users can read/write their own subcollections
         allow read, write: if request.auth != null && request.auth.uid == userId;
-        // Allow server-side API routes to create loans for admin account
-        allow create: if request.resource.data.userId == userId && 
-                        request.auth != null && 
+        // Allow users to create documents in their own subcollections
+        allow create: if request.auth != null && request.auth.uid == userId;
+        // Allow server-side API routes for admin account
+        allow create: if request.auth != null && 
                         request.auth.token.email == 'hassyku786@gmail.com';
       }
     }
@@ -84,15 +91,21 @@ service cloud.firestore {
     
     // Notifications - users can read their own notifications, admins can read all
     match /notifications/{notificationId} {
+      // Users can read/write their own notifications
       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow read: if request.auth != null && isAdmin();
+      // Users can create notifications
       allow create: if request.auth != null;
+      // Admins can read all notifications
+      allow read: if request.auth != null && isAdmin();
     }
     
         // Financial notes - users can read/write their own notes, admins can read all
         match /financial_notes/{noteId} {
+          // Users can read/write their own notes
           allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+          // Users can create their own notes
           allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+          // Admins can read all notes
           allow read: if request.auth != null && isAdmin();
           // Allow server-side API routes to create and read notes
           allow create, read: if request.resource.data.userId != null;

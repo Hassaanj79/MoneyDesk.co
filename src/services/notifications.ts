@@ -118,33 +118,42 @@ export const getAllNotifications = async (): Promise<Notification[]> => {
 // Listen to notifications in real-time for a user
 export const listenToUserNotifications = (
   userId: string,
-  callback: (notifications: Notification[]) => void
+  callback: (notifications: Notification[]) => void,
+  onError?: (error: any) => void
 ) => {
   const notificationsQuery = query(
     collection(db, NOTIFICATIONS_COLLECTION),
     where('userId', '==', userId)
   );
 
-  return onSnapshot(notificationsQuery, (querySnapshot) => {
-    const notifications = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-      expiresAt: doc.data().expiresAt || null
-    })) as Notification[];
+  return onSnapshot(notificationsQuery, 
+    (querySnapshot) => {
+      const notifications = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        expiresAt: doc.data().expiresAt || null
+      })) as Notification[];
 
-    // Filter out expired notifications
-    const now = new Date();
-    const validNotifications = notifications.filter(notification => 
-      !notification.expiresAt || new Date(notification.expiresAt) > now
-    );
+      // Filter out expired notifications
+      const now = new Date();
+      const validNotifications = notifications.filter(notification => 
+        !notification.expiresAt || new Date(notification.expiresAt) > now
+      );
 
-    // Sort by creation date (newest first)
-    const sortedNotifications = validNotifications.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    callback(sortedNotifications);
-  });
+      // Sort by creation date (newest first)
+      const sortedNotifications = validNotifications.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      callback(sortedNotifications);
+    },
+    (error) => {
+      console.error('Error listening to user notifications:', error);
+      if (onError) {
+        onError(error);
+      }
+    }
+  );
 };
 
 // Listen to all notifications in real-time for admin

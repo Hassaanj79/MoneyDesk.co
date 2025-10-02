@@ -48,15 +48,43 @@ export default function DashboardGrid() {
   const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
 
   const { totalBalance, totalIncome, totalExpense, incomeChange, expenseChange, comparisonDescription } = useMemo(() => {
-    const currentPeriodTransactions = transactions.filter(t => 
-      date?.from && date?.to ? isWithinInterval(parseISO(t.date), { start: date.from, end: date.to }) : true
-    );
+    // Helper function to safely convert date to string for parseISO
+    const getDateString = (dateValue: any): string => {
+      if (typeof dateValue === 'string') {
+        return dateValue;
+      } else if (dateValue instanceof Date) {
+        return dateValue.toISOString();
+      } else if (dateValue && typeof dateValue.toDate === 'function') {
+        // Firestore timestamp
+        return dateValue.toDate().toISOString();
+      } else if (dateValue && typeof dateValue.toISOString === 'function') {
+        return dateValue.toISOString();
+      }
+      return new Date().toISOString(); // fallback
+    };
+
+    const currentPeriodTransactions = transactions.filter(t => {
+      if (!date?.from || !date?.to) return true;
+      try {
+        const dateString = getDateString(t.date);
+        return isWithinInterval(parseISO(dateString), { start: date.from, end: date.to });
+      } catch (error) {
+        console.warn('Error parsing transaction date:', t.date, error);
+        return false;
+      }
+    });
 
     // Get the previous period based on the current selected period
     const previousPeriod = getPreviousPeriod(date);
-    const previousPeriodTransactions = previousPeriod ? transactions.filter(t => 
-      isWithinInterval(parseISO(t.date), { start: previousPeriod.from, end: previousPeriod.to })
-    ) : [];
+    const previousPeriodTransactions = previousPeriod ? transactions.filter(t => {
+      try {
+        const dateString = getDateString(t.date);
+        return isWithinInterval(parseISO(dateString), { start: previousPeriod.from, end: previousPeriod.to });
+      } catch (error) {
+        console.warn('Error parsing transaction date for previous period:', t.date, error);
+        return false;
+      }
+    }) : [];
 
     const currentIncome = currentPeriodTransactions
       .filter(t => t.type === 'income')

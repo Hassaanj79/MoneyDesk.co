@@ -13,11 +13,20 @@ interface DateRangeContextType {
 const DateRangeContext = createContext<DateRangeContextType | undefined>(undefined);
 
 export const DateRangeProvider = ({ children }: { children: ReactNode }) => {
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  // Initialize with default date range to prevent undefined errors
+  const [date, setDate] = useState<DateRange | undefined>(() => {
+    const today = new Date();
+    const fromDate = subDays(today, 6);
+    return {
+      from: fromDate,
+      to: today,
+    };
+  });
 
   useEffect(() => {
+    // This effect is now optional since we initialize with default values
+    // But we can keep it for any future logic that might need to run
     const today = new Date();
-    // Default to last 7 days
     const fromDate = subDays(today, 6);
     const toDate = today;
     

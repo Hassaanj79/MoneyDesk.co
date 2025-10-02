@@ -95,6 +95,9 @@ export async function POST(request: NextRequest) {
       try {
         const docRef = await adminDb.collection('users').doc(userId).collection('loans').add(loan);
         createdLoans.push({ id: docRef.id, ...loan });
+        
+        // Note: Loan entries will serve as transaction records
+        // No separate transaction creation needed
       } catch (error) {
         console.error('Error creating loan:', error);
       }

@@ -16,11 +16,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { GoogleSignInButton } from "./google-signin-button";
+import { AppleSignInButton } from "./apple-signin-button";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required.").email("Please enter a valid email address."),
@@ -130,9 +133,7 @@ export function LoginForm() {
     } finally {
       setLoading(prev => ({...prev, email: false}));
     }
-  }
-
-
+  };
 
   return (
     <Card className="w-full max-w-sm mx-auto">
@@ -255,6 +256,40 @@ export function LoginForm() {
               </Button>
             </form>
           </Form>
+        )}
+        
+        {!isForgotPassword && (
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-6 space-y-3">
+              <GoogleSignInButton
+                onSuccess={() => {
+                  toast.success("Successfully signed in with Google!");
+                }}
+                onError={(error) => {
+                  setError(error.message || "Failed to sign in with Google");
+                }}
+              />
+              <AppleSignInButton
+                onSuccess={() => {
+                  toast.success("Successfully signed in with Apple!");
+                }}
+                onError={(error) => {
+                  setError(error.message || "Failed to sign in with Apple");
+                }}
+              />
+            </div>
+          </div>
         )}
         {!isForgotPassword && (
           <div className="mt-4 text-center text-sm">

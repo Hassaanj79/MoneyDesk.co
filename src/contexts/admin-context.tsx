@@ -237,8 +237,12 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     console.log('Setting up real-time admin data listeners...');
     
     // Only set up listeners if user is admin
-    if (!isAdmin) {
-      console.log('User is not admin, skipping real-time listeners');
+    if (!isAdmin || !user) {
+      console.log('User is not admin or not authenticated, skipping real-time listeners');
+      // Clear any existing data for non-admin users
+      setUsers([]);
+      setStats(null);
+      setCancellationRequests([]);
       return;
     }
     
@@ -252,7 +256,15 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       // Set up real-time listeners for users collection
-      const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+      // First try with orderBy, if it fails, fall back to simple query
+      let usersQuery;
+      try {
+        usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+      } catch (indexError) {
+        console.warn('Index error for orderBy, falling back to simple query:', indexError);
+        usersQuery = collection(db, 'users');
+      }
+      
       unsubscribeUsers = onSnapshot(usersQuery, 
         (snapshot) => {
           console.log('Real-time users update received:', snapshot.size, 'users');
@@ -300,17 +312,30 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           // Update state with new users data
           setUsers(users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         },
-        (error) => {
-          console.error('Error in real-time users listener:', error);
-          // Don't set error state for permission denied errors
-          if (error.code !== 'permission-denied') {
-            setError('Failed to sync user data in real-time');
-          }
-        }
+            (error) => {
+              // Only log errors for admin users, suppress for non-admin users
+              if (isAdmin && user) {
+                console.error('Error in real-time users listener:', error);
+                // Don't set error state for permission denied errors
+                if (error.code !== 'permission-denied') {
+                  setError('Failed to sync user data in real-time');
+                } else {
+                  console.log('Permission denied for users listener - user may not be admin');
+                }
+              }
+            }
       );
       
       // Set up real-time listener for cancellation requests
-      const cancellationQuery = query(collection(db, 'cancellationRequests'), orderBy('createdAt', 'desc'));
+      // First try with orderBy, if it fails, fall back to simple query
+      let cancellationQuery;
+      try {
+        cancellationQuery = query(collection(db, 'cancellationRequests'), orderBy('createdAt', 'desc'));
+      } catch (indexError) {
+        console.warn('Index error for cancellation orderBy, falling back to simple query:', indexError);
+        cancellationQuery = collection(db, 'cancellationRequests');
+      }
+      
       unsubscribeCancellations = onSnapshot(cancellationQuery, 
         (snapshot) => {
           console.log('Real-time cancellation requests update received:', snapshot.size, 'requests');
@@ -326,16 +351,29 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
           
           setCancellationRequests(requests);
         },
-        (error) => {
-          console.error('Error in real-time cancellation requests listener:', error);
-          // Don't set error state for permission denied errors
-          if (error.code !== 'permission-denied') {
-            setError('Failed to sync cancellation requests in real-time');
-          }
-        }
+            (error) => {
+              // Only log errors for admin users, suppress for non-admin users
+              if (isAdmin && user) {
+                console.error('Error in real-time cancellation requests listener:', error);
+                // Don't set error state for permission denied errors
+                if (error.code !== 'permission-denied') {
+                  setError('Failed to sync cancellation requests in real-time');
+                } else {
+                  console.log('Permission denied for cancellation requests listener - user may not be admin');
+                }
+              }
+            }
       );
-    } catch (error) {
-      console.error('Error setting up real-time listeners:', error);
+    } catch (error: any) {
+      // Only log errors for admin users, suppress for non-admin users
+      if (isAdmin && user) {
+        console.error('Error setting up real-time listeners:', error);
+        if (error.code !== 'permission-denied') {
+          setError(error.message || 'Failed to set up real-time data sync');
+        } else {
+          console.log('Permission denied for real-time listeners - user may not be admin');
+        }
+      }
     }
     
     // Set up real-time listener for admin stats (refresh every 2 minutes)
@@ -348,9 +386,9 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       console.log('Cleaning up admin real-time listeners...');
       if (unsubscribeUsers) unsubscribeUsers();
       if (unsubscribeCancellations) unsubscribeCancellations();
-      clearInterval(statsInterval);
-    };
-  }, [isAdmin]);
+        clearInterval(statsInterval);
+      };
+    }, [isAdmin, user]);
 
       const value: AdminContextType = {
         users,

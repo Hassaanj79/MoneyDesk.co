@@ -11,6 +11,7 @@ export type Transaction = {
   isRecurring?: boolean;
   recurrenceFrequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   createdAt?: Date;
+  isLoanGenerated?: boolean; // Flag to identify loan-generated transactions
 };
 
 export type Budget = {
@@ -52,6 +53,9 @@ export type UserProfile = {
   photoURL?: string;
   currency?: string;
   timezone?: string;
+  provider?: 'google' | 'apple' | 'email';
+  emailVerified?: boolean;
+  lastSignInTime?: string;
 };
 
 export type Loan = {
@@ -209,3 +213,54 @@ export type Notification = {
 };
 
 // export * from './notification';
+
+// Custom Report Types
+export type ReportModule = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'financial' | 'analytics' | 'transactions' | 'accounts' | 'budgets' | 'loans';
+  dataType: 'chart' | 'table' | 'summary' | 'list';
+  chartType?: 'bar' | 'line' | 'pie' | 'area' | 'composed';
+  required: boolean;
+  enabled: boolean;
+};
+
+export type CustomReport = {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  modules: string[]; // Array of module IDs
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+  format: 'pdf' | 'csv' | 'excel';
+  createdAt: Date;
+  updatedAt: Date;
+  lastGenerated?: Date;
+  isPublic: boolean;
+  tags?: string[];
+};
+
+export type ReportData = {
+  moduleId: string;
+  data: any;
+  metadata: {
+    title: string;
+    description: string;
+    generatedAt: Date;
+    dataPoints: number;
+  };
+};
+
+export type ReportGenerationOptions = {
+  includeCharts: boolean;
+  includeTables: boolean;
+  includeSummary: boolean;
+  chartTheme: 'light' | 'dark' | 'auto';
+  pageSize: 'A4' | 'Letter';
+  orientation: 'portrait' | 'landscape';
+};
