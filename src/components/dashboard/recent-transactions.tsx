@@ -35,11 +35,26 @@ const RecentTransactions = () => {
   const { date } = useDateRange();
   const { formatCurrency } = useCurrency();
 
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
+
   const recentTransactions = useMemo(() => {
-    const sorted = [...transactions].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+    const sorted = [...transactions].sort((a, b) => getDate(b.date).getTime() - getDate(a.date).getTime());
     if (date?.from && date?.to) {
         return sorted.filter((t) =>
-            isWithinInterval(parseISO(t.date), { start: date.from!, end: date.to! })
+            isWithinInterval(getDate(t.date), { start: date.from!, end: date.to! })
         ).slice(0, 5);
     }
     return sorted.slice(0, 5);
@@ -92,7 +107,7 @@ const RecentTransactions = () => {
                   </Avatar>
                   <div className="ml-4 space-y-1">
                     <p className="text-sm font-medium leading-none">{transaction.name}</p>
-                    <p className="text-sm text-muted-foreground">{format(parseISO(transaction.date), 'MMM dd, yyyy')}</p>
+                    <p className="text-sm text-muted-foreground">{format(getDate(transaction.date), 'MMM dd, yyyy')}</p>
                   </div>
                   <div className={`ml-auto font-medium ${transaction.type === "income" ? "text-green-500" : "text-red-500"}`}>
                     {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}

@@ -20,6 +20,7 @@ import { NotificationProvider } from '@/contexts/notification-context';
 import { DeviceProvider } from '@/contexts/device-context';
 import { CustomReportsProvider } from '@/contexts/custom-reports-context';
 import { Analytics } from '@vercel/analytics/next';
+import ErrorBoundary from '@/components/error-boundary';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
@@ -53,50 +54,52 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#000000" />
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <LanguageProvider>
-            <AuthProvider>
-              <ModuleAccessProvider>
-                <AdminProvider>
-                  <CurrencyProvider>
-                    <CountryProvider>
-                      <CategoryProvider>
-                        <AccountProvider>
-                          <TransactionProvider>
-                            <BudgetProvider>
-                              <LoanProvider>
-                                <LoanInstallmentProvider>
-                                  <TimezoneProvider>
-                                        <DateRangeProvider>
-                                          <NotificationProvider>
-                                            <DeviceProvider>
-                                              <CustomReportsProvider>
-                                                {children}
-                                                <Toaster />
-                                                <Analytics />
-                                              </CustomReportsProvider>
-                                            </DeviceProvider>
-                                          </NotificationProvider>
-                                        </DateRangeProvider>
-                                  </TimezoneProvider>
-                                </LoanInstallmentProvider>
-                              </LoanProvider>
-                            </BudgetProvider>
-                          </TransactionProvider>
-                        </AccountProvider>
-                      </CategoryProvider>
-                    </CountryProvider>
-                  </CurrencyProvider>
-                </AdminProvider>
-              </ModuleAccessProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <LanguageProvider>
+              <AuthProvider>
+                <ModuleAccessProvider>
+                  <AdminProvider>
+                    <CurrencyProvider>
+                      <CountryProvider>
+                        <CategoryProvider>
+                          <AccountProvider>
+                            <TransactionProvider>
+                              <BudgetProvider>
+                                <LoanProvider>
+                                  <LoanInstallmentProvider>
+                                    <TimezoneProvider>
+                                      <DateRangeProvider>
+                                        <NotificationProvider>
+                                          <DeviceProvider>
+                                            <CustomReportsProvider>
+                                              {children}
+                                              <Toaster />
+                                              <Analytics />
+                                            </CustomReportsProvider>
+                                          </DeviceProvider>
+                                        </NotificationProvider>
+                                      </DateRangeProvider>
+                                    </TimezoneProvider>
+                                  </LoanInstallmentProvider>
+                                </LoanProvider>
+                              </BudgetProvider>
+                            </TransactionProvider>
+                          </AccountProvider>
+                        </CategoryProvider>
+                      </CountryProvider>
+                    </CurrencyProvider>
+                  </AdminProvider>
+                </ModuleAccessProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -166,6 +166,21 @@ function ReportsPageContent() {
   // const { addNotification } = useNotifications();
   const { formatCurrency, currency } = useCurrency();
 
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
+
   // State for report order
   const [reportOrder, setReportOrder] = useState([
     'summary-cards',
@@ -226,7 +241,7 @@ function ReportsPageContent() {
     transactionFrequencyData
   } = useMemo(() => {
     const currentPeriodTransactions = transactions.filter((t) =>
-      from && to ? isWithinInterval(parseISO(t.date), { start: from, end: to }) : true
+      from && to ? isWithinInterval(getDate(t.date), { start: from, end: to }) : true
     );
 
     const totalIncome = currentPeriodTransactions
@@ -287,7 +302,7 @@ function ReportsPageContent() {
     const monthlyData: Record<string, { income: number; expense: number; month: string }> = {};
     
     currentPeriodTransactions.forEach(transaction => {
-      const month = format(parseISO(transaction.date), 'MMM yyyy');
+      const month = format(getDate(transaction.date), 'MMM yyyy');
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expense: 0, month };
       }
@@ -319,7 +334,7 @@ function ReportsPageContent() {
         while (currentDate <= endDate) {
           const dayStr = format(currentDate, 'MMM dd');
           const dayTransactions = currentPeriodTransactions.filter(t => 
-            format(parseISO(t.date), 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd')
+            format(getDate(t.date), 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd')
           );
           
           const dayIncome = dayTransactions
@@ -426,7 +441,7 @@ function ReportsPageContent() {
     const frequencyData: Record<string, number> = {};
     
     currentPeriodTransactions.forEach(transaction => {
-      const day = format(parseISO(transaction.date), 'EEEE'); // Day of week
+      const day = format(getDate(transaction.date), 'EEEE'); // Day of week
       frequencyData[day] = (frequencyData[day] || 0) + 1;
     });
     
@@ -486,7 +501,7 @@ function ReportsPageContent() {
     autoTable(doc, {
         startY: tableStartY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
+        body: incomeTransactions.map(t => [format(getDate(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185] },
     });
@@ -497,7 +512,7 @@ function ReportsPageContent() {
      autoTable(doc, {
         startY: secondTableY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
+        body: expenseTransactions.map(t => [format(getDate(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [192, 57, 43] },
     });
@@ -522,7 +537,7 @@ function ReportsPageContent() {
     const formatTransactionsToCSV = (transactions: typeof currentPeriodTransactions) => 
       transactions.map(t => 
         [
-          format(parseISO(t.date), 'yyyy-MM-dd'),
+          format(getDate(t.date), 'yyyy-MM-dd'),
           `"${t.name.replace(/"/g, '""')}"`,
           getCategoryName(t.categoryId),
           t.amount.toFixed(2)

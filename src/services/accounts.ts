@@ -29,6 +29,14 @@ export const addAccount = async (userId: string, account: Omit<Account, 'id' | '
 export const updateAccount = async (userId: string, accountId: string, updates: Partial<Omit<Account, 'id' | 'userId'>>) => {
     const accountsCol = getAccountsCollection(userId);
     const accountRef = doc(accountsCol, accountId);
+    
+    // Check if account exists before updating
+    const accountDoc = await getDoc(accountRef);
+    if (!accountDoc.exists()) {
+        console.warn(`Account ${accountId} does not exist, skipping update`);
+        return;
+    }
+    
     await updateDoc(accountRef, updates);
 };
 

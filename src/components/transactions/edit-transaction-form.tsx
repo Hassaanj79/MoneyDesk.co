@@ -55,11 +55,26 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
   const { accounts } = useAccounts();
   const { categories } = useCategories();
 
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...transaction,
-      date: parseISO(transaction.date),
+      date: getDate(transaction.date),
       amount: Math.abs(transaction.amount),
     },
   });

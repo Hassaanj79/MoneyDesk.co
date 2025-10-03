@@ -63,6 +63,21 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
   const { formatCurrency } = useCurrency();
   const now = new Date();
 
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
+
   const getCategoryName = (categoryId: string) => {
     return categories.find(c => c.id === categoryId)?.name || 'N/A';
   }
@@ -74,10 +89,10 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
       previousInterval: Interval
     ) => {
       const currentTransactions = transactions.filter((t) =>
-        isWithinInterval(parseISO(t.date), currentInterval)
+        isWithinInterval(getDate(t.date), currentInterval)
       );
       const previousTransactions = transactions.filter((t) =>
-        isWithinInterval(parseISO(t.date), previousInterval)
+        isWithinInterval(getDate(t.date), previousInterval)
       );
 
       const currentIncome = currentTransactions

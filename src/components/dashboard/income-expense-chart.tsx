@@ -33,6 +33,21 @@ const IncomeExpenseChart = () => {
   const { formatCurrency } = useCurrency();
   const { transactions } = useTransactions();
 
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
+
   useEffect(() => {
     if (date?.from && date?.to) {
       const monthsInInterval = eachMonthOfInterval({
@@ -47,7 +62,7 @@ const IncomeExpenseChart = () => {
         };
 
         const monthTransactions = transactions.filter(t =>
-          isWithinInterval(parseISO(t.date), monthInterval)
+          isWithinInterval(getDate(t.date), monthInterval)
         );
 
         const income = monthTransactions

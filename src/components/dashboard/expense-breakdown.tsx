@@ -24,9 +24,24 @@ const ExpenseBreakdown = ({ open, onOpenChange }: ExpenseBreakdownProps) => {
   const { date } = useDateRange();
   const { categories } = useCategories();
 
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
+
   const expenseBreakdown = useMemo(() => {
     const currentPeriodTransactions = transactions.filter(t => 
-      date?.from && date?.to ? isWithinInterval(parseISO(t.date), { start: date.from, end: date.to }) : true
+      date?.from && date?.to ? isWithinInterval(getDate(t.date), { start: date.from, end: date.to }) : true
     );
 
     const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');

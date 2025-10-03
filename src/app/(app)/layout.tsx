@@ -17,7 +17,11 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     // Only redirect to login if authentication is initialized and no user
     if (!loading && !user) {
-      router.push('/login');
+      try {
+        router.push('/login');
+      } catch (error) {
+        console.error('Error redirecting to login:', error);
+      }
     }
   }, [user, loading, router]);
   
@@ -39,7 +43,14 @@ export default function AuthenticatedLayout({
           <p className="text-lg font-medium mb-2">Authentication Required</p>
           <p className="text-sm text-muted-foreground mb-4">Please log in to access this page.</p>
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => {
+              try {
+                router.push('/login');
+              } catch (error) {
+                console.error('Error navigating to login:', error);
+                window.location.href = '/login';
+              }
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Go to Login

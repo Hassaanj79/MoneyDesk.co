@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { Transaction, Account } from '@/types';
 import { useAuth } from './auth-context';
 import { addTransaction as addTransactionService, deleteTransaction as deleteTransactionService, getTransactions, updateTransaction as updateTransactionService } from '@/services/transactions';
-import { updateAccount as updateAccountService } from '@/services/accounts';
+import { updateAccount as updateAccountService, getAccount } from '@/services/accounts';
 import { Timestamp, onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 
@@ -57,6 +57,13 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
 
   const updateAccountBalance = async (accountId: string, transaction: Transaction) => {
     try {
+      // Check if account exists first
+      const account = await getAccount(user!.uid, accountId);
+      if (!account) {
+        console.warn(`Account ${accountId} not found, skipping balance update`);
+        return;
+      }
+
       // Get current account balance
       const currentTransactions = transactions.filter(t => t.accountId === accountId);
       const currentBalance = currentTransactions.reduce((sum, t) => {

@@ -51,12 +51,27 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useTranslation } from "@/hooks/use-translation";
 import { useCategories } from "@/contexts/category-context";
 
+// Helper function to safely convert date to Date object
+const getDate = (dateValue: any): Date => {
+  if (typeof dateValue === 'string') {
+    return parseISO(dateValue);
+  } else if (dateValue instanceof Date) {
+    return dateValue;
+  } else if (dateValue && typeof dateValue.toDate === 'function') {
+    // Firestore timestamp
+    return dateValue.toDate();
+  } else if (dateValue && typeof dateValue.toISOString === 'function') {
+    return new Date(dateValue.toISOString());
+  }
+  return new Date(); // fallback
+};
+
 const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
     if (!transaction.isRecurring || !transaction.recurrenceFrequency) {
         return null;
     }
 
-    const startDate = parseISO(transaction.date);
+    const startDate = getDate(transaction.date);
     const now = new Date();
     let nextDate = startDate;
 
@@ -181,7 +196,7 @@ function TransactionsPageContent() {
 
     if (date?.from && date?.to) {
       filtered = filtered.filter((t) =>
-        isWithinInterval(parseISO(t.date), { start: date.from!, end: date.to! })
+        isWithinInterval(getDate(t.date), { start: date.from!, end: date.to! })
       );
     }
 
@@ -233,7 +248,7 @@ function TransactionsPageContent() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const recentTransactions = filteredTransactions.filter(t => 
-      parseISO(t.date) >= sevenDaysAgo
+      getDate(t.date) >= sevenDaysAgo
     );
     
     return {
@@ -484,12 +499,12 @@ function TransactionsPageContent() {
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
-                            <span>{format(parseISO(transaction.date), 'MMM d')}</span>
+                            <span>{format(getDate(transaction.date), 'MMM d')}</span>
                             <Badge variant="outline" className="text-xs">{getCategoryName(transaction.categoryId)}</Badge>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell" onClick={() => handleRowClick(transaction)}>{format(parseISO(transaction.date), 'PPP')}</TableCell>
+                      <TableCell className="hidden sm:table-cell" onClick={() => handleRowClick(transaction)}>{format(getDate(transaction.date), 'PPP')}</TableCell>
                       <TableCell className="hidden md:table-cell" onClick={() => handleRowClick(transaction)}>
                         <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
                       </TableCell>
