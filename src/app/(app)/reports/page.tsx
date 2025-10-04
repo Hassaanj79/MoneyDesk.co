@@ -57,10 +57,6 @@ import { useCategories } from "@/contexts/category-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useBudgets } from "@/contexts/budget-context";
 import { useLoans } from "@/contexts/loan-context";
-import { useCustomReports } from "@/contexts/custom-reports-context";
-import { ReportBuilder } from "@/components/reports/report-builder";
-import { CustomReportsList } from "@/components/reports/custom-reports-list";
-import { downloadReport } from "@/services/report-download";
 import {
   DndContext,
   closestCenter,
@@ -162,7 +158,6 @@ function ReportsPageContent() {
   const { accounts } = useAccounts();
   const { budgets } = useBudgets();
   const { loans } = useLoans();
-  const { customReports, generateReport } = useCustomReports();
   // const { addNotification } = useNotifications();
   const { formatCurrency, currency } = useCurrency();
 
@@ -1113,72 +1108,6 @@ function ReportsPageContent() {
         </CardContent>
       </Card>
 
-      {/* Custom Reports Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold">Custom Reports</CardTitle>
-              <CardDescription>
-                Create and manage your personalized financial reports
-              </CardDescription>
-            </div>
-            <ReportBuilder 
-              onReportCreated={(report) => {
-                console.log('Report created:', report);
-                // Refresh the custom reports list
-              }}
-              onReportGenerated={async (reportId, data) => {
-                try {
-                  const report = customReports.find(r => r.id === reportId);
-                  if (report) {
-                    await downloadReport(report, data, {
-                      includeCharts: true,
-                      includeTables: true,
-                      includeSummary: true,
-                      chartTheme: 'auto',
-                      pageSize: 'A4',
-                      orientation: 'portrait',
-                    });
-                  }
-                } catch (error) {
-                  console.error('Error downloading report:', error);
-                }
-              }}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <CustomReportsList 
-            onEditReport={(report) => {
-              console.log('Edit report:', report);
-              // TODO: Implement edit functionality
-            }}
-            onGenerateReport={async (report) => {
-              try {
-                const data = await generateReport(report.id, {
-                  includeCharts: true,
-                  includeTables: true,
-                  includeSummary: true,
-                  chartTheme: 'auto',
-                  pageSize: 'A4',
-                  orientation: 'portrait',
-                });
-                await downloadReport(report, data, {
-                  includeCharts: true,
-                  includeTables: true,
-                  includeSummary: true,
-                  chartTheme: 'auto',
-                  pageSize: 'A4',
-                  orientation: 'portrait',
-                });
-              } catch (error) {
-                console.error('Error generating report:', error);
-              }
-            }}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -18,7 +18,6 @@ import { ModuleAccessProvider } from '@/contexts/module-access-context';
 import { AdminProvider } from '@/contexts/admin-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { DeviceProvider } from '@/contexts/device-context';
-import { CustomReportsProvider } from '@/contexts/custom-reports-context';
 import { Analytics } from '@vercel/analytics/next';
 import ErrorBoundary from '@/components/error-boundary';
 
@@ -77,11 +76,9 @@ export default function RootLayout({
                                       <DateRangeProvider>
                                         <NotificationProvider>
                                           <DeviceProvider>
-                                            <CustomReportsProvider>
-                                              {children}
-                                              <Toaster />
-                                              <Analytics />
-                                            </CustomReportsProvider>
+                                            {children}
+                                            <Toaster />
+                                            <Analytics />
                                           </DeviceProvider>
                                         </NotificationProvider>
                                       </DateRangeProvider>
