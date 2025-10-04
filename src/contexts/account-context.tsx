@@ -42,6 +42,8 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       }, (error) => {
         console.error("Error fetching accounts:", error);
         setLoading(false);
+        // Set empty accounts array on error to prevent UI issues
+        setAccounts([]);
       });
 
       return () => unsubscribe();
@@ -54,26 +56,46 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   const addAccount = async (account: Omit<Account, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
     
-    // Set balance to initialBalance when creating account
-    const accountWithBalance = {
-      ...account,
-      balance: account.initialBalance || 0
-    };
-    const newDoc = await addAccountService(user.uid, accountWithBalance);
-    
-    return newDoc?.id;
+    try {
+      // Set balance to initialBalance when creating account
+      const accountWithBalance = {
+        ...account,
+        balance: account.initialBalance || 0
+      };
+      const newDoc = await addAccountService(user.uid, accountWithBalance);
+      toast.success("Account added successfully!");
+      return newDoc?.id;
+    } catch (error) {
+      console.error('Error adding account:', error);
+      toast.error("Failed to add account.");
+      throw error;
+    }
   };
 
   const updateAccount = async (id: string, updatedAccount: Partial<Omit<Account, 'id' | 'userId'>>) => {
     if (!user) throw new Error("User not authenticated");
     
-    await updateAccountService(user.uid, id, updatedAccount);
+    try {
+      await updateAccountService(user.uid, id, updatedAccount);
+      toast.success("Account updated successfully!");
+    } catch (error) {
+      console.error('Error updating account:', error);
+      toast.error("Failed to update account.");
+      throw error;
+    }
   };
 
   const deleteAccount = async (id: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    await deleteAccountService(user.uid, id);
+    try {
+      await deleteAccountService(user.uid, id);
+      toast.success("Account deleted successfully!");
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error("Failed to delete account.");
+      throw error;
+    }
   };
 
   return (

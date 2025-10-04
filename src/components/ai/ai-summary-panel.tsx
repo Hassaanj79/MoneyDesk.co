@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Bot, 
   Copy, 
@@ -33,6 +33,7 @@ import { useCurrencyContext } from '@/contexts/currency-context';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { parseISO } from 'date-fns';
 
 interface AIInsight {
   summary: string;
@@ -56,7 +57,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
   const { categories } = useCategories();
   const { accounts } = useAccounts();
   const { currency } = useCurrencyContext();
-  const { user } = useAuth();
+  const { user, ensureValidToken } = useAuth();
   
   const [insights, setInsights] = useState<AIInsight | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,15 +65,54 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
   const [aiEnabled, setAiEnabled] = useState(false);
   // const [showNotesViewer, setShowNotesViewer] = useState(false);
   const [noteAlreadyExists, setNoteAlreadyExists] = useState(false);
+  const lastGeneratedRef = useRef<string>('');
+
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
 
   // Filter transactions for the selected date range
   const filteredTransactions = React.useMemo(() => {
-    if (!date.from || !date.to) return [];
+    if (!date.from || !date.to) {
+      console.log('AI Summary: No date range selected');
+      return [];
+    }
     
-    return transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      return transactionDate >= date.from! && transactionDate <= date.to!;
+    console.log('AI Summary: Filtering transactions for date range:', {
+      from: date.from,
+      to: date.to,
+      totalTransactions: transactions.length
     });
+    
+    const filtered = transactions.filter(transaction => {
+      try {
+        const transactionDate = getDate(transaction.date);
+        const isInRange = transactionDate >= date.from! && transactionDate <= date.to!;
+        console.log('Transaction date check:', {
+          transactionDate,
+          isInRange,
+          originalDate: transaction.date
+        });
+        return isInRange;
+      } catch (error) {
+        console.warn('Error parsing transaction date:', transaction.date, error);
+        return false;
+      }
+    });
+    
+    console.log('AI Summary: Filtered transactions count:', filtered.length);
+    return filtered;
   }, [transactions, date]);
 
   // Check AI privacy setting
@@ -83,31 +123,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
     }
   }, [user?.uid]);
 
-  // Generate insights when panel opens or date range changes
-  useEffect(() => {
-    if (open && filteredTransactions.length > 0 && aiEnabled) {
-      generateInsights();
-    }
-  }, [open, date.from, date.to, aiEnabled]);
-
-  // Check for existing notes when date range or insights change
-  useEffect(() => {
-    if (insights && date.from && date.to && user?.uid) {
-      const noteData = {
-        userId: user.uid,
-        dateRange: {
-          from: date.from.toISOString(),
-          to: date.to.toISOString(),
-        }
-      };
-      const existingNote = checkForDuplicateNote(noteData);
-      setNoteAlreadyExists(!!existingNote);
-    } else {
-      setNoteAlreadyExists(false);
-    }
-  }, [insights, date.from, date.to, user?.uid]);
-
-  const generateInsights = async () => {
+  const generateInsights = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -146,9 +162,40 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filteredTransactions, categories, date.from, date.to, currency, user?.uid]);
 
-  const calculateAggregates = (transactions: any[], categories: any[]) => {
+  // Generate insights when panel opens or date range changes
+  useEffect(() => {
+    if (open && filteredTransactions.length > 0 && aiEnabled) {
+      // Create a unique key for this generation request
+      const generationKey = `${date.from?.toISOString()}-${date.to?.toISOString()}-${filteredTransactions.length}-${user?.uid}`;
+      
+      // Only generate if we haven't already generated for this exact combination
+      if (lastGeneratedRef.current !== generationKey) {
+        lastGeneratedRef.current = generationKey;
+        generateInsights();
+      }
+    }
+  }, [open, filteredTransactions.length, aiEnabled, date.from, date.to, user?.uid]);
+
+  // Check for existing notes when date range or insights change
+  useEffect(() => {
+    if (insights && date.from && date.to && user?.uid) {
+      const noteData = {
+        userId: user.uid,
+        dateRange: {
+          from: date.from.toISOString(),
+          to: date.to.toISOString(),
+        },
+      };
+      const existingNote = checkForDuplicateNote(noteData);
+      setNoteAlreadyExists(!!existingNote);
+    } else {
+      setNoteAlreadyExists(false);
+    }
+  }, [insights, date.from, date.to, user?.uid]);
+
+  const calculateAggregates = useCallback((transactions: any[], categories: any[]) => {
     const income = transactions.filter(t => t.type === 'income');
     const expenses = transactions.filter(t => t.type === 'expense');
     
@@ -165,7 +212,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
     }, {} as Record<string, number>);
     
     const topCategories = Object.entries(categoryBreakdown)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 5)
       .map(([name, amount]) => ({ name, amount }));
     
@@ -177,9 +224,9 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
       topCategories,
       averageTransaction: transactions.length > 0 ? (totalIncome + totalExpenses) / transactions.length : 0,
     };
-  };
+  }, []);
 
-  const generateFallbackInsights = (): AIInsight => {
+  const generateFallbackInsights = useCallback((): AIInsight => {
     const aggregates = calculateAggregates(filteredTransactions, categories);
     const dateRangeStr = `${date.from?.toLocaleDateString()} - ${date.to?.toLocaleDateString()}`;
     
@@ -190,14 +237,14 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
       summary: `During ${dateRangeStr}, you had ${currency}${aggregates.totalIncome.toFixed(2)} in income and ${currency}${aggregates.totalExpenses.toFixed(2)} in expenses, resulting in a ${aggregates.netIncome >= 0 ? 'positive' : 'negative'} net income of ${currency}${Math.abs(aggregates.netIncome).toFixed(2)}.`,
       highlights: [
         `Total of ${aggregates.transactionCount} transactions processed`,
-        `Top spending category: ${aggregates.topCategories[0]?.name || 'N/A'} (${currency}${aggregates.topCategories[0]?.amount.toFixed(2) || '0.00'})`,
-        `Average transaction: ${currency}${aggregates.averageTransaction.toFixed(2)}`,
+        `Top spending category: ${aggregates.topCategories[0]?.name || 'N/A'} (${currency}${(aggregates.topCategories[0]?.amount as number || 0).toFixed(2)})`,
+        `Average transaction: ${currency}${(aggregates.averageTransaction as number).toFixed(2)}`,
         aggregates.netIncome >= 0 ? 'Positive cash flow this period' : 'Negative cash flow this period'
       ],
       recommendations,
       quote: getInspirationalQuote(aggregates.netIncome)
     };
-  };
+  }, [filteredTransactions, categories, date.from, date.to, currency]);
 
   const generateActionableRecommendations = (aggregates: any, categories: any[]) => {
     const recommendations = [];
@@ -382,7 +429,6 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
 
     try {
       // Ensure we have a valid token before making the request
-      const { ensureValidToken } = useAuth();
       await ensureValidToken();
 
       const response = await fetch('/api/financial-notes', {

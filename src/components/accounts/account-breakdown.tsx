@@ -11,7 +11,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 import { ArrowUpRight, ArrowDownLeft, Calendar, Tag, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import type { Account, Transaction } from "@/types";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface AccountBreakdownProps {
   account: Account;
@@ -24,6 +24,21 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
   const { categories } = useCategories();
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
+
+  // Helper function to safely convert date to Date object
+  const getDate = (dateValue: any): Date => {
+    if (typeof dateValue === 'string') {
+      return parseISO(dateValue);
+    } else if (dateValue instanceof Date) {
+      return dateValue;
+    } else if (dateValue && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate();
+    } else if (dateValue && typeof dateValue.toISOString === 'function') {
+      return new Date(dateValue.toISOString());
+    }
+    return new Date(); // fallback
+  };
   
   const [accountTransactions, setAccountTransactions] = useState<Transaction[]>([]);
   const [breakdown, setBreakdown] = useState({
@@ -76,7 +91,7 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
   };
 
   const sortedTransactions = [...accountTransactions].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
+    getDate(b.date).getTime() - getDate(a.date).getTime()
   );
 
   return (
@@ -148,8 +163,8 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                 </CardTitle>
               </CardHeader>
               <CardContent className="min-w-0 px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-red-600 break-words" title={`-${formatCurrency(breakdown.totalExpenses)}`}>
-                  -{formatCurrency(breakdown.totalExpenses)}
+                <div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-red-600 break-words" title={formatCurrency(breakdown.totalExpenses)}>
+                  {formatCurrency(breakdown.totalExpenses)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Money spent</p>
               </CardContent>
@@ -224,7 +239,7 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                   
                   <div className="flex items-center justify-between py-2 px-2 sm:px-3 bg-red-50 rounded-md border border-red-200">
                     <span className="text-xs sm:text-sm font-medium text-red-700">Total Expenses</span>
-                    <span className="text-xs font-mono font-semibold text-red-600 break-words text-right flex-1 ml-2" title={`-${formatCurrency(breakdown.totalExpenses)}`}>-{formatCurrency(breakdown.totalExpenses)}</span>
+                    <span className="text-xs font-mono font-semibold text-red-600 break-words text-right flex-1 ml-2" title={formatCurrency(breakdown.totalExpenses)}>{formatCurrency(breakdown.totalExpenses)}</span>
                   </div>
                   
                   <div className="flex items-center justify-center">
@@ -304,8 +319,8 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                             <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                <span className="hidden sm:inline">{format(new Date(transaction.date), 'MMM dd, yyyy')}</span>
-                                <span className="sm:hidden">{format(new Date(transaction.date), 'MMM dd')}</span>
+                                <span className="hidden sm:inline">{format(getDate(transaction.date), 'MMM dd, yyyy')}</span>
+                                <span className="sm:hidden">{format(getDate(transaction.date), 'MMM dd')}</span>
                               </div>
                               <div className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block"></div>
                               <div className="flex items-center gap-1">

@@ -27,6 +27,7 @@ import IncomeBreakdown from "@/components/dashboard/income-breakdown";
 import ExpenseBreakdown from "@/components/dashboard/expense-breakdown";
 import { LoanCards } from "@/components/dashboard/loan-cards";
 import { LoanSummaryCards } from "@/components/dashboard/loan-summary-cards";
+import { AIInsightsCard } from "@/components/dashboard/ai-insights-card";
 import { ArrowDown, ArrowUp, Wallet } from "lucide-react";
 import { useDateRange } from "@/contexts/date-range-context";
 import { SortableItem } from "./sortable-item";
@@ -198,6 +199,11 @@ export default function DashboardGrid() {
       id: "recent",
       component: <RecentTransactions />,
       colSpan: "sm:col-span-2 lg:col-span-1",
+    },
+    {
+      id: "ai-insights",
+      component: <AIInsightsCard />,
+      colSpan: "sm:col-span-2 lg:col-span-2",
     },
     {
       id: "loans",

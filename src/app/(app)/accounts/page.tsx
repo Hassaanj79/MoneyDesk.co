@@ -69,13 +69,13 @@ export default function AccountsPage() {
 
   const processedAccounts: Account[] = useMemo(() => {
     return accounts.map((account) => {
-      const balance = transactions.reduce((acc, t) => {
-        if (t.accountId === account.id) {
-          return acc + (t.type === 'income' ? t.amount : -t.amount);
-        }
-        return acc;
-      }, account.initialBalance);
-      return { ...account, balance };
+      // Calculate balance from transactions to ensure accuracy
+      const accountTransactions = transactions.filter(t => t.accountId === account.id);
+      const calculatedBalance = accountTransactions.reduce((sum, t) => {
+        return sum + (t.type === 'income' ? t.amount : -t.amount);
+      }, account.initialBalance || 0);
+      
+      return { ...account, balance: calculatedBalance };
     })
   }, [accounts, transactions]);
 

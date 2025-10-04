@@ -29,7 +29,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import type { Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
@@ -38,9 +38,12 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useEffect, useRef, useState } from "react";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
+import { useAIFeatures } from "@/hooks/use-ai-features";
+import { useAuth } from "@/contexts/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { CameraCapture } from "./camera-capture";
 import Image from "next/image";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -60,12 +63,17 @@ type AddTransactionFormProps = {
 };
 
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
-  const { addTransaction } = useTransactions();
+  const { addTransaction, categorizeTransaction, detectDuplicate } = useTransactions();
   // const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
-  const { categories } = useCategories();
+  const { categories, addCategory } = useCategories();
+  const aiFeatures = useAIFeatures();
+  const { user } = useAuth();
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<{category: string, confidence: number}[]>([]);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -106,6 +114,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
         date: format(values.date, "yyyy-MM-dd"),
       };
 
+      // Check for duplicates before adding
+      const isDuplicate = detectDuplicate(transactionPayload);
+      if (isDuplicate) {
+        toast.warning('This transaction might be a duplicate. Please review before saving.');
+        // Still allow saving, but warn the user
+      }
+
       await addTransaction(transactionPayload);
 
       // addNotification({
@@ -120,6 +135,8 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
       onSuccess?.();
       form.reset();
+      setShowAiSuggestions(false);
+      setAiSuggestions([]);
     } catch (error) {
       console.error('Error adding transaction:', error);
       toast.error('Failed to add transaction. Please try again.');
@@ -133,6 +150,75 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
+  // AI categorization when description changes
+  const handleDescriptionChange = (value: string) => {
+    if (value.length > 3) {
+      try {
+        const suggestions = aiFeatures.suggestCategories({ name: value, type });
+        setAiSuggestions(suggestions);
+        setShowAiSuggestions(true);
+      } catch (error) {
+        console.error('Error getting AI suggestions:', error);
+      }
+    } else {
+      setShowAiSuggestions(false);
+      setAiSuggestions([]);
+    }
+  };
+
+  // Handle AI category selection - create if doesn't exist
+  const handleAiCategorySelect = async (categoryName: string) => {
+    try {
+      setCreatingCategory(categoryName);
+      
+      // First, try to find existing category
+      let category = categories.find(c => c.name === categoryName && c.type === type);
+      
+      if (!category) {
+        // Category doesn't exist, create it
+        const newCategory = {
+          name: categoryName,
+          type: type,
+          color: '#3B82F6', // Default blue color
+          icon: 'tag' // Default icon
+        };
+        
+        // Add the new category
+        const categoryId = await addCategory(newCategory);
+        if (categoryId) {
+          // Find the newly created category
+          category = categories.find(c => c.id === categoryId);
+          if (!category) {
+            // If not found in current categories, create a temporary object
+            category = {
+              id: categoryId,
+              name: categoryName,
+              type: type,
+              color: '#3B82F6',
+              icon: 'tag',
+              userId: user?.uid || '',
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+          }
+        }
+      }
+      
+      if (category) {
+        form.setValue('categoryId', category.id);
+        setShowAiSuggestions(false);
+        setAiSuggestions([]);
+        const action = categories.some(c => c.name === categoryName && c.type === type) ? 'selected' : 'created and selected';
+        toast.success(`Category "${categoryName}" ${action}!`);
+      }
+    } catch (error) {
+      console.error('Error handling AI category selection:', error);
+      toast.error('Failed to select category. Please try again.');
+    } finally {
+      setCreatingCategory(null);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -140,11 +226,59 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           control={form.control}
           name="name"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="relative">
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Coffee, Salary" {...field} />
+                <Input 
+                  placeholder="e.g., Coffee, Salary" 
+                  {...field} 
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleDescriptionChange(e.target.value);
+                  }}
+                />
               </FormControl>
+              {showAiSuggestions && aiSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                  <div className="p-2">
+                    <p className="text-xs text-gray-500 mb-2">AI Suggestions:</p>
+                    {aiSuggestions.slice(0, 3).map((suggestion, index) => {
+                      const categoryExists = categories.some(c => c.name === suggestion.category && c.type === type);
+                      const isCreating = creatingCategory === suggestion.category;
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleAiCategorySelect(suggestion.category)}
+                          disabled={isCreating || !!creatingCategory}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded flex justify-between items-center group disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span>{suggestion.category}</span>
+                            {isCreating ? (
+                              <span className="text-xs text-orange-600 bg-orange-100 px-2 py-0.5 rounded flex items-center">
+                                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                                Creating...
+                              </span>
+                            ) : categoryExists ? (
+                              <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
+                                Existing
+                              </span>
+                            ) : (
+                              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                                Will Create
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            {Math.round(suggestion.confidence * 100)}%
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               <FormMessage />
             </FormItem>
           )}

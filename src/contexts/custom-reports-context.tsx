@@ -66,25 +66,19 @@ export const CustomReportsProvider = ({ children }: { children: ReactNode }) => 
     setLoading(true);
     setError(null);
 
-    const loadReports = async () => {
-      try {
-        const reports = await getUserCustomReports(user.uid);
+    // Set up real-time listener only
+    const unsubscribe = listenToUserCustomReports(
+      user.uid, 
+      (reports) => {
         setCustomReports(reports);
-      } catch (err) {
-        console.error('Error loading custom reports:', err);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error in custom reports listener:', error);
         setError('Failed to load custom reports');
-      } finally {
         setLoading(false);
       }
-    };
-
-    loadReports();
-
-    // Set up real-time listener
-    const unsubscribe = listenToUserCustomReports(user.uid, (reports) => {
-      setCustomReports(reports);
-      setLoading(false);
-    });
+    );
 
     return () => {
       if (unsubscribe) {

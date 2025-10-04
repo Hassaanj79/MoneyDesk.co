@@ -20,7 +20,7 @@ import {
   Shield,
   Bot,
 } from "lucide-react";
-import { NotificationBell } from "@/components/notifications/notification-bell";
+import { SmartNotifications } from "@/components/ai/smart-notifications";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { useDateRange } from "@/contexts/date-range-context";
@@ -507,9 +507,9 @@ export function Header() {
                  </PopoverContent>
             </Popover>
             
-            {/* Notification Bell */}
+            {/* Smart Notifications */}
             <div className="ml-2">
-              <NotificationBell />
+              <SmartNotifications />
             </div>
             
             <TooltipProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './auth-context';
 import { 
   getUserNotifications,
@@ -36,7 +36,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   // Calculate unread count
   const unreadCount = notifications.filter(notification => !notification.isRead).length;
@@ -108,8 +108,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (!user) return;
 
     // Stop existing listener
-    if (unsubscribe) {
-      unsubscribe();
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
     }
 
     // Start new listener
@@ -130,14 +130,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     );
 
-    setUnsubscribe(() => unsubscribeFn);
+    unsubscribeRef.current = unsubscribeFn;
   }, [user]);
 
   // Stop listening
   const stopListening = useCallback(() => {
-    if (unsubscribe) {
-      unsubscribe();
-      setUnsubscribe(null);
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
     }
   }, []);
 
@@ -155,11 +155,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
       }
     };
-  }, [unsubscribe]);
+  }, []); // Remove unsubscribe dependency to prevent infinite loops
 
   const value: NotificationContextType = {
     notifications,
