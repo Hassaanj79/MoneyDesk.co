@@ -57,6 +57,8 @@ import { useCategories } from "@/contexts/category-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useBudgets } from "@/contexts/budget-context";
 import { useLoans } from "@/contexts/loan-context";
+import { useReportLogs } from "@/contexts/report-logs-context";
+import { ReportLogs } from "@/components/reports/report-logs";
 import {
   DndContext,
   closestCenter,
@@ -158,6 +160,7 @@ function ReportsPageContent() {
   const { accounts } = useAccounts();
   const { budgets } = useBudgets();
   const { loans } = useLoans();
+  const { logReport } = useReportLogs();
   // const { addNotification } = useNotifications();
   const { formatCurrency, currency } = useCurrency();
 
@@ -463,114 +466,168 @@ function ReportsPageContent() {
     };
   }, [transactions, from, to, accounts, categories, budgets, loans]);
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
-    const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
-    const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+  const generatePDF = async () => {
+    try {
+      const doc = new jsPDF();
+      const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
+      const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
+      const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
 
-    doc.setFontSize(20);
-    doc.text("Income Statement", 14, 22);
-    doc.setFontSize(12);
-    if (fromDate && toDate) {
-      doc.text(`Date Range: ${fromDate} - ${toDate}`, 14, 30);
+      doc.setFontSize(20);
+      doc.text("Income Statement", 14, 22);
+      doc.setFontSize(12);
+      if (fromDate && toDate) {
+        doc.text(`Date Range: ${fromDate} - ${toDate}`, 14, 30);
+      }
+      
+      doc.setFontSize(14);
+      doc.text("Summary", 14, 45);
+      autoTable(doc, {
+          startY: 50,
+          body: [
+              ['Total Income', formatCurrency(totalIncome)],
+              ['Total Expenses', formatCurrency(totalExpense)],
+              ['Net Savings', formatCurrency(netSavings)],
+          ],
+          theme: 'striped',
+          styles: { fontSize: 12 },
+      });
+
+      const tableStartY = (doc as any).lastAutoTable.finalY + 15;
+
+      doc.setFontSize(14);
+      doc.text("Income", 14, tableStartY);
+      autoTable(doc, {
+          startY: tableStartY + 5,
+          head: [['Date', 'Description', 'Category', 'Amount']],
+          body: incomeTransactions.map(t => [format(getDate(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
+          theme: 'striped',
+          headStyles: { fillColor: [41, 128, 185] },
+      });
+
+      const secondTableY = (doc as any).lastAutoTable.finalY + 15;
+      doc.setFontSize(14);
+      doc.text("Expenses", 14, secondTableY);
+       autoTable(doc, {
+          startY: secondTableY + 5,
+          head: [['Date', 'Description', 'Category', 'Amount']],
+          body: expenseTransactions.map(t => [format(getDate(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
+          theme: 'striped',
+          headStyles: { fillColor: [192, 57, 43] },
+      });
+
+      doc.save(reportName);
+
+        // Log successful report generation
+        await logReport(
+          'Income Statement PDF',
+          'pdf',
+          { from: from || new Date(), to: to || new Date() },
+          'success',
+          {
+            recordCount: currentPeriodTransactions.length,
+            fileSize: doc.getNumberOfPages() * 1024 // Approximate file size
+          }
+        );
+
+      // addNotification({
+      //   type: 'report_generated',
+      //   title: "Report Generated",
+      //   message: `Successfully downloaded ${reportName}`,
+      //   navigationPath: '/reports'
+      // });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      
+        // Log failed report generation
+        await logReport(
+          'Income Statement PDF',
+          'pdf',
+          { from: from || new Date(), to: to || new Date() },
+          'error',
+          {
+            errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
+          }
+        );
     }
-    
-    doc.setFontSize(14);
-    doc.text("Summary", 14, 45);
-    autoTable(doc, {
-        startY: 50,
-        body: [
-            ['Total Income', formatCurrency(totalIncome)],
-            ['Total Expenses', formatCurrency(totalExpense)],
-            ['Net Savings', formatCurrency(netSavings)],
-        ],
-        theme: 'striped',
-        styles: { fontSize: 12 },
-    });
-
-    const tableStartY = (doc as any).lastAutoTable.finalY + 15;
-
-    doc.setFontSize(14);
-    doc.text("Income", 14, tableStartY);
-    autoTable(doc, {
-        startY: tableStartY + 5,
-        head: [['Date', 'Description', 'Category', 'Amount']],
-        body: incomeTransactions.map(t => [format(getDate(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
-        theme: 'striped',
-        headStyles: { fillColor: [41, 128, 185] },
-    });
-
-    const secondTableY = (doc as any).lastAutoTable.finalY + 15;
-    doc.setFontSize(14);
-    doc.text("Expenses", 14, secondTableY);
-     autoTable(doc, {
-        startY: secondTableY + 5,
-        head: [['Date', 'Description', 'Category', 'Amount']],
-        body: expenseTransactions.map(t => [format(getDate(t.date), 'yyyy-MM-dd'), t.name, getCategoryName(t.categoryId), formatCurrency(t.amount)]),
-        theme: 'striped',
-        headStyles: { fillColor: [192, 57, 43] },
-    });
-
-
-    doc.save(reportName);
-    // addNotification({
-    //   type: 'report_generated',
-    //   title: "Report Generated",
-    //   message: `Successfully downloaded ${reportName}`,
-    //   navigationPath: '/reports'
-    // });
   };
 
-  const generateCSV = () => {
-    const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
-    const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
-    const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  const generateCSV = async () => {
+    try {
+      const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
+      const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
+      const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`;
 
-    const headers = ['Date', 'Description', 'Category', `Amount (${currency})`];
-    
-    const formatTransactionsToCSV = (transactions: typeof currentPeriodTransactions) => 
-      transactions.map(t => 
-        [
-          format(getDate(t.date), 'yyyy-MM-dd'),
-          `"${t.name.replace(/"/g, '""')}"`,
-          getCategoryName(t.categoryId),
-          t.amount.toFixed(2)
-        ].join(',')
-      ).join('\n');
+      const headers = ['Date', 'Description', 'Category', `Amount (${currency})`];
+      
+      const formatTransactionsToCSV = (transactions: typeof currentPeriodTransactions) => 
+        transactions.map(t => 
+          [
+            format(getDate(t.date), 'yyyy-MM-dd'),
+            `"${t.name.replace(/"/g, '""')}"`,
+            getCategoryName(t.categoryId),
+            t.amount.toFixed(2)
+          ].join(',')
+        ).join('\n');
 
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += `Income Statement\n`;
-    if(fromDate && toDate) {
-      csvContent += `Date Range: ${fromDate} - ${toDate}\n`;
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += `Income Statement\n`;
+      if(fromDate && toDate) {
+        csvContent += `Date Range: ${fromDate} - ${toDate}\n`;
+      }
+      csvContent += "\nSummary\n";
+      csvContent += `Total Income,${totalIncome.toFixed(2)}\n`;
+      csvContent += `Total Expenses,${totalExpense.toFixed(2)}\n`;
+      csvContent += `Net Savings,${netSavings.toFixed(2)}\n`;
+      
+      csvContent += "\nIncome\n";
+      csvContent += headers.join(',') + '\n';
+      csvContent += formatTransactionsToCSV(incomeTransactions) + '\n';
+
+      csvContent += "\nExpenses\n";
+      csvContent += headers.join(',') + '\n';
+      csvContent += formatTransactionsToCSV(expenseTransactions) + '\n';
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", reportName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+        // Log successful report generation
+        await logReport(
+          'Income Statement CSV',
+          'csv',
+          { from: from || new Date(), to: to || new Date() },
+          'success',
+          {
+            recordCount: currentPeriodTransactions.length,
+            fileSize: csvContent.length // Approximate file size
+          }
+        );
+
+      // addNotification({
+      //   type: 'report_generated',
+      //   title: "Report Generated",
+      //   message: `Successfully downloaded ${reportName}`,
+      //   navigationPath: '/reports'
+      // });
+    } catch (error) {
+      console.error('Error generating CSV:', error);
+      
+        // Log failed report generation
+        await logReport(
+          'Income Statement CSV',
+          'csv',
+          { from: from || new Date(), to: to || new Date() },
+          'error',
+          {
+            errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
+          }
+        );
     }
-    csvContent += "\nSummary\n";
-    csvContent += `Total Income,${totalIncome.toFixed(2)}\n`;
-    csvContent += `Total Expenses,${totalExpense.toFixed(2)}\n`;
-    csvContent += `Net Savings,${netSavings.toFixed(2)}\n`;
-    
-    csvContent += "\nIncome\n";
-    csvContent += headers.join(',') + '\n';
-    csvContent += formatTransactionsToCSV(incomeTransactions) + '\n';
-
-    csvContent += "\nExpenses\n";
-    csvContent += headers.join(',') + '\n';
-    csvContent += formatTransactionsToCSV(expenseTransactions) + '\n';
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", reportName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // addNotification({
-    //   type: 'report_generated',
-    //   title: "Report Generated",
-    //   message: `Successfully downloaded ${reportName}`,
-    //   navigationPath: '/reports'
-    // });
   }
 
   return (
@@ -745,7 +802,7 @@ function ReportsPageContent() {
                       <SortableCard key={reportId} id={reportId}>
                         <Card>
                           <CardHeader>
-                            <CardTitle>Monthly Income vs Expense Trends</CardTitle>
+                            <CardTitle>Income vs Expense Trends</CardTitle>
                             <CardDescription>
                               Track your monthly income and expense patterns over time.
                             </CardDescription>
@@ -1108,6 +1165,8 @@ function ReportsPageContent() {
         </CardContent>
       </Card>
 
+      {/* Report Generation Logs */}
+      <ReportLogs />
     </div>
   );
 }

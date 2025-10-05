@@ -116,6 +116,16 @@ service cloud.firestore {
           allow read, write: if request.auth != null && request.auth.uid == userId;
           allow read: if request.auth != null && isAdmin();
         }
+        
+        // Report logs - users can read/write their own report logs, admins can read all
+        match /reportLogs/{logId} {
+          // Users can read/write their own report logs
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+          // Users can create their own report logs
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+          // Admins can read all report logs
+          allow read: if request.auth != null && isAdmin();
+        }
     
     // Admin access to all collections for dashboard stats
     match /{document=**} {
