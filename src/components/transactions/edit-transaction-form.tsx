@@ -85,6 +85,11 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
       date: format(values.date, "yyyy-MM-dd"),
     });
     onSuccess?.();
+    
+    // Auto refresh the page to ensure UI updates
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000); // Wait 1 second to show the success message
   }
 
   const filteredCategories = categories.filter((c) => c.type === transaction.type);

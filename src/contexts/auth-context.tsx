@@ -68,24 +68,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    try {
-      setLoading(true);
-      setAuthInitialized(false);
-      
-      // Set a timeout to prevent infinite loading
-      const timeout = setTimeout(() => {
-        console.log('Auth timeout - setting loading to false');
-        setLoading(false);
-        setAuthInitialized(true);
-      }, 2000); // 2 second timeout
-      
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        try {
+        console.log('Setting up auth listener...');
+    setLoading(true);
+    setAuthInitialized(false);
+    
+        // Set a shorter timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+          console.log('Auth timeout - forcing loading to false');
+      setLoading(false);
+      setAuthInitialized(true);
+        }, 2000); // 2 second timeout
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
           console.log('Auth state changed:', user ? `User logged in: ${user.email}` : 'No user');
-          clearTimeout(timeout);
-          setUser(user);
-          setLoading(false);
-          setAuthInitialized(true);
+      clearTimeout(timeout);
+      setUser(user);
+      setLoading(false);
+      setAuthInitialized(true);
           
           // Store user email in localStorage for admin access
           if (user?.email) {
@@ -94,32 +93,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             localStorage.removeItem('userEmail');
           }
           
-          // User state updated
-          console.log('User state updated, loading set to false');
-        } catch (error) {
-          console.error('Error in auth state change handler:', error);
-          clearTimeout(timeout);
-          setLoading(false);
-          setAuthInitialized(true);
-        }
-      }, (error) => {
-        console.error('Firebase auth error:', error);
-        clearTimeout(timeout);
-        setLoading(false);
-        setAuthInitialized(true);
-        console.log('Auth error handled, loading set to false');
-      });
-      
-      return () => {
-        clearTimeout(timeout);
-        unsubscribe();
-      };
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
+          console.log('Auth state updated successfully');
+    }, (error) => {
+      console.error('Firebase auth error:', error);
+      clearTimeout(timeout);
       setLoading(false);
       setAuthInitialized(true);
-    }
+    });
+    
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
+
 
   const login = async (email: string, password: string) => {
     console.log('Attempting to login with email:', email);

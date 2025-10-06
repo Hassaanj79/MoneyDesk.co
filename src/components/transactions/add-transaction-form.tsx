@@ -38,11 +38,9 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useEffect, useRef, useState } from "react";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
-import { useAIFeatures } from "@/hooks/use-ai-features";
 import { useAuth } from "@/contexts/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { CameraCapture } from "./camera-capture";
-import { CategorySuggestions } from "./category-suggestions";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -54,7 +52,7 @@ const formSchema = z.object({
   accountId: z.string().min(1, "Please select an account."),
   categoryId: z.string().min(1, "Please select a category."),
   isRecurring: z.boolean().default(false),
-  recurrenceFrequency: z.string().optional(),
+  recurrenceFrequency: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
   receipt: z.any().optional(),
 });
 
@@ -64,7 +62,7 @@ type AddTransactionFormProps = {
 };
 
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
-  const { addTransaction, categorizeTransaction, detectDuplicate } = useTransactions();
+  const { addTransaction } = useTransactions();
   // const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
@@ -72,13 +70,12 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { user } = useAuth();
   const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [resetTrigger, setResetTrigger] = useState(0);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: type,
-      amount: '' as any,
+      amount: 0,
       date: new Date(),
       accountId: "",
       categoryId: "",
@@ -90,14 +87,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   useEffect(() => {
     form.reset({
       type: type,
-      amount: '' as any,
+      amount: 0,
       date: new Date(),
       accountId: "",
       categoryId: "",
       name: "",
       isRecurring: false,
     });
-    setResetTrigger(prev => prev + 1); // Trigger suggestions reset
   }, [type, form]);
   
 
@@ -106,35 +102,33 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      console.log('Form submitted with values:', values);
+      
       const { receipt, ...transactionData } = values;
 
-      const transactionPayload = {
+      // Filter out undefined values to prevent Firebase errors
+      const transactionPayload: any = {
         ...transactionData,
-        date: format(values.date, "yyyy-MM-dd"),
+        date: values.date, // Keep as Date object
       };
 
-      // Check for duplicates before adding
-      const isDuplicate = detectDuplicate(transactionPayload);
-      if (isDuplicate) {
-        toast.warning('This transaction might be a duplicate. Please review before saving.');
-        // Still allow saving, but warn the user
+      // Only add recurrenceFrequency if it's defined and isRecurring is true
+      if (values.isRecurring && values.recurrenceFrequency) {
+        transactionPayload.recurrenceFrequency = values.recurrenceFrequency;
       }
 
-      await addTransaction(transactionPayload);
+      console.log('Submitting transaction payload:', transactionPayload);
+      const result = await addTransaction(transactionPayload);
+      console.log('Transaction added successfully:', result);
 
-      // addNotification({
-      //   type: 'transaction_created',
-      //   title: `Transaction Added`,
-      //   message: `${values.name} for ${formatCurrency(values.amount)} has been saved.`,
-      //   navigationPath: '/transactions',
-      //   navigationParams: { id: transactionId },
-      //   relatedEntityId: transactionId,
-      //   relatedEntityType: 'transaction'
-      // });
-
+      toast.success('Transaction added successfully!');
       onSuccess?.();
       form.reset();
-      setResetTrigger(prev => prev + 1); // Clear suggestions after successful submission
+      
+      // Auto refresh the page to ensure UI updates
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // Wait 1 second to show the success message
     } catch (error) {
       console.error('Error adding transaction:', error);
       toast.error('Failed to add transaction. Please try again.');
@@ -148,88 +142,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
-  // Handle AI category selection - create if doesn't exist
-  const handleAiCategorySelect = async (categoryName: string) => {
-    try {
-      // First, try to find existing category
-      let category = categories.find(c => c.name === categoryName && c.type === type);
-      
-      if (!category) {
-        // Category doesn't exist, create it
-        const newCategory = {
-          name: categoryName,
-          type: type,
-          color: '#3B82F6', // Default blue color
-          icon: 'tag' // Default icon
-        };
-        
-        // Add the new category
-        const categoryId = await addCategory(newCategory);
-        if (categoryId) {
-          // Wait a moment for the categories list to update
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Try to find the newly created category in the updated list
-          category = categories.find(c => c.id === categoryId);
-          if (!category) {
-            // If still not found, create a temporary object with the correct ID
-            category = {
-              id: categoryId,
-              name: categoryName,
-              type: type,
-              color: '#3B82F6',
-              icon: 'tag',
-              userId: user?.uid || '',
-              createdAt: new Date(),
-              updatedAt: new Date()
-            };
-          }
-        }
-      }
-      
-      if (category) {
-        form.setValue('categoryId', category.id);
-        // Force form to re-render by triggering a change event
-        form.trigger('categoryId');
-        const action = categories.some(c => c.name === categoryName && c.type === type) ? 'selected' : 'created and selected';
-        toast.success(`Category "${categoryName}" ${action}!`);
-      }
-    } catch (error) {
-      console.error('Error handling AI category selection:', error);
-      toast.error('Failed to select category. Please try again.');
-    }
-  };
 
-  // Handle adding new category from AI suggestions
-  const handleAddNewCategory = async (categoryName: string) => {
-    try {
-      const newCategory = {
-        name: categoryName,
-        type: type,
-        color: '#3B82F6', // Default blue color
-        icon: 'tag' // Default icon
-      };
-      
-      // Add the new category
-      const categoryId = await addCategory(newCategory);
-      if (categoryId) {
-        // Wait a moment for the categories list to update
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Find the newly created category and select it
-        const category = categories.find(c => c.id === categoryId);
-        if (category) {
-          form.setValue('categoryId', category.id);
-          // Force form to re-render by triggering a change event
-          form.trigger('categoryId');
-          toast.success(`Category "${categoryName}" created and selected!`);
-        }
-      }
-    } catch (error) {
-      console.error('Error creating new category:', error);
-      toast.error('Failed to create category. Please try again.');
-    }
-  };
 
   return (
     <Form {...form}>
@@ -251,16 +164,6 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           )}
         />
 
-        {/* AI Category Suggestions */}
-        <CategorySuggestions
-          description={form.watch("name") || ""}
-          type={type}
-          existingCategories={filteredCategories.map(c => c.name)}
-          onSelectCategory={handleAiCategorySelect}
-          onAddNewCategory={handleAddNewCategory}
-          disabled={!form.watch("name") || form.watch("name").length < 3}
-          resetTrigger={resetTrigger}
-        />
 
         <FormField
           control={form.control}
@@ -269,7 +172,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             <FormItem>
               <FormLabel>Amount</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="0.00" {...field} step="0.01"/>
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  step="0.01"
+                  value={field.value || ''}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

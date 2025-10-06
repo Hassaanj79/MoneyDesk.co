@@ -111,8 +111,12 @@ const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
 
 function TransactionsPageContent() {
   const { t } = useTranslation();
-  const { transactions, deleteTransaction } = useTransactions();
+  const { transactions, deleteTransaction, loading } = useTransactions();
   const { categories } = useCategories();
+  
+  // Debug logging
+  console.log('TransactionsPageContent - transactions count:', transactions.length);
+  console.log('TransactionsPageContent - loading:', loading);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -464,7 +468,13 @@ function TransactionsPageContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Loading transactions...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTransactions.length > 0 ? (
                   filteredTransactions.map((transaction) => {
                     const nextDueDate = getNextRecurrenceDate(transaction);
                     return (

@@ -41,8 +41,8 @@ import { getPreviousPeriod, getComparisonDescription } from "@/lib/utils";
 export default function DashboardGrid() {
   const { t } = useTranslation();
   const { date } = useDateRange();
-  const { transactions } = useTransactions();
-  const { accounts } = useAccounts();
+  const { transactions, refreshTrigger } = useTransactions();
+  const { accounts, refreshTrigger: accountRefreshTrigger } = useAccounts();
   const { formatCurrency } = useCurrency();
   const [showBalanceBreakdown, setShowBalanceBreakdown] = useState(false);
   const [showIncomeBreakdown, setShowIncomeBreakdown] = useState(false);
@@ -116,14 +116,11 @@ export default function DashboardGrid() {
     const expenseChange = calculatePercentageChange(currentExpense, previousExpense);
     const comparisonDescription = getComparisonDescription(date);
 
-    // Calculate total balance from all accounts
-    // For each account, calculate current balance based on initial balance + transactions
+    // Calculate total balance from all accounts using the stored balance
+    // This ensures we use the most up-to-date balance from the database
     const totalBalance = accounts.reduce((acc, account) => {
-      const accountTransactions = transactions.filter(t => t.accountId === account.id);
-      const accountBalance = account.initialBalance + accountTransactions.reduce((sum, t) => {
-        return sum + (t.type === 'income' ? t.amount : -t.amount);
-      }, 0);
-      return acc + accountBalance;
+      // Use the balance from the database, which is kept in sync by the transaction context
+      return acc + (account.balance || 0);
     }, 0);
 
     return {
@@ -134,7 +131,7 @@ export default function DashboardGrid() {
       expenseChange,
       comparisonDescription
     };
-  }, [transactions, date, accounts]);
+  }, [transactions, date, accounts, refreshTrigger, accountRefreshTrigger]);
 
 
   const initialItems = [

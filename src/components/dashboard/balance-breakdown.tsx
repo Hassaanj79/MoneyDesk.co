@@ -16,8 +16,8 @@ interface BalanceBreakdownProps {
 
 const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
   const { formatCurrency } = useCurrency();
-  const { accounts } = useAccounts();
-  const { transactions } = useTransactions();
+  const { accounts, refreshTrigger: accountRefreshTrigger } = useAccounts();
+  const { transactions, refreshTrigger } = useTransactions();
 
   const accountBreakdown = useMemo(() => {
     return accounts.map(account => {
@@ -29,7 +29,8 @@ const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const currentBalance = account.initialBalance + income - expenses;
+      // Use the stored balance from the database instead of calculating it
+      const currentBalance = account.balance || 0;
       const netChange = income - expenses;
       
       return {
@@ -41,7 +42,7 @@ const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
         transactionCount: accountTransactions.length
       };
     }).sort((a, b) => b.currentBalance - a.currentBalance);
-  }, [accounts, transactions]);
+  }, [accounts, transactions, refreshTrigger, accountRefreshTrigger]);
 
   const totalBalance = accountBreakdown.reduce((sum, account) => sum + account.currentBalance, 0);
   const totalIncome = accountBreakdown.reduce((sum, account) => sum + account.income, 0);

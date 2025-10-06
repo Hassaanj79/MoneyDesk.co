@@ -14,11 +14,27 @@ export const getTransactions = (userId: string) => {
 // Add a new transaction
 export const addTransaction = async (userId: string, transaction: Omit<Transaction, 'id' | 'userId'>) => {
     const transactionsCol = getTransactionsCollection(userId);
+    
+    // Filter out undefined values to prevent Firebase errors
+    const filteredTransaction = Object.fromEntries(
+        Object.entries(transaction).filter(([_, value]) => value !== undefined)
+    );
+    
+    // Ensure date is properly converted to a Date object
+    let dateValue = transaction.date;
+    if (typeof dateValue === 'string') {
+        dateValue = new Date(dateValue);
+    } else if (!(dateValue instanceof Date)) {
+        dateValue = new Date();
+    }
+    
     const transactionData = {
-        ...transaction,
-        date: new Date(transaction.date),
+        ...filteredTransaction,
+        date: dateValue,
         createdAt: Timestamp.now()
     };
+    
+    console.log('Adding transaction to Firestore:', transactionData);
     return await addDoc(transactionsCol, transactionData);
 };
 
@@ -26,7 +42,13 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
 export const updateTransaction = async (userId: string, transactionId: string, updates: Partial<Omit<Transaction, 'id' | 'userId'>>) => {
     const transactionsCol = getTransactionsCollection(userId);
     const transactionRef = doc(transactionsCol, transactionId);
-    const updateData = { ...updates };
+    
+    // Filter out undefined values to prevent Firebase errors
+    const filteredUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined)
+    );
+    
+    const updateData = { ...filteredUpdates };
     if (updates.date) {
         updateData.date = new Date(updates.date);
     }

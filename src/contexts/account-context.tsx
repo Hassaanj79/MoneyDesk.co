@@ -13,6 +13,7 @@ interface AccountContextType {
   updateAccount: (id: string, updatedAccount: Partial<Omit<Account, 'id' | 'userId'>>) => Promise<void>;
   deleteAccount: (id: string) => Promise<void>;
   loading: boolean;
+  refreshTrigger: number; // Add refresh trigger for forcing re-renders
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
@@ -20,6 +21,7 @@ const AccountContext = createContext<AccountContextType | undefined>(undefined);
 export const AccountProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -39,6 +41,8 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
         });
         setAccounts(userAccounts);
         setLoading(false);
+        // Trigger refresh when accounts are updated
+        setRefreshTrigger(prev => prev + 1);
       }, (error) => {
         console.error("Error fetching accounts:", error);
         setLoading(false);
@@ -99,7 +103,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AccountContext.Provider value={{ accounts, addAccount, updateAccount, deleteAccount, loading }}>
+    <AccountContext.Provider value={{ accounts, addAccount, updateAccount, deleteAccount, loading, refreshTrigger }}>
       {children}
     </AccountContext.Provider>
   );

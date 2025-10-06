@@ -8,8 +8,8 @@ import { updateAccount as updateAccountService, getAccount } from '@/services/ac
 import { Timestamp, onSnapshot, getDocs, query, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { useAIFeatures } from '@/hooks/use-ai-features';
-import { aiCache } from '@/lib/ai-cache';
+// import { useAIFeatures } from '@/hooks/use-ai-features';
+// import { aiCache } from '@/lib/ai-cache';
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -18,10 +18,8 @@ interface TransactionContextType {
   deleteTransaction: (id: string) => Promise<void>;
   recalculateAllAccountBalances: () => Promise<void>;
   loading: boolean;
-  // AI Features
-  categorizeTransaction: (transaction: Partial<Transaction>) => string | null;
-  detectDuplicate: (transaction: Partial<Transaction>) => boolean;
-  generateSpendingInsights: () => void;
+  refreshTrigger: number; // Add refresh trigger for forcing re-renders
+  // AI Features removed for simplicity
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
@@ -29,26 +27,50 @@ const TransactionContext = createContext<TransactionContextType | undefined>(und
 export const TransactionProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { user } = useAuth();
-  const aiFeatures = useAIFeatures();
 
   useEffect(() => {
     if (user) {
       setLoading(true);
       const q = getTransactions(user.uid);
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        console.log('Firestore listener triggered, documents:', querySnapshot.docs.length);
         const userTransactions: Transaction[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          userTransactions.push({ 
+          
+          // Safely handle date conversion
+          let dateValue = data.date;
+          if (dateValue && typeof dateValue.toDate === 'function') {
+            dateValue = dateValue.toDate();
+          } else if (typeof dateValue === 'string') {
+            dateValue = new Date(dateValue);
+          } else if (!(dateValue instanceof Date)) {
+            dateValue = new Date();
+          }
+          
+          // Safely handle createdAt conversion
+          let createdAtValue = data.createdAt;
+          if (createdAtValue && typeof createdAtValue.toDate === 'function') {
+            createdAtValue = createdAtValue.toDate();
+          } else if (!(createdAtValue instanceof Date)) {
+            createdAtValue = new Date();
+          }
+          
+          const transaction = { 
             id: doc.id, 
             ...data,
-            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt || new Date()),
-            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt || new Date())
-          } as unknown as Transaction);
+            date: dateValue,
+            createdAt: createdAtValue
+          } as Transaction;
+          
+          userTransactions.push(transaction);
+          console.log('Processing transaction:', transaction.id, transaction.name, 'Date:', transaction.date);
         });
         // Sort by creation date, newest first
         userTransactions.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+        console.log('Setting transactions:', userTransactions.length);
         setTransactions(userTransactions);
         setLoading(false);
       }, (error) => {
@@ -83,6 +105,8 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
 
       // Update account balance in Firestore
       await updateAccountService(user!.uid, accountId, { balance: updatedBalance });
+      
+      console.log(`Updated account ${accountId} balance to ${updatedBalance}`);
     } catch (error) {
       console.error('Error updating account balance:', error);
     }
@@ -134,68 +158,36 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
     
-    const newDoc = await addTransactionService(user.uid, transaction);
-    
-    // Update account balance after adding transaction
-    if (newDoc?.id && transaction.accountId) {
-      // Create a temporary transaction object with the new ID for balance calculation
-      const newTransaction: Transaction = {
-        ...transaction,
-        id: newDoc.id,
-        userId: user.uid,
-        createdAt: new Date() // Add createdAt for immediate sorting
-      };
+    try {
+      const newDoc = await addTransactionService(user.uid, transaction);
       
-      // Immediately add to local state for instant UI update
-      setTransactions(prev => {
-        // Check if transaction already exists to prevent duplicates
-        const exists = prev.some(t => t.id === newTransaction.id);
-        if (exists) {
-          console.log('Transaction already exists in state, skipping duplicate');
-          return prev;
-        }
-        return [newTransaction, ...prev];
-      });
-      
-      // Update account balance immediately with the new transaction
-      await updateAccountBalance(transaction.accountId, newTransaction);
-
-      // Clear AI cache to ensure fresh insights
-      aiCache.clear();
-
-      // Generate smart notifications for the new transaction
-      try {
-        const notifications = aiFeatures.generateTransactionNotifications(
-          newTransaction,
-          transactions,
-          [] // budgets - can be added later
-        );
+      if (newDoc?.id) {
+        // Create a temporary transaction object with the new ID for balance calculation
+        const newTransaction: Transaction = {
+          ...transaction,
+          id: newDoc.id,
+          userId: user.uid,
+          createdAt: new Date()
+        };
         
-        // Show notifications
-        notifications.forEach(notification => {
-          if (notification.type === 'warning') {
-            toast.warning(notification.title, {
-              description: notification.message,
-              duration: 5000,
-            });
-          } else if (notification.type === 'info') {
-            toast.info(notification.title, {
-              description: notification.message,
-              duration: 3000,
-            });
-          } else {
-            toast.success(notification.title, {
-              description: notification.message,
-              duration: 3000,
-            });
-          }
-        });
-      } catch (error) {
-        console.error('Error generating smart notifications:', error);
+        // Update account balance if accountId exists
+        if (transaction.accountId) {
+          await updateAccountBalance(transaction.accountId, newTransaction);
+        }
+
+        // Trigger refresh for components that depend on account balances
+        setRefreshTrigger(prev => prev + 1);
+
+        // Show success notification
+        toast.success('Transaction added successfully!');
+        
+        console.log('Transaction added successfully:', newDoc.id);
+        return newDoc.id;
       }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
     }
-    
-    return newDoc?.id;
   };
 
   const updateTransaction = async (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'userId'>>) => {
@@ -229,21 +221,6 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // AI Features
-  const categorizeTransaction = (transaction: Partial<Transaction>) => {
-    return aiFeatures.categorizeTransaction(transaction);
-  };
-
-  const detectDuplicate = (transaction: Partial<Transaction>) => {
-    const result = aiFeatures.detectDuplicate(transaction, transactions);
-    return result.isDuplicate;
-  };
-
-  const generateSpendingInsights = () => {
-    const insights = aiFeatures.generateSpendingInsights(transactions);
-    // You can add logic here to display insights or trigger notifications
-    console.log('Generated spending insights:', insights);
-  };
 
   return (
     <TransactionContext.Provider value={{ 
@@ -253,10 +230,7 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       deleteTransaction, 
       recalculateAllAccountBalances,
       loading,
-      // AI Features
-      categorizeTransaction,
-      detectDuplicate,
-      generateSpendingInsights
+      refreshTrigger,
     }}>
       {children}
     </TransactionContext.Provider>

@@ -4,7 +4,7 @@
 import type { Transaction } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
@@ -12,6 +12,41 @@ import { useCategories } from "@/contexts/category-context";
 type TransactionDetailsProps = {
   transaction: Transaction;
   children?: React.ReactNode;
+};
+
+// Helper function to safely format dates
+const formatDate = (date: any): string => {
+  try {
+    if (!date) return 'N/A';
+    
+    let dateObj: Date;
+    
+    if (date instanceof Date) {
+      dateObj = date;
+    } else if (typeof date === 'string') {
+      // Try to parse as ISO string first
+      if (date.includes('T') || date.includes('Z')) {
+        dateObj = parseISO(date);
+      } else {
+        // Try to parse as regular date string
+        dateObj = new Date(date);
+      }
+    } else if (date && typeof date === 'object' && date.toDate) {
+      // Handle Firestore Timestamp
+      dateObj = date.toDate();
+    } else {
+      dateObj = new Date(date);
+    }
+    
+    if (!isValid(dateObj)) {
+      return 'Invalid Date';
+    }
+    
+    return format(dateObj, "PPP");
+  } catch (error) {
+    console.error('Error formatting date:', error, 'Date value:', date);
+    return 'Invalid Date';
+  }
 };
 
 export function TransactionDetails({ transaction, children }: TransactionDetailsProps) {
@@ -41,7 +76,7 @@ export function TransactionDetails({ transaction, children }: TransactionDetails
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <p className="text-muted-foreground">Date</p>
-          <p>{format(parseISO(date), "PPP")}</p>
+          <p>{formatDate(date)}</p>
         </div>
         <div>
           <p className="text-muted-foreground">Category</p>
