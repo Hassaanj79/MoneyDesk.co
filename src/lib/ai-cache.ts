@@ -59,8 +59,15 @@ class AICache {
   }
 
   // Generate cache key for financial insights
-  generateKey(userId: string, dateRange: { from: string; to: string }, currency: string): string {
-    return `ai-insights:${userId}:${dateRange.from}:${dateRange.to}:${currency}`;
+  generateKey(userId: string, dateRange: { from: string; to: string }, currency: string, transactionHash?: string): string {
+    const baseKey = `ai-insights:${userId}:${dateRange.from}:${dateRange.to}:${currency}`;
+    return transactionHash ? `${baseKey}:${transactionHash}` : baseKey;
+  }
+
+  // Generate cache key for category suggestions
+  generateCategoryKey(description: string, type: string, existingCategories: string[]): string {
+    const categoriesHash = existingCategories.sort().join(',');
+    return `category-suggestions:${description}:${type}:${categoriesHash}`;
   }
 
   // Get cache statistics

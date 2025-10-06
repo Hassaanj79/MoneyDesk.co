@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { aiCache } from '@/lib/ai-cache';
+import { openaiFinancialAnalysis, FinancialData } from '@/services/openai-financial-analysis';
+import { groqFinancialAnalysis } from '@/services/groq-financial-analysis';
 
 interface FinancialAggregates {
   totalIncome: number;
@@ -37,7 +39,7 @@ const FINANCIAL_QUOTES = [
 
 export async function POST(request: NextRequest) {
   try {
-    const { aggregates, dateRange, currency, userId = 'current-user' } = await request.json();
+    const { aggregates, dateRange, currency, userId = 'current-user', transactions = [], categories = [] } = await request.json();
 
     // Validate input
     if (!aggregates || !dateRange) {
@@ -47,8 +49,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate transaction hash for cache invalidation
+    const transactionHash = transactions.length > 0 
+      ? transactions.map(t => `${t.id}-${t.amount}-${t.type}`).join('|')
+      : 'no-transactions';
+    
     // Check cache first
-    const cacheKey = aiCache.generateKey(userId, dateRange, currency);
+    const cacheKey = aiCache.generateKey(userId, dateRange, currency, transactionHash);
     const cachedInsights = aiCache.get(cacheKey);
     
     if (cachedInsights) {
@@ -59,19 +66,100 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate AI insights using rule-based logic (simulating AI)
-    const insights = generateFinancialInsights(aggregates, dateRange, currency);
+        // Check if Groq API key is available (preferred - free)
+        if (process.env.GROQ_API_KEY) {
+          console.log('Using Groq for AI insights...');
+          try {
+            const financialData: FinancialData = {
+              totalIncome: aggregates.totalIncome,
+              totalExpense: aggregates.totalExpenses,
+              netSavings: aggregates.netIncome,
+              currency,
+              dateRange,
+              transactions: transactions.map((t: any) => ({
+                type: t.type,
+                amount: t.amount,
+                category: t.categoryName || t.categoryId,
+                name: t.name,
+                date: t.date
+              })),
+              categories: categories.map((c: any) => ({
+                name: c.name,
+                totalAmount: c.totalAmount || 0,
+                transactionCount: c.transactionCount || 0
+              }))
+            };
 
-    // Cache the results for 5 minutes
-    aiCache.set(cacheKey, insights, 5 * 60 * 1000);
+        const insights = await groqFinancialAnalysis.generateFinancialInsights(financialData);
+        aiCache.set(cacheKey, insights, 2 * 60 * 1000); // Reduced to 2 minutes
+            return NextResponse.json({
+              ...insights,
+              aiPowered: true,
+              provider: 'groq'
+            });
+          } catch (groqError) {
+            console.error('Groq error, falling back to rule-based insights:', groqError);
+            // Fall through to rule-based insights
+          }
+        }
 
-    return NextResponse.json(insights);
+        // Check if OpenAI API key is available (fallback)
+        if (process.env.OPENAI_API_KEY) {
+          console.log('Using OpenAI for AI insights...');
+          const financialData: FinancialData = {
+            totalIncome: aggregates.totalIncome,
+            totalExpense: aggregates.totalExpenses,
+            netSavings: aggregates.netIncome,
+            currency,
+            dateRange,
+            transactions: transactions.map((t: any) => ({
+              type: t.type,
+              amount: t.amount,
+              category: t.categoryName || t.categoryId,
+              name: t.name,
+              date: t.date
+            })),
+            categories: categories.map((c: any) => ({
+              name: c.name,
+              totalAmount: c.totalAmount || 0,
+              transactionCount: c.transactionCount || 0
+            }))
+          };
+
+          const insights = await openaiFinancialAnalysis.generateFinancialInsights(financialData);
+          aiCache.set(cacheKey, insights, 2 * 60 * 1000); // Reduced to 2 minutes
+          return NextResponse.json({
+            ...insights,
+            aiPowered: true,
+            provider: 'openai'
+          });
+        }
+
+        // Fallback to rule-based insights
+        console.log('No AI API keys found, using fallback insights');
+        const insights = generateFinancialInsights(aggregates, dateRange, currency);
+        return NextResponse.json({
+          ...insights,
+          fallback: true
+        });
   } catch (error) {
     console.error('Error generating financial insights:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate insights' },
-      { status: 500 }
-    );
+    
+    // Fallback to rule-based insights if OpenAI fails
+    try {
+      const { aggregates, dateRange, currency } = await request.json();
+      const insights = generateFinancialInsights(aggregates, dateRange, currency);
+      return NextResponse.json({
+        ...insights,
+        fallback: true,
+        error: 'OpenAI service unavailable, using fallback analysis'
+      });
+    } catch (fallbackError) {
+      return NextResponse.json(
+        { error: 'Failed to generate insights' },
+        { status: 500 }
+      );
+    }
   }
 }
 

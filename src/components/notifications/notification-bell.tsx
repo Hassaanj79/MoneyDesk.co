@@ -142,7 +142,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
       {/* Notifications Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
           <Card className="border-0 shadow-none">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -219,7 +219,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
                               </span>
                             </div>
                           </div>
-                          <p className="text-xs text-muted-foreground font-sans mb-2">
+                          <p className="text-xs text-muted-foreground font-sans mb-2 break-words">
                             {notification.message}
                           </p>
                           <div className="flex items-center gap-1">

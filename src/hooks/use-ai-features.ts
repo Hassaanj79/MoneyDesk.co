@@ -4,6 +4,8 @@ import { aiCategorization } from '@/services/ai-categorization';
 import { aiDuplicateDetection, DuplicateDetectionResult } from '@/services/ai-duplicate-detection';
 import { aiSpendingInsights, SpendingInsight } from '@/services/ai-spending-insights';
 import { aiNotifications, SmartNotification } from '@/services/ai-notifications';
+import { useCurrency } from '@/hooks/use-currency';
+import { useCategories } from '@/contexts/category-context';
 
 export interface AIFeatures {
   // Categorization
@@ -44,6 +46,8 @@ export const useAIFeatures = (): AIFeatures => {
   const [notifications, setNotifications] = useState<SmartNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const { formatCurrency } = useCurrency();
+  const { categories } = useCategories();
 
   // Initialize notifications
   useEffect(() => {
@@ -97,6 +101,8 @@ export const useAIFeatures = (): AIFeatures => {
     const newNotifications = aiNotifications.generateTransactionNotifications(
       transaction,
       existingTransactions,
+      formatCurrency,
+      categories,
       budgets
     );
     
@@ -108,7 +114,7 @@ export const useAIFeatures = (): AIFeatures => {
     setUnreadCount(aiNotifications.getNotificationCount());
     
     return newNotifications;
-  }, []);
+  }, [formatCurrency, categories]);
 
   const generateDailySummaryNotifications = useCallback((
     transactions: Transaction[],
@@ -118,6 +124,7 @@ export const useAIFeatures = (): AIFeatures => {
     const newNotifications = aiNotifications.generateDailySummaryNotifications(
       transactions,
       accounts,
+      formatCurrency,
       budgets
     );
     
@@ -129,7 +136,7 @@ export const useAIFeatures = (): AIFeatures => {
     setUnreadCount(aiNotifications.getNotificationCount());
     
     return newNotifications;
-  }, []);
+  }, [formatCurrency]);
 
   const generateWeeklyInsightsNotifications = useCallback((
     transactions: Transaction[],
@@ -137,7 +144,8 @@ export const useAIFeatures = (): AIFeatures => {
   ): SmartNotification[] => {
     const newNotifications = aiNotifications.generateWeeklyInsightsNotifications(
       transactions,
-      previousWeekTransactions
+      previousWeekTransactions,
+      formatCurrency
     );
     
     newNotifications.forEach(notification => {
@@ -148,7 +156,7 @@ export const useAIFeatures = (): AIFeatures => {
     setUnreadCount(aiNotifications.getNotificationCount());
     
     return newNotifications;
-  }, []);
+  }, [formatCurrency]);
 
   const getNotifications = useCallback((): SmartNotification[] => {
     return aiNotifications.getNotifications();

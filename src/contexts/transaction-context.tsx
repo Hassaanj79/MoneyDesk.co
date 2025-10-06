@@ -9,6 +9,7 @@ import { Timestamp, onSnapshot, getDocs, query, collection } from 'firebase/fire
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { useAIFeatures } from '@/hooks/use-ai-features';
+import { aiCache } from '@/lib/ai-cache';
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -158,6 +159,9 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       
       // Update account balance immediately with the new transaction
       await updateAccountBalance(transaction.accountId, newTransaction);
+
+      // Clear AI cache to ensure fresh insights
+      aiCache.clear();
 
       // Generate smart notifications for the new transaction
       try {

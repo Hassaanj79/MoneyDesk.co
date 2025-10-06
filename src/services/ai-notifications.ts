@@ -34,6 +34,8 @@ export class AINotificationService {
   public generateTransactionNotifications(
     newTransaction: Transaction,
     existingTransactions: Transaction[],
+    formatCurrency: (amount: number) => string,
+    categories?: Array<{id: string, name: string}>,
     budgets?: Array<{category: string, limit: number, spent: number}>
   ): SmartNotification[] {
     const notifications: SmartNotification[] = [];
@@ -43,13 +45,18 @@ export class AINotificationService {
       return notifications;
     }
 
+    // Helper function to get category name
+    const getCategoryName = (categoryId: string) => {
+      return categories?.find(c => c.id === categoryId)?.name || categoryId;
+    };
+
     // Large transaction notification
     if (newTransaction.amount > 500) {
       notifications.push({
         id: `large-transaction-${Date.now()}`,
         type: 'info',
         title: 'Large Transaction',
-        message: `You made a large transaction of $${newTransaction.amount.toFixed(2)} for ${newTransaction.name}.`,
+        message: `You made a large transaction of ${formatCurrency(newTransaction.amount)} for ${newTransaction.name}.`,
         priority: 'medium',
         category: 'transaction',
         actionable: true,
@@ -62,7 +69,7 @@ export class AINotificationService {
 
     // Budget warning notification
     if (budgets) {
-      const budget = budgets.find(b => b.category === newTransaction.category);
+      const budget = budgets.find(b => b.category === getCategoryName(newTransaction.categoryId));
       if (budget) {
         const newSpent = budget.spent + newTransaction.amount;
         const utilization = newSpent / budget.limit;
@@ -72,7 +79,7 @@ export class AINotificationService {
             id: `budget-exceeded-${Date.now()}`,
             type: 'warning',
             title: 'Budget Exceeded',
-            message: `You've exceeded your ${budget.category} budget by $${(newSpent - budget.limit).toFixed(2)}.`,
+            message: `You've exceeded your ${budget.category} budget by ${formatCurrency(newSpent - budget.limit)}.`,
             priority: 'high',
             category: 'budget',
             actionable: true,
@@ -109,7 +116,7 @@ export class AINotificationService {
     });
 
     const categorySpending = recentTransactions
-      .filter(t => t.category === newTransaction.category)
+      .filter(t => t.categoryId === newTransaction.categoryId)
       .reduce((sum, t) => sum + t.amount, 0);
 
     if (categorySpending > 200) {
@@ -117,7 +124,7 @@ export class AINotificationService {
         id: `spending-pattern-${Date.now()}`,
         type: 'info',
         title: 'Spending Pattern Alert',
-        message: `You've spent $${categorySpending.toFixed(2)} on ${newTransaction.category} this week.`,
+        message: `You've spent ${formatCurrency(categorySpending)} on ${getCategoryName(newTransaction.categoryId)} this week.`,
         priority: 'low',
         category: 'spending',
         actionable: true,
@@ -137,6 +144,7 @@ export class AINotificationService {
   public generateDailySummaryNotifications(
     transactions: Transaction[],
     accounts: Array<{name: string, balance: number}>,
+    formatCurrency: (amount: number) => string,
     budgets?: Array<{category: string, limit: number, spent: number}>
   ): SmartNotification[] {
     const notifications: SmartNotification[] = [];
@@ -162,7 +170,7 @@ export class AINotificationService {
         id: `daily-summary-${Date.now()}`,
         type: 'info',
         title: 'Daily Spending Summary',
-        message: `You spent $${totalSpent.toFixed(2)} today across ${todayTransactions.length} transaction(s).`,
+        message: `You spent ${formatCurrency(totalSpent)} today across ${todayTransactions.length} transaction(s).`,
         priority: 'low',
         category: 'spending',
         actionable: true,
@@ -224,7 +232,8 @@ export class AINotificationService {
    */
   public generateWeeklyInsightsNotifications(
     transactions: Transaction[],
-    previousWeekTransactions: Transaction[]
+    previousWeekTransactions: Transaction[],
+    formatCurrency: (amount: number) => string
   ): SmartNotification[] {
     const notifications: SmartNotification[] = [];
     

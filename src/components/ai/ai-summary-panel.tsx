@@ -145,11 +145,15 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
           },
           currency: currency,
           userId: user?.uid || 'anonymous',
+          transactions: filteredTransactions,
+          categories: categories,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate insights');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('AI insights API error:', errorData);
+        throw new Error(`Failed to generate insights: ${errorData.error || response.statusText}`);
       }
 
       const data = await response.json();
@@ -379,7 +383,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
   const copyToClipboard = async () => {
     if (!insights) return;
     
-    const text = `${insights.summary}\n\nHighlights:\n${insights.highlights.map(h => `• ${h}`).join('\n')}\n\nRecommendations:\n${insights.recommendations.map(r => `• ${r.title}: ${r.description}`).join('\n')}\n\n"${insights.quote}"`;
+    const text = `${insights.summary}\n\nHighlights:\n${insights.highlights.map(h => `• ${typeof h === 'string' ? h : h.title || h.description || JSON.stringify(h)}`).join('\n')}\n\nRecommendations:\n${insights.recommendations.map(r => `• ${r.title}: ${r.description}`).join('\n')}\n\n"${insights.quote}"`;
     
     try {
       await navigator.clipboard.writeText(text);
@@ -658,7 +662,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
                     <div key={index} className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-2 flex-shrink-0" />
                       <span className="text-sm text-gray-600 dark:text-gray-300">
-                        {highlight}
+                        {typeof highlight === 'string' ? highlight : highlight.title || highlight.description || JSON.stringify(highlight)}
                       </span>
                     </div>
                   ))}

@@ -42,6 +42,7 @@ import { useAIFeatures } from "@/hooks/use-ai-features";
 import { useAuth } from "@/contexts/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { CameraCapture } from "./camera-capture";
+import { CategorySuggestions } from "./category-suggestions";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -68,13 +69,10 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
   const { categories, addCategory } = useCategories();
-  const aiFeatures = useAIFeatures();
   const { user } = useAuth();
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<{category: string, confidence: number}[]>([]);
-  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
-  const [creatingCategory, setCreatingCategory] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [resetTrigger, setResetTrigger] = useState(0);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -99,6 +97,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       name: "",
       isRecurring: false,
     });
+    setResetTrigger(prev => prev + 1); // Trigger suggestions reset
   }, [type, form]);
   
 
@@ -135,8 +134,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
       onSuccess?.();
       form.reset();
-      setShowAiSuggestions(false);
-      setAiSuggestions([]);
+      setResetTrigger(prev => prev + 1); // Clear suggestions after successful submission
     } catch (error) {
       console.error('Error adding transaction:', error);
       toast.error('Failed to add transaction. Please try again.');
@@ -150,27 +148,9 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
-  // AI categorization when description changes
-  const handleDescriptionChange = (value: string) => {
-    if (value.length > 3) {
-      try {
-        const suggestions = aiFeatures.suggestCategories({ name: value, type });
-        setAiSuggestions(suggestions);
-        setShowAiSuggestions(true);
-      } catch (error) {
-        console.error('Error getting AI suggestions:', error);
-      }
-    } else {
-      setShowAiSuggestions(false);
-      setAiSuggestions([]);
-    }
-  };
-
   // Handle AI category selection - create if doesn't exist
   const handleAiCategorySelect = async (categoryName: string) => {
     try {
-      setCreatingCategory(categoryName);
-      
       // First, try to find existing category
       let category = categories.find(c => c.name === categoryName && c.type === type);
       
@@ -186,10 +166,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
         // Add the new category
         const categoryId = await addCategory(newCategory);
         if (categoryId) {
-          // Find the newly created category
+          // Wait a moment for the categories list to update
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Try to find the newly created category in the updated list
           category = categories.find(c => c.id === categoryId);
           if (!category) {
-            // If not found in current categories, create a temporary object
+            // If still not found, create a temporary object with the correct ID
             category = {
               id: categoryId,
               name: categoryName,
@@ -206,16 +189,45 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       
       if (category) {
         form.setValue('categoryId', category.id);
-        setShowAiSuggestions(false);
-        setAiSuggestions([]);
+        // Force form to re-render by triggering a change event
+        form.trigger('categoryId');
         const action = categories.some(c => c.name === categoryName && c.type === type) ? 'selected' : 'created and selected';
         toast.success(`Category "${categoryName}" ${action}!`);
       }
     } catch (error) {
       console.error('Error handling AI category selection:', error);
       toast.error('Failed to select category. Please try again.');
-    } finally {
-      setCreatingCategory(null);
+    }
+  };
+
+  // Handle adding new category from AI suggestions
+  const handleAddNewCategory = async (categoryName: string) => {
+    try {
+      const newCategory = {
+        name: categoryName,
+        type: type,
+        color: '#3B82F6', // Default blue color
+        icon: 'tag' // Default icon
+      };
+      
+      // Add the new category
+      const categoryId = await addCategory(newCategory);
+      if (categoryId) {
+        // Wait a moment for the categories list to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Find the newly created category and select it
+        const category = categories.find(c => c.id === categoryId);
+        if (category) {
+          form.setValue('categoryId', category.id);
+          // Force form to re-render by triggering a change event
+          form.trigger('categoryId');
+          toast.success(`Category "${categoryName}" created and selected!`);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating new category:', error);
+      toast.error('Failed to create category. Please try again.');
     }
   };
 
@@ -226,62 +238,28 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           control={form.control}
           name="name"
           render={({ field }) => (
-            <FormItem className="relative">
+            <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Input 
                   placeholder="e.g., Coffee, Salary" 
-                  {...field} 
-                  onChange={(e) => {
-                    field.onChange(e);
-                    handleDescriptionChange(e.target.value);
-                  }}
+                  {...field}
                 />
               </FormControl>
-              {showAiSuggestions && aiSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-                  <div className="p-2">
-                    <p className="text-xs text-gray-500 mb-2">AI Suggestions:</p>
-                    {aiSuggestions.slice(0, 3).map((suggestion, index) => {
-                      const categoryExists = categories.some(c => c.name === suggestion.category && c.type === type);
-                      const isCreating = creatingCategory === suggestion.category;
-                      return (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => handleAiCategorySelect(suggestion.category)}
-                          disabled={isCreating || !!creatingCategory}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded flex justify-between items-center group disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <span>{suggestion.category}</span>
-                            {isCreating ? (
-                              <span className="text-xs text-orange-600 bg-orange-100 px-2 py-0.5 rounded flex items-center">
-                                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
-                                Creating...
-                              </span>
-                            ) : categoryExists ? (
-                              <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
-                                Existing
-                              </span>
-                            ) : (
-                              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
-                                Will Create
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-400">
-                            {Math.round(suggestion.confidence * 100)}%
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        {/* AI Category Suggestions */}
+        <CategorySuggestions
+          description={form.watch("name") || ""}
+          type={type}
+          existingCategories={filteredCategories.map(c => c.name)}
+          onSelectCategory={handleAiCategorySelect}
+          onAddNewCategory={handleAddNewCategory}
+          disabled={!form.watch("name") || form.watch("name").length < 3}
+          resetTrigger={resetTrigger}
         />
 
         <FormField
@@ -343,7 +321,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Account</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an account" />
@@ -369,7 +347,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -416,7 +394,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                   <FormLabel>Frequency</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
