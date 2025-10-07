@@ -57,8 +57,6 @@ import { useCategories } from "@/contexts/category-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useBudgets } from "@/contexts/budget-context";
 import { useLoans } from "@/contexts/loan-context";
-import { useReportLogs } from "@/contexts/report-logs-context";
-import { ReportLogs } from "@/components/reports/report-logs";
 import {
   DndContext,
   closestCenter,
@@ -114,13 +112,6 @@ function SortableCard({ id, children }: SortableCardProps) {
   );
 }
 
-const generatedReports = [
-  { id: "1", name: "Q3 2024 Expense Report", date: "2024-10-05", type: "PDF" },
-  { id: "2", name: "September 2024 Spending", date: "2024-10-2", type: "CSV" },
-  { id: "3", name: "Q3 2024 Income Statement", date: "2024-10-01", type: "PDF" },
-  { id: "4", name: "August 2024 Transactions", date: "2024-09-05", type: "CSV" },
-  { id: "5", name: "Q2 2024 Summary", date: "2024-07-03", type: "PDF" },
-];
 
 const chartConfig = {
   amount: {
@@ -160,7 +151,6 @@ function ReportsPageContent() {
   const { accounts } = useAccounts();
   const { budgets } = useBudgets();
   const { loans } = useLoans();
-  const { logReport } = useReportLogs();
   // const { addNotification } = useNotifications();
   const { formatCurrency, currency } = useCurrency();
 
@@ -189,8 +179,7 @@ function ReportsPageContent() {
     'account-balance-distribution',
     'budget-performance',
     'loan-status-overview',
-    'transaction-frequency',
-    'generated-reports'
+    'transaction-frequency'
   ]);
 
   // Drag and drop sensors
@@ -1112,51 +1101,6 @@ function ReportsPageContent() {
                       </SortableCard>
                     );
                   }
-                  if (reportId === 'generated-reports') {
-                    return (
-                      <SortableCard key={reportId} id={reportId}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Generated Reports</CardTitle>
-          <CardDescription>
-            Download your previously generated financial reports.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Report Name</TableHead>
-                <TableHead>Date Generated</TableHead>
-                                  <TableHead>Type</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {generatedReports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell className="font-medium">{report.name}</TableCell>
-                  <TableCell>{report.date}</TableCell>
-                                    <TableCell>
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {report.type}
-                                      </span>
-                                    </TableCell>
-                  <TableCell className="text-right">
-                                      <Button variant="outline" size="sm">
-                                        <Download className="h-4 w-4 mr-1" />
-                                        Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-                          </CardContent>
-                        </Card>
-                      </SortableCard>
-                    );
-                  }
                   return null;
                 })}
               </div>
@@ -1164,9 +1108,6 @@ function ReportsPageContent() {
           </DndContext>
         </CardContent>
       </Card>
-
-      {/* Report Generation Logs */}
-      <ReportLogs />
     </div>
   );
 }

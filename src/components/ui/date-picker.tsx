@@ -30,7 +30,7 @@ export function DatePicker({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -46,13 +46,14 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 animate-in fade-in-0 zoom-in-95 duration-200"
+        className="w-auto p-0 animate-in fade-in-0 zoom-in-95 duration-200 z-[100]"
         align="start"
         side="bottom"
         sideOffset={4}
         style={{
           animation: 'fadeInScale 0.2s ease-out'
         }}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Calendar
           mode="single"

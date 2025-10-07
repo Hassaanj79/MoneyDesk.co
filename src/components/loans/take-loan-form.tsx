@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
+import { SimpleDatePicker } from "@/components/ui/simple-date-picker";
 import { Loader2, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -172,6 +172,11 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
 
       form.reset();
       onSuccess?.();
+      
+      // Auto-refresh the page to show updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error("Failed to take loan", error);
       // addNotification({
@@ -274,7 +279,7 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
               <FormItem>
                 <FormLabel>Start Date *</FormLabel>
                 <FormControl>
-                  <DatePicker
+                  <SimpleDatePicker
                     value={field.value}
                     onChange={field.onChange}
                     placeholder="Pick a start date"
@@ -292,7 +297,7 @@ export function TakeLoanForm({ onSuccess }: TakeLoanFormProps) {
               <FormItem>
                 <FormLabel>Due Date *</FormLabel>
                 <FormControl>
-                  <DatePicker
+                  <SimpleDatePicker
                     value={field.value}
                     onChange={field.onChange}
                     placeholder="Pick a due date"
