@@ -70,6 +70,17 @@ class AICache {
     return `category-suggestions:${description}:${type}:${categoriesHash}`;
   }
 
+  // Clear cache for a specific user
+  clearUserCache(userId: string): void {
+    const keysToDelete: string[] = [];
+    for (const key of this.cache.keys()) {
+      if (key.includes(`:${userId}:`)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => this.cache.delete(key));
+  }
+
   // Get cache statistics
   getStats(): { size: number; entries: string[] } {
     return {

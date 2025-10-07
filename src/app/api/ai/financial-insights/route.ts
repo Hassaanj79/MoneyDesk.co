@@ -51,11 +51,15 @@ export async function POST(request: NextRequest) {
 
     // Generate transaction hash for cache invalidation
     const transactionHash = transactions.length > 0 
-      ? transactions.map(t => `${t.id}-${t.amount}-${t.type}`).join('|')
+      ? transactions.map(t => `${t.id}-${t.amount}-${t.type}-${t.date}-${t.name}`).join('|')
       : 'no-transactions';
     
+    // Also include aggregates in the hash to ensure cache invalidation when data changes
+    const aggregatesHash = `${aggregates.totalIncome}-${aggregates.totalExpenses}-${aggregates.netIncome}-${aggregates.transactionCount}`;
+    const fullHash = `${transactionHash}-${aggregatesHash}`;
+    
     // Check cache first
-    const cacheKey = aiCache.generateKey(userId, dateRange, currency, transactionHash);
+    const cacheKey = aiCache.generateKey(userId, dateRange, currency, fullHash);
     const cachedInsights = aiCache.get(cacheKey);
     
     if (cachedInsights) {
@@ -90,8 +94,8 @@ export async function POST(request: NextRequest) {
               }))
             };
 
-        const insights = await groqFinancialAnalysis.generateFinancialInsights(financialData);
-        aiCache.set(cacheKey, insights, 2 * 60 * 1000); // Reduced to 2 minutes
+            const insights = await groqFinancialAnalysis.generateFinancialInsights(financialData);
+            aiCache.set(cacheKey, insights, 30 * 1000); // Reduced to 30 seconds for more frequent updates
             return NextResponse.json({
               ...insights,
               aiPowered: true,
@@ -106,33 +110,43 @@ export async function POST(request: NextRequest) {
         // Check if OpenAI API key is available (fallback)
         if (process.env.OPENAI_API_KEY) {
           console.log('Using OpenAI for AI insights...');
-          const financialData: FinancialData = {
-            totalIncome: aggregates.totalIncome,
-            totalExpense: aggregates.totalExpenses,
-            netSavings: aggregates.netIncome,
-            currency,
-            dateRange,
-            transactions: transactions.map((t: any) => ({
-              type: t.type,
-              amount: t.amount,
-              category: t.categoryName || t.categoryId,
-              name: t.name,
-              date: t.date
-            })),
-            categories: categories.map((c: any) => ({
-              name: c.name,
-              totalAmount: c.totalAmount || 0,
-              transactionCount: c.transactionCount || 0
-            }))
-          };
+          try {
+            const financialData: FinancialData = {
+              totalIncome: aggregates.totalIncome,
+              totalExpense: aggregates.totalExpenses,
+              netSavings: aggregates.netIncome,
+              currency,
+              dateRange,
+              transactions: transactions.map((t: any) => ({
+                type: t.type,
+                amount: t.amount,
+                category: t.categoryName || t.categoryId,
+                name: t.name,
+                date: t.date
+              })),
+              categories: categories.map((c: any) => ({
+                name: c.name,
+                totalAmount: c.totalAmount || 0,
+                transactionCount: c.transactionCount || 0
+              }))
+            };
 
-          const insights = await openaiFinancialAnalysis.generateFinancialInsights(financialData);
-          aiCache.set(cacheKey, insights, 2 * 60 * 1000); // Reduced to 2 minutes
-          return NextResponse.json({
-            ...insights,
-            aiPowered: true,
-            provider: 'openai'
-          });
+            const insights = await openaiFinancialAnalysis.generateFinancialInsights(financialData);
+            aiCache.set(cacheKey, insights, 30 * 1000); // Reduced to 30 seconds for more frequent updates
+            return NextResponse.json({
+              ...insights,
+              aiPowered: true,
+              provider: 'openai'
+            });
+          } catch (openaiError: any) {
+            console.error('OpenAI error, falling back to rule-based insights:', openaiError);
+            
+            // Check if it's a quota error and disable OpenAI temporarily
+            if (openaiError?.code === 'insufficient_quota' || openaiError?.status === 429) {
+              console.log('OpenAI quota exceeded, will use fallback insights');
+            }
+            // Fall through to rule-based insights
+          }
         }
 
         // Fallback to rule-based insights
@@ -145,19 +159,38 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error generating financial insights:', error);
     
-    // Fallback to rule-based insights if OpenAI fails
+    // Always fallback to rule-based insights if anything fails
     try {
-      const { aggregates, dateRange, currency } = await request.json();
-      const insights = generateFinancialInsights(aggregates, dateRange, currency);
-      return NextResponse.json({
-        ...insights,
-        fallback: true,
-        error: 'OpenAI service unavailable, using fallback analysis'
-      });
+      // Re-parse the request to get the data for fallback
+      const requestBody = await request.json();
+      const { aggregates, dateRange, currency } = requestBody;
+      
+      if (aggregates && dateRange && currency) {
+        const insights = generateFinancialInsights(aggregates, dateRange, currency);
+        return NextResponse.json({
+          ...insights,
+          fallback: true,
+          error: 'AI service unavailable, using fallback analysis'
+        });
+      } else {
+        throw new Error('Invalid request data for fallback');
+      }
     } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError);
       return NextResponse.json(
-        { error: 'Failed to generate insights' },
-        { status: 500 }
+        { 
+          error: 'Failed to generate insights',
+          fallback: true,
+          summary: 'Unable to generate financial insights at this time.',
+          highlights: ['Please try again later'],
+          recommendations: [{
+            title: 'Try Again',
+            description: 'Please refresh the page and try generating insights again.',
+            priority: 'medium' as const
+          }],
+          quote: 'Persistence is the key to success.'
+        },
+        { status: 200 } // Return 200 to prevent UI errors
       );
     }
   }

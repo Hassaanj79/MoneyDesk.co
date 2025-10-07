@@ -8,8 +8,7 @@ import { updateAccount as updateAccountService, getAccount } from '@/services/ac
 import { Timestamp, onSnapshot, getDocs, query, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-// import { useAIFeatures } from '@/hooks/use-ai-features';
-// import { aiCache } from '@/lib/ai-cache';
+import { aiCache } from '@/lib/ai-cache';
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -175,14 +174,19 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
           await updateAccountBalance(transaction.accountId, newTransaction);
         }
 
-        // Trigger refresh for components that depend on account balances
-        setRefreshTrigger(prev => prev + 1);
+                // Clear AI insights cache to ensure fresh insights
+                if (user) {
+                  aiCache.clearUserCache(user.uid);
+                }
 
-        // Show success notification
-        toast.success('Transaction added successfully!');
-        
-        console.log('Transaction added successfully:', newDoc.id);
-        return newDoc.id;
+                // Trigger refresh for components that depend on account balances
+                setRefreshTrigger(prev => prev + 1);
+
+                // Show success notification
+                toast.success('Transaction added successfully!');
+                
+                console.log('Transaction added successfully:', newDoc.id);
+                return newDoc.id;
       }
     } catch (error) {
       console.error('Error adding transaction:', error);
@@ -205,6 +209,11 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
         updatedAt: new Date()
       } as Transaction);
     }
+    
+    // Clear AI insights cache to ensure fresh insights
+    aiCache.clearUserCache(user.uid);
+    
+    setRefreshTrigger(prev => prev + 1); // Trigger refresh for components that depend on account balances
   };
 
   const deleteTransaction = async (id: string) => {
@@ -219,6 +228,11 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
     if (transaction.accountId) {
       await updateAccountBalance(transaction.accountId, transaction);
     }
+    
+    // Clear AI insights cache to ensure fresh insights
+    aiCache.clearUserCache(user.uid);
+    
+    setRefreshTrigger(prev => prev + 1); // Trigger refresh for components that depend on account balances
   };
 
 

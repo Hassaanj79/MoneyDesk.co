@@ -99,6 +99,10 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
   const isRecurring = form.watch("isRecurring");
   const receiptPreview = form.watch("receipt");
+  const selectedAccountId = form.watch("accountId");
+  
+  // Get the selected account details
+  const selectedAccount = accounts.find(acc => acc.id === selectedAccountId);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -239,11 +243,23 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                   <SelectContent>
                     {accounts.map((acc) => (
                       <SelectItem key={acc.id} value={acc.id}>
-                        {acc.name}
+                        <div className="flex flex-col">
+                          <span>{acc.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            Balance: {formatCurrency(acc.balance || 0)}
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedAccount && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Current Balance: <span className="font-medium text-foreground">
+                      {formatCurrency(selectedAccount.balance || 0)}
+                    </span>
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )}

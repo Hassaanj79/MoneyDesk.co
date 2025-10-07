@@ -69,7 +69,7 @@ class GroqFinancialAnalysisService {
 
         prompt += `Based on this data, provide a financial summary, key highlights, actionable recommendations, and an inspirational financial quote. 
         
-        IMPORTANT: Your response must be ONLY a valid JSON object. Do not include any other text, explanations, or markdown formatting.
+        CRITICAL: Your response must be ONLY a valid JSON object. Do not include any other text, explanations, or markdown formatting. No code blocks, no additional text.
         
         The JSON structure must be exactly:
         {
@@ -82,6 +82,14 @@ class GroqFinancialAnalysisService {
           ],
           "quote": "string"
         }
+        
+        Rules:
+        - Start your response with { and end with }
+        - Use double quotes for all strings
+        - Ensure all JSON is properly formatted
+        - No trailing commas
+        - No markdown formatting
+        - No explanations outside the JSON
         
         Ensure the descriptions are concise and professional. Recommendations should be practical and directly actionable.
         `;
@@ -114,8 +122,16 @@ class GroqFinancialAnalysisService {
                 content: `You are a professional financial advisor and AI assistant specializing in personal finance analysis. 
                 You provide insightful, actionable, and personalized financial advice based on transaction data.
                 
-                CRITICAL: Your response must be ONLY a valid JSON object. No markdown, no explanations, no additional text.
-                The JSON must match the exact schema provided in the user prompt.`,
+                CRITICAL RULES:
+                1. Your response must be ONLY a valid JSON object
+                2. No markdown formatting (no code blocks)
+                3. No explanations or additional text
+                4. Start with { and end with }
+                5. Use double quotes for all strings
+                6. No trailing commas
+                7. The JSON must match the exact schema provided in the user prompt
+                
+                If you cannot provide a valid JSON response, do not respond at all.`,
               },
               {
                 role: "user",
@@ -141,16 +157,48 @@ class GroqFinancialAnalysisService {
           } else if (cleanedResponse.startsWith('```')) {
             cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
           }
+          
+          // Fix common JSON issues
+          cleanedResponse = cleanedResponse
+            .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
+            .replace(/,\s*]/g, ']') // Remove trailing commas before closing brackets
+            .replace(/\n/g, ' ') // Replace newlines with spaces
+            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+            .trim();
 
-          // Try to parse the JSON
+          // Try to parse the JSON with better error handling
           let insights: AIFinancialInsights;
           try {
             insights = JSON.parse(cleanedResponse);
+            
+            // Validate the response structure
+            if (!insights.summary || !insights.highlights || !insights.recommendations || !insights.quote) {
+              throw new Error('Invalid response structure from Groq');
+            }
+            
+            // Ensure highlights and recommendations are arrays
+            if (!Array.isArray(insights.highlights) || !Array.isArray(insights.recommendations)) {
+              throw new Error('Invalid array structure in Groq response');
+            }
+            
           } catch (parseError) {
             console.error('JSON parse error:', parseError);
             console.error('Raw response:', rawResponse);
             console.error('Cleaned response:', cleanedResponse);
-            throw new Error(`Invalid JSON response from Groq: ${parseError}`);
+            
+            // Try to extract JSON from the response if it's embedded in text
+            const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              try {
+                insights = JSON.parse(jsonMatch[0]);
+                console.log('Successfully extracted JSON from embedded text');
+              } catch (extractError) {
+                console.error('Failed to extract JSON:', extractError);
+                throw new Error(`Invalid JSON response from Groq: ${parseError}`);
+              }
+            } else {
+              throw new Error(`Invalid JSON response from Groq: ${parseError}`);
+            }
           }
 
           return insights;

@@ -34,6 +34,7 @@ import type { Transaction } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
+import { useCurrency } from "@/hooks/use-currency";
 
 
 const formSchema = z.object({
@@ -54,6 +55,7 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
   const { updateTransaction } = useTransactions();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
+  const { formatCurrency } = useCurrency();
 
   // Helper function to safely convert date to Date object
   const getDate = (dateValue: any): Date => {
@@ -78,6 +80,11 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
       amount: Math.abs(transaction.amount),
     },
   });
+
+  const selectedAccountId = form.watch("accountId");
+  
+  // Get the selected account details
+  const selectedAccount = accounts.find(acc => acc.id === selectedAccountId);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await updateTransaction(transaction.id, {
@@ -185,12 +192,24 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
                       <SelectContent>
                       {accounts.map((acc) => (
                           <SelectItem key={acc.id} value={acc.id}>
-                          {acc.name}
+                            <div className="flex flex-col">
+                              <span>{acc.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                Balance: {formatCurrency(acc.balance || 0)}
+                              </span>
+                            </div>
                           </SelectItem>
                       ))}
                       </SelectContent>
                   </Select>
                 </div>
+                {selectedAccount && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Current Balance: <span className="font-medium text-foreground">
+                      {formatCurrency(selectedAccount.balance || 0)}
+                    </span>
+                  </div>
+                )}
                 <FormMessage />
                 </FormItem>
             )}
