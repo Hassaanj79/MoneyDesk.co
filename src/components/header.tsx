@@ -24,6 +24,7 @@ import { SmartNotifications } from "@/components/ai/smart-notifications";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { useDateRange } from "@/contexts/date-range-context";
+import { useCurrency } from "@/hooks/use-currency";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { searchTransactions } from "@/ai/flows/search";
 import type { Transaction } from "@/types";
@@ -59,6 +60,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { date, setDate } = useDateRange();
+  const { currency } = useCurrency();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchResults, setSearchResults] = React.useState<{
     id: string;
@@ -465,7 +467,7 @@ export function Header() {
                                    )}>
                                      {result.transactionType === 'expense' ? '-' : 
                                       result.transactionType === 'income' ? '+' : ''}
-                                     ${result.amount.toFixed(2)}
+                                     {currency} {result.amount.toFixed(2)}
                                    </div>
                                  )}
                                </div>
