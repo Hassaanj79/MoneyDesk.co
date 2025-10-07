@@ -8,6 +8,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 import { useTransactions } from "@/contexts/transaction-context";
 import { Wallet, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { formatAmount } from "@/utils/format-amount";
 
 interface BalanceBreakdownProps {
   open: boolean;
@@ -15,9 +16,12 @@ interface BalanceBreakdownProps {
 }
 
 const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const { accounts, refreshTrigger: accountRefreshTrigger } = useAccounts();
   const { transactions, refreshTrigger } = useTransactions();
+
+  // Use the professional formatter from utils
+  const formatAmountWithCurrency = (value: number) => formatAmount(value, currency);
 
   const accountBreakdown = useMemo(() => {
     return accounts.map(account => {
@@ -80,36 +84,36 @@ const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
         
         <div className="space-y-4 sm:space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <Card>
-              <CardHeader className="pb-2 px-3 sm:px-6">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground !text-muted-foreground">Total Balance</CardTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-3 px-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Balance</CardTitle>
               </CardHeader>
-              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold break-words">
-                  {formatCurrency(totalBalance)}
+              <CardContent className="px-4 pb-4">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {formatAmountWithCurrency(totalBalance)}
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader className="pb-2 px-3 sm:px-6">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground !text-muted-foreground">Total Income</CardTitle>
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-3 px-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Income</CardTitle>
               </CardHeader>
-              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 dark:text-green-400 break-words">
-                  {formatCurrency(totalIncome)}
+              <CardContent className="px-4 pb-4">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {formatAmountWithCurrency(totalIncome)}
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader className="pb-2 px-3 sm:px-6">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground !text-muted-foreground">Total Expenses</CardTitle>
+            <Card className="border-l-4 border-l-red-500">
+              <CardHeader className="pb-3 px-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Expenses</CardTitle>
               </CardHeader>
-              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600 dark:text-red-400 break-words">
-                  {formatCurrency(totalExpenses)}
+              <CardContent className="px-4 pb-4">
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {formatAmountWithCurrency(totalExpenses)}
                 </div>
               </CardContent>
             </Card>
@@ -147,8 +151,8 @@ const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
                           </div>
                         </div>
                         <div className="text-right min-w-0 flex-shrink-0">
-                          <div className="text-sm sm:text-base lg:text-lg font-bold break-words">
-                            {formatCurrency(account.currentBalance)}
+                          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                            {formatAmountWithCurrency(account.currentBalance)}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {account.transactionCount} transactions
@@ -156,44 +160,44 @@ const BalanceBreakdown = ({ open, onOpenChange }: BalanceBreakdownProps) => {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
-                        <div className="min-w-0">
-                          <div className="text-muted-foreground">Initial</div>
-                          <div className="font-medium break-words">{formatCurrency(account.initialBalance)}</div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <div className="text-muted-foreground text-xs mb-1">Initial</div>
+                          <div className="font-semibold">{formatAmountWithCurrency(account.initialBalance)}</div>
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-muted-foreground">Income</div>
-                          <div className="font-medium text-green-600 dark:text-green-400 break-words">
-                            +{formatCurrency(account.income)}
+                        <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <div className="text-muted-foreground text-xs mb-1">Income</div>
+                          <div className="font-semibold text-green-600 dark:text-green-400">
+                            +{formatAmountWithCurrency(account.income)}
                           </div>
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-muted-foreground">Expenses</div>
-                          <div className="font-medium text-red-600 dark:text-red-400 break-words">
-                            -{formatCurrency(account.expenses)}
+                        <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                          <div className="text-muted-foreground text-xs mb-1">Expenses</div>
+                          <div className="font-semibold text-red-600 dark:text-red-400">
+                            -{formatAmountWithCurrency(account.expenses)}
                           </div>
                         </div>
                       </div>
                       
                       {account.netChange !== 0 && (
-                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t">
-                          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm min-w-0">
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="flex items-center justify-center gap-2 text-sm">
                             {account.netChange > 0 ? (
-                              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
+                              <TrendingUp className="h-4 w-4 text-green-600" />
                             ) : account.netChange < 0 ? (
-                              <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 flex-shrink-0" />
+                              <TrendingDown className="h-4 w-4 text-red-600" />
                             ) : (
-                              <Minus className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600 flex-shrink-0" />
+                              <Minus className="h-4 w-4 text-gray-600" />
                             )}
-                            <span className="text-muted-foreground flex-shrink-0">Net Change:</span>
-                            <span className={`font-medium break-words ${
+                            <span className="text-muted-foreground">Net Change:</span>
+                            <span className={`font-semibold ${
                               account.netChange > 0 
                                 ? 'text-green-600 dark:text-green-400' 
                                 : account.netChange < 0 
                                 ? 'text-red-600 dark:text-red-400'
                                 : 'text-gray-600'
                             }`}>
-                              {account.netChange > 0 ? '+' : ''}{formatCurrency(account.netChange)}
+                              {account.netChange > 0 ? '+' : ''}{formatAmountWithCurrency(account.netChange)}
                             </span>
                           </div>
                         </div>

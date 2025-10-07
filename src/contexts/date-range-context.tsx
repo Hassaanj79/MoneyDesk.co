@@ -23,18 +23,8 @@ export const DateRangeProvider = ({ children }: { children: ReactNode }) => {
     };
   });
 
-  useEffect(() => {
-    // This effect is now optional since we initialize with default values
-    // But we can keep it for any future logic that might need to run
-    const today = new Date();
-    const fromDate = subDays(today, 6);
-    const toDate = today;
-    
-    setDate({
-      from: fromDate,
-      to: toDate,
-    });
-  }, []);
+  // Removed the useEffect that was overriding the date range
+  // This was preventing predefined date filters from working
 
   return (
     <DateRangeContext.Provider value={{ date, setDate }}>

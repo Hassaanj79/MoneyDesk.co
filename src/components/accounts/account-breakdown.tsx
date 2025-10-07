@@ -10,6 +10,7 @@ import { useCategories } from "@/contexts/category-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 import { ArrowUpRight, ArrowDownLeft, Calendar, Tag, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { formatAmount } from "@/utils/format-amount";
 import type { Account, Transaction } from "@/types";
 import { format, parseISO } from "date-fns";
 
@@ -22,7 +23,7 @@ interface AccountBreakdownProps {
 export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownProps) {
   const { transactions } = useTransactions();
   const { categories } = useCategories();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const { accounts } = useAccounts();
 
   // Helper function to safely convert date to Date object
@@ -191,8 +192,8 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
               <CardContent className="min-w-0 px-3 sm:px-6 pb-3 sm:pb-6">
                 <div className={`text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold break-words ${
                   breakdown.currentBalance >= 0 ? 'text-emerald-600' : 'text-red-600'
-                }`} title={formatCurrency(breakdown.currentBalance)}>
-                  {formatCurrency(breakdown.currentBalance)}
+                }`} title={formatAmount(breakdown.currentBalance, currency)}>
+                  {formatAmount(breakdown.currentBalance, currency)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
                   {breakdown.currentBalance >= 0 ? 'Available funds' : 'Overdrawn'}
@@ -221,7 +222,7 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center justify-between py-2 px-2 sm:px-3 bg-gray-50 rounded-md">
                     <span className="text-xs sm:text-sm font-medium text-gray-700">Initial Balance</span>
-                    <span className="text-xs font-mono font-semibold break-words text-right flex-1 ml-2" title={formatCurrency(breakdown.initialBalance)}>{formatCurrency(breakdown.initialBalance)}</span>
+                    <span className="text-xs font-mono font-semibold break-words text-right flex-1 ml-2" title={formatAmount(breakdown.initialBalance, currency)}>{formatAmount(breakdown.initialBalance, currency)}</span>
                   </div>
                   
                   <div className="flex items-center justify-center">
@@ -230,7 +231,7 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                   
                   <div className="flex items-center justify-between py-2 px-2 sm:px-3 bg-green-50 rounded-md border border-green-200">
                     <span className="text-xs sm:text-sm font-medium text-green-700">Total Income</span>
-                    <span className="text-xs font-mono font-semibold text-green-600 break-words text-right flex-1 ml-2" title={`+${formatCurrency(breakdown.totalIncome)}`}>+{formatCurrency(breakdown.totalIncome)}</span>
+                    <span className="text-xs font-mono font-semibold text-green-600 break-words text-right flex-1 ml-2" title={`+${formatAmount(breakdown.totalIncome, currency)}`}>+{formatAmount(breakdown.totalIncome, currency)}</span>
                   </div>
                   
                   <div className="flex items-center justify-center">
@@ -239,7 +240,7 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                   
                   <div className="flex items-center justify-between py-2 px-2 sm:px-3 bg-red-50 rounded-md border border-red-200">
                     <span className="text-xs sm:text-sm font-medium text-red-700">Total Expenses</span>
-                    <span className="text-xs font-mono font-semibold text-red-600 break-words text-right flex-1 ml-2" title={formatCurrency(breakdown.totalExpenses)}>{formatCurrency(breakdown.totalExpenses)}</span>
+                    <span className="text-xs font-mono font-semibold text-red-600 break-words text-right flex-1 ml-2" title={formatAmount(breakdown.totalExpenses, currency)}>{formatAmount(breakdown.totalExpenses, currency)}</span>
                   </div>
                   
                   <div className="flex items-center justify-center">
@@ -258,8 +259,8 @@ export function AccountBreakdown({ account, isOpen, onClose }: AccountBreakdownP
                     </span>
                     <span className={`text-xs sm:text-sm font-mono break-words text-right flex-1 ml-2 ${
                       breakdown.currentBalance >= 0 ? 'text-emerald-600' : 'text-red-600'
-                    }`} title={formatCurrency(breakdown.currentBalance)}>
-                      {formatCurrency(breakdown.currentBalance)}
+                    }`} title={formatAmount(breakdown.currentBalance, currency)}>
+                      {formatAmount(breakdown.currentBalance, currency)}
                     </span>
                   </div>
                 </div>

@@ -10,13 +10,14 @@ import { useDateRange } from "@/contexts/date-range-context";
 import { ArrowUp, ArrowDown, HandCoins, CreditCard, AlertTriangle } from "lucide-react";
 import { format, isAfter, isBefore, isWithinInterval, parseISO } from "date-fns";
 import { getPreviousPeriod, getComparisonDescription } from "@/lib/utils";
+import { formatAmount } from "@/utils/format-amount";
 import { ReceivableBreakdown } from "./receivable-breakdown";
 import { PayableBreakdown } from "./payable-breakdown";
 import { NetPositionBreakdown } from "./net-position-breakdown";
 
 export function LoanSummaryCards() {
   const { loans } = useLoans();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const { date } = useDateRange();
   const [showReceivableBreakdown, setShowReceivableBreakdown] = useState(false);
   const [showPayableBreakdown, setShowPayableBreakdown] = useState(false);
@@ -101,7 +102,7 @@ export function LoanSummaryCards() {
             <HandCoins className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(loanStats.totalReceivable)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatAmount(loanStats.totalReceivable, currency)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowUp className="h-3 w-3 text-green-600 mr-1" />
               <span className="text-green-600 font-medium">{loanStats.receivableChange}</span>
@@ -130,7 +131,7 @@ export function LoanSummaryCards() {
             <CreditCard className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(loanStats.totalPayable)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatAmount(loanStats.totalPayable, currency)}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <ArrowDown className="h-3 w-3 text-red-600 mr-1" />
               <span className="text-red-600 font-medium">{loanStats.payableChange}</span>
@@ -169,7 +170,7 @@ export function LoanSummaryCards() {
         </CardHeader>
         <CardContent>
           <div className={`text-xl sm:text-2xl font-bold ${loanStats.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {formatCurrency(Math.abs(loanStats.netPosition))}
+            {formatAmount(Math.abs(loanStats.netPosition), currency)}
           </div>
           <div className="text-xs text-muted-foreground">
             {loanStats.netPosition >= 0 ? 'You are owed more' : 'You owe more'}
@@ -180,7 +181,7 @@ export function LoanSummaryCards() {
             </Badge>
             {(loanStats.overdueReceivable > 0 || loanStats.overduePayable > 0) && (
               <Badge variant="destructive" className="text-xs">
-                Overdue Amount: {formatCurrency(loanStats.overdueReceivable + loanStats.overduePayable)}
+                Overdue Amount: {formatAmount(loanStats.overdueReceivable + loanStats.overduePayable, currency)}
               </Badge>
             )}
           </div>

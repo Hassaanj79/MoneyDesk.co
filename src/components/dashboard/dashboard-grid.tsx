@@ -37,13 +37,14 @@ import { isWithinInterval, parseISO, subMonths, startOfMonth, endOfMonth } from 
 import { useCurrency } from "@/hooks/use-currency";
 import { useTranslation } from "@/hooks/use-translation";
 import { getPreviousPeriod, getComparisonDescription } from "@/lib/utils";
+import { formatAmount } from "@/utils/format-amount";
 
 export default function DashboardGrid() {
   const { t } = useTranslation();
   const { date } = useDateRange();
   const { transactions, refreshTrigger } = useTransactions();
   const { accounts, refreshTrigger: accountRefreshTrigger } = useAccounts();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const [showBalanceBreakdown, setShowBalanceBreakdown] = useState(false);
   const [showIncomeBreakdown, setShowIncomeBreakdown] = useState(false);
   const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
@@ -144,7 +145,7 @@ export default function DashboardGrid() {
         >
           <BalanceCard
             title={t('dashboard.totalBalance')}
-            amount={formatCurrency(totalBalance)}
+            amount={formatAmount(totalBalance, currency)}
             icon={Wallet}
           />
         </div>
@@ -156,7 +157,7 @@ export default function DashboardGrid() {
       component: (
         <BalanceCard
           title={t('dashboard.totalIncome')}
-          amount={formatCurrency(totalIncome)}
+          amount={formatAmount(totalIncome, currency)}
           icon={ArrowUp}
           change={incomeChange}
           changeDescription={comparisonDescription}
@@ -169,7 +170,7 @@ export default function DashboardGrid() {
       component: (
         <BalanceCard
           title={t('dashboard.totalExpenses')}
-          amount={formatCurrency(totalExpense)}
+          amount={formatAmount(totalExpense, currency)}
           icon={ArrowDown}
           change={expenseChange}
           changeDescription={comparisonDescription}

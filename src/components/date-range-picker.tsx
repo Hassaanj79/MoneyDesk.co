@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { format, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears, subDays } from "date-fns"
+import { format, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears, subDays, isSameDay } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
@@ -27,7 +27,41 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
   const [preset, setPreset] = React.useState<string>("custom");
   const [isOpen, setIsOpen] = React.useState(false);
 
+  // Detect current preset based on date range
+  React.useEffect(() => {
+    if (!date?.from || !date?.to) {
+      setPreset("custom");
+      return;
+    }
+
+    const now = new Date();
+    const from = date.from;
+    const to = date.to;
+
+    // Check if it matches predefined ranges
+    if (isSameDay(from, startOfWeek(now)) && isSameDay(to, endOfWeek(now))) {
+      setPreset("this-week");
+    } else if (isSameDay(from, startOfWeek(subWeeks(now, 1))) && isSameDay(to, endOfWeek(subWeeks(now, 1)))) {
+      setPreset("last-week");
+    } else if (isSameDay(from, startOfMonth(now)) && isSameDay(to, endOfMonth(now))) {
+      setPreset("this-month");
+    } else if (isSameDay(from, startOfMonth(subMonths(now, 1))) && isSameDay(to, endOfMonth(subMonths(now, 1)))) {
+      setPreset("last-month");
+    } else if (isSameDay(from, startOfYear(now)) && isSameDay(to, endOfYear(now))) {
+      setPreset("this-year");
+    } else if (isSameDay(from, startOfYear(subYears(now, 1))) && isSameDay(to, endOfYear(subYears(now, 1)))) {
+      setPreset("last-year");
+    } else if (isSameDay(from, subDays(now, 6)) && isSameDay(to, now)) {
+      setPreset("last-7-days");
+    } else if (isSameDay(from, subDays(now, 29)) && isSameDay(to, now)) {
+      setPreset("last-30-days");
+    } else {
+      setPreset("custom");
+    }
+  }, [date]);
+
   const handlePresetChange = (value: string) => {
+    console.log('Preset changed to:', value);
     setPreset(value);
     const now = new Date();
     let from: Date | undefined;
@@ -80,7 +114,10 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={(open) => {
+        console.log('Popover open state changed to:', open);
+        setIsOpen(open);
+      }}>
         <PopoverTrigger asChild>
           <Button
             id="date"
@@ -105,13 +142,13 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="end">
+        <PopoverContent className="w-auto p-0 z-[100] bg-white dark:bg-gray-900 border shadow-lg" align="end">
             <div className="flex items-center p-2">
                 <Select value={preset} onValueChange={handlePresetChange}>
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a preset" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[110]">
                         <SelectItem value="custom">Custom</SelectItem>
                         <SelectItem value="this-week">This Week</SelectItem>
                         <SelectItem value="last-week">Last Week</SelectItem>

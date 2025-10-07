@@ -11,6 +11,7 @@ import { useDateRange } from "@/contexts/date-range-context";
 import { useCategories } from "@/contexts/category-context";
 import { ArrowDown, TrendingUp, DollarSign } from "lucide-react";
 import { isWithinInterval, parseISO } from "date-fns";
+import { formatAmount } from "@/utils/format-amount";
 
 interface IncomeBreakdownProps {
   open: boolean;
@@ -18,7 +19,7 @@ interface IncomeBreakdownProps {
 }
 
 const IncomeBreakdown = ({ open, onOpenChange }: IncomeBreakdownProps) => {
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const { accounts } = useAccounts();
   const { transactions } = useTransactions();
   const { date } = useDateRange();
@@ -133,8 +134,8 @@ const IncomeBreakdown = ({ open, onOpenChange }: IncomeBreakdownProps) => {
                 <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground !text-muted-foreground">Total Income</CardTitle>
               </CardHeader>
               <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 dark:text-green-400 break-words">
-                  {formatCurrency(incomeBreakdown.totalIncome)}
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 dark:text-green-400">
+                  {formatAmount(incomeBreakdown.totalIncome, currency)}
                 </div>
               </CardContent>
             </Card>
@@ -178,8 +179,8 @@ const IncomeBreakdown = ({ open, onOpenChange }: IncomeBreakdownProps) => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-green-600 dark:text-green-400 break-words overflow-hidden">
-                            {formatCurrency(category.amount)}
+                          <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                            {formatAmount(category.amount, currency)}
                           </div>
                         </div>
                       </div>
@@ -218,8 +219,8 @@ const IncomeBreakdown = ({ open, onOpenChange }: IncomeBreakdownProps) => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-green-600 dark:text-green-400 break-words overflow-hidden">
-                            {formatCurrency(account.amount)}
+                          <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                            {formatAmount(account.amount, currency)}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {account.count} transaction{account.count !== 1 ? 's' : ''}
