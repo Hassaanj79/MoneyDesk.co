@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 // import { useNotifications } from "@/contexts/notification-context";
 import { useCurrency } from "@/hooks/use-currency";
-import { formatAmount } from "@/utils/format-amount";
 import { useCategories } from "@/contexts/category-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useBudgets } from "@/contexts/budget-context";
@@ -672,7 +671,7 @@ function ReportsPageContent() {
                 <ArrowUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                                  <div className="text-xl sm:text-2xl font-bold text-green-500 break-words overflow-visible">{formatAmount(totalIncome, currency)}</div>
+                                  <div className="text-xl sm:text-2xl font-bold text-green-500 break-words overflow-visible">{formatCurrency(totalIncome)}</div>
               </CardContent>
             </Card>
             <Card className="overflow-visible">
@@ -683,7 +682,7 @@ function ReportsPageContent() {
                 <ArrowDown className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                                  <div className="text-xl sm:text-2xl font-bold text-red-500 break-words overflow-visible">{formatAmount(totalExpense, currency)}</div>
+                                  <div className="text-xl sm:text-2xl font-bold text-red-500 break-words overflow-visible">{formatCurrency(totalExpense)}</div>
               </CardContent>
             </Card>
             <Card className="overflow-visible">

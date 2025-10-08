@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { TwoFAGuard } from '@/components/auth/2fa-guard';
 
 export default function AuthenticatedLayout({
   children,
@@ -60,5 +61,9 @@ export default function AuthenticatedLayout({
     );
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return (
+    <TwoFAGuard>
+      <AppLayout>{children}</AppLayout>
+    </TwoFAGuard>
+  );
 }

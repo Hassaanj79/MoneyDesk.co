@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,14 +14,148 @@ import { Loader2, Shield, Key, Eye, EyeOff, Lock, UserCheck, Check, X, HelpCircl
 import { useAuth } from "@/contexts/auth-context"
 import { DeviceManagement } from "./device-management"
 import { toast } from "sonner"
+import { enable2FA, disable2FA, is2FAEnabled, send2FACode, verify2FACode, generateBackupCodes } from "@/services/email-2fa"
 
 export function SecuritySettings() {
   const { user } = useAuth()
+  const [is2FAOn, setIs2FAOn] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showCodeInput, setShowCodeInput] = useState(false)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
+  const [showBackupCodes, setShowBackupCodes] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Check 2FA status on component mount
+  useEffect(() => {
+    const check2FAStatus = async () => {
+      if (user?.uid) {
+        try {
+          const enabled = await is2FAEnabled(user.uid)
+          setIs2FAOn(enabled)
+        } catch (error) {
+          console.error('Error checking 2FA status:', error)
+        }
+      }
+    }
+    check2FAStatus()
+  }, [user?.uid])
+
+  // Handle 2FA toggle
+  const handle2FAToggle = async (enabled: boolean) => {
+    if (!user?.uid || !user?.email) {
+      toast.error("User not found")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      if (enabled) {
+        // Enable 2FA
+        const result = await enable2FA(user.uid, user.email)
+        if (result.success) {
+          setIs2FAOn(true)
+          setShowCodeInput(true)
+          toast.success("2FA enabled! Check your email for verification code.")
+        } else {
+          toast.error(result.message)
+        }
+      } else {
+        // Disable 2FA
+        const result = await disable2FA(user.uid)
+        if (result.success) {
+          setIs2FAOn(false)
+          setShowCodeInput(false)
+          setVerificationCode("")
+          toast.success("2FA disabled successfully")
+        } else {
+          toast.error(result.message)
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling 2FA:', error)
+      toast.error("Failed to update 2FA settings")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle verification code submission
+  const handleVerifyCode = async () => {
+    if (!user?.uid || !verificationCode.trim()) {
+      toast.error("Please enter a verification code")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await verify2FACode(user.uid, verificationCode.trim())
+      if (result.success) {
+        setShowCodeInput(false)
+        setVerificationCode("")
+        toast.success("2FA verification successful!")
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      console.error('Error verifying code:', error)
+      toast.error("Failed to verify code")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle sending new code
+  const handleSendNewCode = async () => {
+    if (!user?.uid || !user?.email) {
+      toast.error("User not found")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await send2FACode(user.uid, user.email)
+      if (result.success) {
+        toast.success("New verification code sent to your email")
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      console.error('Error sending code:', error)
+      toast.error("Failed to send verification code")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle generating backup codes
+  const handleGenerateBackupCodes = async () => {
+    if (!user?.uid) {
+      toast.error("User not found")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await generateBackupCodes(user.uid)
+      if (result.codes) {
+        setBackupCodes(result.codes)
+        setShowBackupCodes(true)
+        toast.success("Backup codes generated successfully")
+      } else {
+        toast.error("Failed to generate backup codes")
+      }
+    } catch (error) {
+      console.error('Error generating backup codes:', error)
+      toast.error("Failed to generate backup codes")
+    } finally {
+      setIsLoading(false)
+    }
+  }
   
   // Security Questions state
   const [securityQuestionsOpen, setSecurityQuestionsOpen] = useState(false)
@@ -546,11 +680,66 @@ export function SecuritySettings() {
             <div className="space-y-0.5">
               <Label>Enable 2FA</Label>
               <p className="text-sm text-muted-foreground">
-                Use an authenticator app to generate verification codes
+                Receive verification codes via email
               </p>
             </div>
-            <Switch />
+            <Switch 
+              checked={is2FAOn}
+              onCheckedChange={handle2FAToggle}
+              disabled={isLoading}
+            />
           </div>
+
+          {/* Verification Code Input */}
+          {showCodeInput && (
+            <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Verification Code</Label>
+                <p className="text-sm text-muted-foreground">
+                  Enter the 6-digit code sent to your email
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="verification-code"
+                    type="text"
+                    placeholder="123456"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    maxLength={6}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={handleVerifyCode}
+                    disabled={isLoading || verificationCode.length !== 6}
+                    size="sm"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleSendNewCode}
+                  disabled={isLoading}
+                >
+                  Send New Code
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setShowCodeInput(false)
+                    setVerificationCode("")
+                    setIs2FAOn(false)
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
           
           <Separator />
           
@@ -562,50 +751,46 @@ export function SecuritySettings() {
                   Generate backup codes for account recovery
                 </p>
               </div>
-              <Button variant="outline" size="sm">
-                Generate
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleGenerateBackupCodes}
+                disabled={isLoading || !is2FAOn}
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate"}
               </Button>
             </div>
+
+            {/* Backup Codes Display */}
+            {showBackupCodes && backupCodes.length > 0 && (
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label>Your Backup Codes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Store these codes in a safe place. Each code can only be used once.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {backupCodes.map((code, index) => (
+                    <div key={index} className="p-2 bg-background rounded border font-mono text-sm">
+                      {code}
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowBackupCodes(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
 
-      {/* Privacy Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Privacy Settings
-          </CardTitle>
-          <CardDescription>
-            Control your privacy and data sharing preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Data Analytics</Label>
-              <p className="text-sm text-muted-foreground">
-                Allow anonymous usage data to improve the app
-              </p>
-            </div>
-            <Switch />
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive security and account notifications via email
-              </p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Account Security */}
       <Card>

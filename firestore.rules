@@ -64,6 +64,30 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.token.email == email;
     }
     
+    // 2FA settings - users can only access their own 2FA settings
+    match /user_2fa/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow admin to read all 2FA data for debugging
+      allow read: if request.auth != null && isAdmin();
+    }
+    
+    // 2FA codes - users can only access their own 2FA codes
+    match /user_2fa_codes/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow admin to read all 2FA codes for debugging
+      allow read: if request.auth != null && isAdmin();
+    }
+    
+    // 2FA backup codes - users can only access their own backup codes
+    match /user_2fa_backup_codes/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow admin to read all backup codes for debugging
+      allow read: if request.auth != null && isAdmin();
+    }
+    
     // Device sessions - users can only access their own device sessions
     match /device_sessions/{sessionId} {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
