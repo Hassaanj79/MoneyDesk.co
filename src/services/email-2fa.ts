@@ -23,43 +23,32 @@ const generate2FACode = (): string => {
 };
 
 /**
- * Send 2FA code to email using a faster method
+ * Send 2FA code to email using Firebase Auth
  */
 const send2FACodeToEmail = async (email: string, code: string): Promise<void> => {
   try {
-    // For now, we'll use a simple approach that's much faster
-    // In production, you can integrate with SendGrid, AWS SES, or similar services
+    // Import Firebase Auth dynamically to avoid issues
+    const { getAuth, sendPasswordResetEmail } = await import('firebase/auth');
+    const { createActionCodeSettings } = await import('@/lib/auth-config');
     
-    // Create a simple email notification
-    const emailData = {
-      to: email,
-      subject: 'MoneyDesk 2FA Verification Code',
-      body: `Your 2FA verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this code, please ignore this email.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">MoneyDesk 2FA Verification</h2>
-          <p>Your verification code is:</p>
-          <div style="background-color: #f3f4f6; padding: 20px; text-align: center; margin: 20px 0;">
-            <h1 style="color: #1f2937; font-size: 32px; margin: 0; letter-spacing: 5px;">${code}</h1>
-          </div>
-          <p>This code expires in 10 minutes.</p>
-          <p>If you didn't request this code, please ignore this email.</p>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="color: #6b7280; font-size: 14px;">MoneyDesk - Personal Finance Management</p>
-        </div>
-      `
-    };
+    const auth = getAuth();
     
-    // For development, we'll log the email and show the code
-    console.log(`📧 2FA Email would be sent to: ${email}`);
+    // Create a custom URL with the 2FA code
+    const baseUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:3001' 
+      : `https://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'moneydesk.co'}`;
+    
+    const actionCodeSettings = createActionCodeSettings(
+      `${baseUrl}/verify-2fa?code=${code}&email=${encodeURIComponent(email)}`
+    );
+    
+    // Use sendPasswordResetEmail for actual email delivery
+    // This will send a real email to the user
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
+    
+    console.log(`📧 2FA verification email sent to ${email}`);
     console.log(`🔐 2FA Code: ${code}`);
     console.log(`⏰ Code expires in 10 minutes`);
-    
-    // In production, you would send the actual email here
-    // await sendEmail(emailData);
-    
-    // For now, we'll simulate successful sending
-    console.log('✅ Email sent successfully (simulated)');
     
   } catch (error) {
     console.error('Error sending 2FA email:', error);
