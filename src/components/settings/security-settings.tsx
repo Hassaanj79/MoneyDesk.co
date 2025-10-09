@@ -14,7 +14,6 @@ import { Loader2, Shield, Key, Eye, EyeOff, Lock, UserCheck, Check, X, HelpCircl
 import { useAuth } from "@/contexts/auth-context"
 import { DeviceManagement } from "./device-management"
 import { toast } from "sonner"
-import { hasSMS2FAEnrolled } from "@/services/sms-2fa"
 
 export function SecuritySettings() {
   const { user } = useAuth()
@@ -648,78 +647,6 @@ export function SecuritySettings() {
         </CardContent>
       </Card>
 
-      {/* SMS Two-Factor Authentication */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            SMS Two-Factor Authentication
-          </CardTitle>
-          <CardDescription>
-            Add an extra layer of security with SMS verification codes
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>SMS 2FA Status</Label>
-              <p className="text-sm text-muted-foreground">
-                {hasSMS2FAEnrolled() ? 'Enabled' : 'Not enabled'}
-              </p>
-            </div>
-            <Button 
-              onClick={() => window.location.href = '/settings/sms-2fa'}
-              variant={hasSMS2FAEnrolled() ? "outline" : "default"}
-            >
-              {hasSMS2FAEnrolled() ? 'Manage' : 'Enable SMS 2FA'}
-            </Button>
-          </div>
-          
-          <div className="text-sm text-muted-foreground">
-            <p>
-              {hasSMS2FAEnrolled() 
-                ? 'Your account is protected with SMS verification codes.'
-                : 'Enable SMS 2FA to receive verification codes when signing in.'
-              }
-            </p>
-          </div>
-          
-          <div className="pt-2 border-t space-y-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/demo-sms-2fa'}
-              className="w-full text-xs"
-            >
-              🧪 Try Demo SMS 2FA (No Firebase Required)
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/firebase-sms-2fa'}
-              className="w-full text-xs"
-            >
-              🔥 Firebase SMS 2FA (Real SMS)
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/firebase-diagnostics'}
-              className="w-full text-xs"
-            >
-              🔧 Firebase Diagnostics (Fix Errors)
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/demo-recaptcha'}
-              className="w-full text-xs"
-            >
-              🛡️ reCAPTCHA Demo (Login/Signup)
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Device Management Component */}
       <DeviceManagement />
