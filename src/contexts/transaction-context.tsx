@@ -30,7 +30,7 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    if (user && user.uid) {
       setLoading(true);
       const q = getTransactions(user.uid);
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -75,6 +75,14 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       }, (error) => {
         console.error("Error fetching transactions:", error);
         setLoading(false);
+        // Handle permission errors gracefully
+        if (error.code === 'permission-denied') {
+          console.log('Permission denied for transactions, using empty array');
+          setTransactions([]);
+        } else {
+          // Set empty transactions array on error to prevent UI issues
+          setTransactions([]);
+        }
       });
 
       return () => unsubscribe();

@@ -25,7 +25,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    if (user && user.uid) {
       setLoading(true);
       const q = getAccounts(user.uid);
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -46,8 +46,14 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       }, (error) => {
         console.error("Error fetching accounts:", error);
         setLoading(false);
-        // Set empty accounts array on error to prevent UI issues
-        setAccounts([]);
+        // Handle permission errors gracefully
+        if (error.code === 'permission-denied') {
+          console.log('Permission denied for accounts, using empty array');
+          setAccounts([]);
+        } else {
+          // Set empty accounts array on error to prevent UI issues
+          setAccounts([]);
+        }
       });
 
       return () => unsubscribe();

@@ -27,6 +27,8 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
+  getMultiFactorResolver,
+  MultiFactorResolver,
 } from "firebase/auth";
 import { auth } from '@/lib/firebase'; // Assuming firebase is initialized here
 import { createActionCodeSettings, createPasswordResetUrl, createEmailVerificationUrl } from '@/lib/auth-config';
@@ -39,6 +41,8 @@ import { updateUserProfile } from '@/services/users';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  mfaResolver: MultiFactorResolver | null;
+  requiresMFA: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, name: string, phone?: string) => Promise<any>;
   signupWithVerification: (email: string, password: string, name: string, phone?: string) => Promise<any>;
@@ -63,6 +67,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Start with loading true
+  const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
+  const [requiresMFA, setRequiresMFA] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false); // Start as not initialized
 
   useEffect(() => {
@@ -118,6 +124,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const result = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', result.user.email);
       
+      // Reset MFA state on successful login
+      setMfaResolver(null);
+      setRequiresMFA(false);
+      
       // Create device session
       try {
         const deviceId = localStorage.getItem('deviceId') || generateDeviceId();
@@ -162,6 +172,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         name: error.name,
         customData: error.customData
       });
+      
+      // Handle MFA requirement
+      if (error.code === 'auth/multi-factor-auth-required') {
+        console.log('MFA required, setting up resolver');
+        const resolver = getMultiFactorResolver(auth, error);
+        setMfaResolver(resolver);
+        setRequiresMFA(true);
+        throw { ...error, requiresMFA: true, resolver };
+      }
+      
       throw error;
     }
   };
@@ -455,6 +475,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     user,
     loading,
+    mfaResolver,
+    requiresMFA,
     login,
     signup,
     signupWithVerification,

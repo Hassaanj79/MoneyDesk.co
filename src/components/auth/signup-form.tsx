@@ -25,6 +25,7 @@ import { Loader2, Eye, EyeOff, Phone, CheckCircle, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation";
 import { GoogleSignInButton } from "./google-signin-button";
 import { AppleSignInButton } from "./apple-signin-button";
+import { SimpleRecaptcha } from "./simple-recaptcha";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required.").min(2, "Name must be at least 2 characters."),
@@ -53,6 +54,7 @@ export function SignupForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState<any>(null);
+    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,6 +78,12 @@ export function SignupForm() {
   const passwordStrength = getPasswordStrength(form.watch('password') || '');
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Check if reCAPTCHA token exists
+    if (!recaptchaToken) {
+      setError('Please complete the security verification first');
+      return;
+    }
+
     setLoading(prev => ({...prev, email: true}));
     setError(null);
     try {
@@ -95,6 +103,8 @@ export function SignupForm() {
         } else {
             setError("An unexpected error occurred. Please try again.");
         }
+        // Reset reCAPTCHA on error
+        setRecaptchaToken(null);
     } finally {
         setLoading(prev => ({...prev, email: false}));
     }
@@ -243,9 +253,34 @@ export function SignupForm() {
                         <FormMessage />
                     </FormItem>
                 )} />
-                <Button type="submit" className="w-full" disabled={loading.email}>
+                {/* reCAPTCHA Status */}
+                {recaptchaToken && (
+                  <Alert>
+                    <AlertDescription>
+                      ✅ Security verification completed
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* reCAPTCHA Component */}
+                {!recaptchaToken && (
+                  <div className="pt-2">
+                    <SimpleRecaptcha
+                      onVerify={(token: string) => {
+                        setRecaptchaToken(token);
+                        setError(null);
+                      }}
+                      onError={(error) => {
+                        setError(`Security verification failed: ${error}`);
+                      }}
+                      action="signup"
+                    />
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={loading.email || !recaptchaToken}>
                   {loading.email && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
+                  {!recaptchaToken ? 'Complete Security Check First' : 'Create Account'}
                 </Button>
             </form>
             </Form>
