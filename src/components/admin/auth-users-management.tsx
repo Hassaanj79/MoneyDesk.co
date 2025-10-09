@@ -84,7 +84,10 @@ export function AuthUsersManagement() {
       setLoading(true);
       setError(null);
       console.log('🔄 Loading auth users...');
-      const response = await fetchAllAuthUsers();
+      
+      // Add timestamp to ensure fresh data
+      const timestamp = Date.now();
+      const response = await fetchAllAuthUsers(timestamp);
       console.log('📊 Response received:', response);
       console.log('👥 Users count:', response.users.length);
       console.log('🔍 First user sample:', response.users[0]);
@@ -114,6 +117,14 @@ export function AuthUsersManagement() {
 
   useEffect(() => {
     loadAuthUsers();
+    
+    // Auto-refresh every 30 seconds to catch new users
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing auth users...');
+      loadAuthUsers();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleViewUser = (user: AuthUser) => {

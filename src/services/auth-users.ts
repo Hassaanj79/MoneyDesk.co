@@ -25,13 +25,19 @@ export interface AuthUsersResponse {
   nextPageToken: string | null;
 }
 
-export const fetchAllAuthUsers = async (): Promise<AuthUsersResponse> => {
+export const fetchAllAuthUsers = async (timestamp?: number): Promise<AuthUsersResponse> => {
   try {
     console.log('Fetching auth users from API...');
-    const response = await fetch('/api/admin/users', {
+    
+    // Add timestamp to URL to prevent caching
+    const url = timestamp ? `/api/admin/users?t=${timestamp}` : '/api/admin/users';
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
       },
     });
 

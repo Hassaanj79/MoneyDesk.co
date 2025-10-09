@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { UserRecord, ListUsersResult } from 'firebase-admin/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    // Add cache-busting headers to ensure fresh data
+    const headers = new Headers();
+    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    headers.set('Pragma', 'no-cache');
+    headers.set('Expires', '0');
+    
     // Log environment information for debugging
     console.log('Environment check:');
     console.log('- NODE_ENV:', process.env.NODE_ENV);
@@ -12,7 +19,11 @@ export async function GET(request: NextRequest) {
     
     // Check if Firebase Admin SDK is available and initialized
     if (!adminAuth) {
-      console.log('Firebase Admin SDK not available, returning mock data');
+      console.log('❌ Firebase Admin SDK not available, returning mock data');
+      console.log('🔧 To fix this on production:');
+      console.log('1. Set FIREBASE_SERVICE_ACCOUNT_KEY in Vercel environment variables');
+      console.log('2. Set NEXT_PUBLIC_FIREBASE_PROJECT_ID in Vercel environment variables');
+      console.log('3. Redeploy the project');
       return getMockUsersData();
     }
 
@@ -21,37 +32,54 @@ export async function GET(request: NextRequest) {
 
     // Test if adminAuth is working by making a simple call
     try {
-      // List all users (paginated)
-      const maxResults = 1000; // Maximum number of users to return
-      const listUsersResult = await adminAuth.listUsers(maxResults);
+      // Fetch ALL users by handling pagination
+      let allUsers: any[] = [];
+      let nextPageToken: string | undefined = undefined;
+      let totalFetched = 0;
       
-      const users = listUsersResult.users.map(userRecord => ({
-        uid: userRecord.uid,
-        email: userRecord.email,
-        displayName: userRecord.displayName,
-        emailVerified: userRecord.emailVerified,
-        disabled: userRecord.disabled,
-        metadata: {
-          creationTime: userRecord.metadata.creationTime,
-          lastSignInTime: userRecord.metadata.lastSignInTime,
-          lastRefreshTime: userRecord.metadata.lastRefreshTime,
-        },
-        customClaims: userRecord.customClaims,
-        providerData: userRecord.providerData.map(provider => ({
-          providerId: provider.providerId,
-          uid: provider.uid,
-          email: provider.email,
-          displayName: provider.displayName,
-        })),
-      }));
+      do {
+        const listUsersResult: ListUsersResult = await (adminAuth as any).listUsers(1000, nextPageToken);
+        
+        const batchUsers = listUsersResult.users.map((userRecord: UserRecord) => ({
+          uid: userRecord.uid,
+          email: userRecord.email,
+          displayName: userRecord.displayName,
+          emailVerified: userRecord.emailVerified,
+          disabled: userRecord.disabled,
+          metadata: {
+            creationTime: userRecord.metadata.creationTime,
+            lastSignInTime: userRecord.metadata.lastSignInTime,
+            lastRefreshTime: userRecord.metadata.lastRefreshTime,
+          },
+          customClaims: userRecord.customClaims,
+          providerData: userRecord.providerData.map((provider: any) => ({
+            providerId: provider.providerId,
+            uid: provider.uid,
+            email: provider.email,
+            displayName: provider.displayName,
+          })),
+        }));
+        
+        allUsers = allUsers.concat(batchUsers);
+        totalFetched += batchUsers.length;
+        nextPageToken = listUsersResult.pageToken;
+        
+        console.log(`Fetched batch: ${batchUsers.length} users (Total: ${totalFetched})`);
+        
+        // Safety check to prevent infinite loops
+        if (totalFetched > 10000) {
+          console.warn('Reached safety limit of 10,000 users');
+          break;
+        }
+      } while (nextPageToken);
 
-      console.log(`Successfully fetched ${users.length} real users from Firebase Authentication`);
+      console.log(`Successfully fetched ${allUsers.length} real users from Firebase Authentication`);
       return NextResponse.json({
-        users,
-        totalUsers: listUsersResult.users.length,
-        hasMore: listUsersResult.pageToken ? true : false,
-        nextPageToken: listUsersResult.pageToken,
-      });
+        users: allUsers,
+        totalUsers: allUsers.length,
+        hasMore: false, // We fetched all users
+        nextPageToken: null,
+      }, { headers });
     } catch (authError: any) {
       console.error('Firebase Admin Auth error:', authError);
       
@@ -181,5 +209,9 @@ function getMockUsersData() {
     totalUsers: mockUsers.length,
     hasMore: false,
     nextPageToken: null,
-  });
+  }, { headers: new Headers({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  })});
 }

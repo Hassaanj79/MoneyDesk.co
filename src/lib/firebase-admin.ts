@@ -15,6 +15,11 @@ function initializeFirebaseAdmin() {
       // Try to initialize with service account key if available
       const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
       
+      console.log('Firebase Admin SDK initialization attempt:');
+      console.log('- Service account key exists:', !!serviceAccountKey);
+      console.log('- NODE_ENV:', process.env.NODE_ENV);
+      console.log('- Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+      
       if (serviceAccountKey && serviceAccountKey.trim() !== '') {
         try {
           // Parse the service account key
@@ -40,8 +45,10 @@ function initializeFirebaseAdmin() {
           throw parseError;
         }
       } else {
-        // Try to initialize with Application Default Credentials (ADC)
-        // This works in production environments like Vercel
+        // For production, try to use the service account key from environment
+        // If not available, try Application Default Credentials
+        console.log('No service account key found, trying Application Default Credentials');
+        
         adminApp = initializeApp({
           projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "chirpchat-yi7xn",
         });
