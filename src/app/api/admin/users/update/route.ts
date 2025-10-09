@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +38,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Update Firestore user document with module access and subscription info
-    const userDocRef = doc(db, 'users', userId);
     const firestoreUpdates: any = {
       updatedAt: new Date().toISOString()
     };
@@ -61,8 +58,8 @@ export async function POST(request: NextRequest) {
       firestoreUpdates.isActive = isActive;
     }
 
-    // Update Firestore document
-    await setDoc(userDocRef, firestoreUpdates, { merge: true });
+    // Update Firestore document using admin SDK
+    await adminDb.collection('users').doc(userId).set(firestoreUpdates, { merge: true });
 
     return NextResponse.json({
       success: true,

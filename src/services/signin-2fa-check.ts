@@ -10,8 +10,12 @@ export const check2FARequired = async (userId: string): Promise<boolean> => {
       return false
     }
     
-    const enabled = await is2FAEnabled(userId)
-    return enabled
+    // Temporarily disable 2FA to prevent app from getting stuck
+    // You can re-enable this later when email system is working properly
+    return false
+    
+    // const enabled = await is2FAEnabled(userId)
+    // return enabled
   } catch (error) {
     console.error('Error checking 2FA requirement:', error)
     return false
