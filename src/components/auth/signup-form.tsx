@@ -24,7 +24,6 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2, Eye, EyeOff, Phone, CheckCircle, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GoogleSignInButton } from "./google-signin-button";
-import { AppleSignInButton } from "./apple-signin-button";
 import { SimpleRecaptcha } from "./simple-recaptcha";
 
 const formSchema = z.object({
@@ -304,14 +303,6 @@ export function SignupForm() {
                         }}
                         onError={(error) => {
                             setError(error.message || "Failed to sign in with Google");
-                        }}
-                    />
-                    <AppleSignInButton
-                        onSuccess={() => {
-                            router.push('/');
-                        }}
-                        onError={(error) => {
-                            setError(error.message || "Failed to sign in with Apple");
                         }}
                     />
                 </div>

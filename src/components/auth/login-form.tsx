@@ -22,7 +22,6 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { GoogleSignInButton } from "./google-signin-button";
-import { AppleSignInButton } from "./apple-signin-button";
 import { SimpleRecaptcha } from "./simple-recaptcha";
 
 const loginSchema = z.object({
@@ -310,14 +309,6 @@ export function LoginForm() {
                 }}
                 onError={(error) => {
                   setError(error.message || "Failed to sign in with Google");
-                }}
-              />
-              <AppleSignInButton
-                onSuccess={() => {
-                  toast.success("Successfully signed in with Apple!");
-                }}
-                onError={(error) => {
-                  setError(error.message || "Failed to sign in with Apple");
                 }}
               />
             </div>

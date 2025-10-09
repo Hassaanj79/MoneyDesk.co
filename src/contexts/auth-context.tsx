@@ -25,7 +25,6 @@ import {
   signInWithCredential,
   ConfirmationResult,
   GoogleAuthProvider,
-  OAuthProvider,
   signInWithPopup,
   getMultiFactorResolver,
   MultiFactorResolver,
@@ -57,7 +56,6 @@ interface AuthContextType {
   sendPasswordResetWithOTP: (email: string) => Promise<void>;
   verifyPasswordResetOTP: (email: string, otp: string, newPassword: string) => Promise<void>;
   signInWithGoogle: () => Promise<any>;
-  signInWithApple: () => Promise<any>;
   refreshToken: () => Promise<string | null>;
   ensureValidToken: () => Promise<string | null>;
 }
@@ -377,7 +375,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   googleProvider.addScope('profile');
   googleProvider.addScope('email');
   
-  const appleProvider = new OAuthProvider('apple.com');
 
   // Google Sign-In
   const signInWithGoogle = async () => {
@@ -416,61 +413,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Apple Sign-In
-  const signInWithApple = async () => {
-    try {
-      // Configure Apple provider with proper settings
-      appleProvider.addScope('email');
-      appleProvider.addScope('name');
-      
-      // Set custom parameters for Apple sign-in
-      appleProvider.setCustomParameters({
-        locale: 'en_US'
-      });
-      
-      const result = await signInWithPopup(auth, appleProvider);
-      const user = result.user;
-      
-      // Store comprehensive user profile data from Apple
-      try {
-        const profileData = {
-          name: user.displayName || user.email?.split('@')[0] || 'User',
-          email: user.email || '',
-          phone: user.phoneNumber || '',
-          photoURL: user.photoURL || '',
-          provider: 'apple' as const,
-          // Additional Apple-specific data
-          emailVerified: user.emailVerified || false,
-          lastSignInTime: new Date().toISOString()
-        };
-        
-        await updateUserProfile(user.uid, profileData);
-        console.log('Apple user profile stored successfully:', {
-          name: profileData.name,
-          email: profileData.email,
-          photoURL: profileData.photoURL
-        });
-      } catch (error) {
-        console.error('Error storing Apple user profile:', error);
-        // Don't throw error - profile storage is optional
-      }
-      
-      return result;
-    } catch (error: any) {
-      console.error('Error signing in with Apple:', error);
-      
-      // Handle specific Apple sign-in errors
-      if (error.code === 'auth/operation-not-allowed') {
-        throw new Error('Apple sign-in is not enabled. Please contact support.');
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        throw new Error('Sign-in was cancelled. Please try again.');
-      } else if (error.code === 'auth/network-request-failed') {
-        throw new Error('Network error. Please check your connection and try again.');
-      } else {
-        throw new Error(error.message || 'Failed to sign in with Apple. Please try again.');
-      }
-    }
-  };
 
   const value = {
     user,
@@ -491,7 +433,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sendPasswordResetWithOTP,
     verifyPasswordResetOTP,
     signInWithGoogle,
-    signInWithApple,
     refreshToken: firebaseAuthService.refreshToken.bind(firebaseAuthService),
     ensureValidToken: firebaseAuthService.ensureValidToken.bind(firebaseAuthService),
   };
