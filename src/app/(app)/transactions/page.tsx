@@ -50,6 +50,7 @@ import {
 import { useCurrency } from "@/hooks/use-currency";
 import { useTranslation } from "@/hooks/use-translation";
 import { useCategories } from "@/contexts/category-context";
+import { formatAmount } from "@/utils/format-amount";
 
 // Helper function to safely convert date to Date object
 const getDate = (dateValue: any): Date => {
@@ -130,7 +131,7 @@ function TransactionsPageContent() {
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const { date } = useDateRange();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
 
   const handleTriggerClick = (type: "income" | "expense") => {
     setTransactionType(type);
@@ -288,21 +289,21 @@ function TransactionsPageContent() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-sm font-medium text-muted-foreground">Total Income</div>
-                    <div className="text-2xl font-bold text-green-600">{formatCurrency(transactionStats.totalIncome)}</div>
+                    <div className="text-2xl font-bold text-green-600 break-all whitespace-nowrap" title={formatCurrency(transactionStats.totalIncome)}>{formatCurrency(transactionStats.totalIncome)}</div>
                     <div className="text-xs text-muted-foreground">{transactionStats.incomeCount} transaction{transactionStats.incomeCount !== 1 ? 's' : ''}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-sm font-medium text-muted-foreground">Total Expenses</div>
-                    <div className="text-2xl font-bold text-red-600">{formatCurrency(transactionStats.totalExpense)}</div>
+                    <div className="text-2xl font-bold text-red-600 break-all whitespace-nowrap" title={formatCurrency(transactionStats.totalExpense)}>{formatCurrency(transactionStats.totalExpense)}</div>
                     <div className="text-xs text-muted-foreground">{transactionStats.expenseCount} transaction{transactionStats.expenseCount !== 1 ? 's' : ''}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-sm font-medium text-muted-foreground">Net Savings</div>
-                    <div className={`text-2xl font-bold ${transactionStats.netSavings >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`text-2xl font-bold break-all whitespace-nowrap ${transactionStats.netSavings >= 0 ? 'text-green-600' : 'text-red-600'}`} title={formatCurrency(transactionStats.netSavings)}>
                       {formatCurrency(transactionStats.netSavings)}
                     </div>
                     <div className="text-xs text-muted-foreground">

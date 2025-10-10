@@ -43,6 +43,7 @@ import { useDateRange } from "@/contexts/date-range-context";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { useTransactions } from "@/contexts/transaction-context";
+import { formatAmount } from "@/utils/format-amount";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -671,7 +672,7 @@ function ReportsPageContent() {
                 <ArrowUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                                  <div className="text-xl sm:text-2xl font-bold text-green-500 break-words overflow-visible">{formatCurrency(totalIncome)}</div>
+                                  <div className="text-xl sm:text-2xl font-bold text-green-500 break-all whitespace-nowrap" title={formatCurrency(totalIncome)}>{formatCurrency(totalIncome)}</div>
               </CardContent>
             </Card>
             <Card className="overflow-visible">
@@ -682,7 +683,7 @@ function ReportsPageContent() {
                 <ArrowDown className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                                  <div className="text-xl sm:text-2xl font-bold text-red-500 break-words overflow-visible">{formatCurrency(totalExpense)}</div>
+                                  <div className="text-xl sm:text-2xl font-bold text-red-500 break-all whitespace-nowrap" title={formatCurrency(totalExpense)}>{formatCurrency(totalExpense)}</div>
               </CardContent>
             </Card>
             <Card className="overflow-visible">
@@ -691,7 +692,7 @@ function ReportsPageContent() {
                                   <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent className="px-6 pb-6">
-                                  <div className="text-xl sm:text-2xl font-bold break-words overflow-visible">{formatCurrency(netSavings)}</div>
+                                  <div className="text-xl sm:text-2xl font-bold break-all whitespace-nowrap" title={formatCurrency(netSavings)}>{formatCurrency(netSavings)}</div>
               </CardContent>
             </Card>
           </div>
