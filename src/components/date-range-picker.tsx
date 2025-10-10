@@ -21,11 +21,19 @@ import { Separator } from "./ui/separator"
 interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   date?: DateRange;
   onDateChange: (date: DateRange | undefined) => void;
+  forceOpen?: boolean; // New prop to force the calendar to be open
 }
 
-export function DateRangePicker({ className, date, onDateChange }: DateRangePickerProps) {
+export function DateRangePicker({ className, date, onDateChange, forceOpen = false }: DateRangePickerProps) {
   const [preset, setPreset] = React.useState<string>("custom");
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(forceOpen);
+
+  // Handle forceOpen prop
+  React.useEffect(() => {
+    if (forceOpen) {
+      setIsOpen(true);
+    }
+  }, [forceOpen]);
 
   // Detect current preset based on date range
   React.useEffect(() => {
@@ -110,6 +118,41 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
   const handleDateSelect = (range: DateRange | undefined) => {
     setPreset("custom");
     onDateChange(range);
+  }
+
+  // If forceOpen is true, render the calendar directly without popover
+  if (forceOpen) {
+    return (
+      <div className={cn("grid gap-2", className)}>
+        <div className="flex items-center p-2">
+          <Select value={preset} onValueChange={handlePresetChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a preset" />
+            </SelectTrigger>
+            <SelectContent className="z-[110]">
+              <SelectItem value="custom">Custom</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="last-week">Last Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="last-month">Last Month</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+              <SelectItem value="last-year">Last Year</SelectItem>
+              <SelectItem value="last-7-days">Last 7 Days</SelectItem>
+              <SelectItem value="last-30-days">Last 30 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Separator />
+        <Calendar
+          initialFocus
+          mode="range"
+          defaultMonth={date?.from}
+          selected={date}
+          onSelect={handleDateSelect}
+          numberOfMonths={2}
+        />
+      </div>
+    );
   }
 
   return (

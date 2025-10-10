@@ -19,6 +19,7 @@ import {
   Settings,
   Shield,
   Bot,
+  Calendar,
 } from "lucide-react";
 import { SmartNotifications } from "@/components/ai/smart-notifications";
 import { Logo } from "@/components/icons/logo";
@@ -78,6 +79,7 @@ export function Header() {
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchPopoverOpen, setSearchPopoverOpen] = React.useState(false);
   const [aiSummaryOpen, setAiSummaryOpen] = React.useState(false);
+  const [mobileDatePickerOpen, setMobileDatePickerOpen] = React.useState(false);
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = React.useState(false);
   const { transactions } = useTransactions();
@@ -307,41 +309,19 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 lg:hidden"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <nav className="grid gap-6 text-lg font-medium">
-              <Link
-                href="#"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Logo className="h-6 w-6" />
-                <span className="">MoneyDesk</span>
-              </Link>
-               {navItems.map((item) => (
-                <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                        "transition-colors hover:text-foreground",
-                        pathname === item.href ? "text-foreground" : "text-muted-foreground"
-                    )}
-                    >
-                    {t(item.labelKey)}
-                </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
+
+        {/* Mobile Icons - Date Picker */}
+        <div className="flex items-center gap-1 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileDatePickerOpen(true)}
+            className="rounded-full"
+          >
+            <Calendar className="h-5 w-5" />
+            <span className="sr-only">Date Picker</span>
+          </Button>
+        </div>
 
         <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 lg:gap-2 pr-4">
             {/* Date Range Picker - hidden on mobile */}
@@ -559,6 +539,28 @@ export function Header() {
 
         </div>
         <AISummaryPanel open={aiSummaryOpen} onOpenChange={setAiSummaryOpen} />
+        
+        {/* Mobile Date Picker Modal */}
+        <Sheet open={mobileDatePickerOpen} onOpenChange={setMobileDatePickerOpen}>
+          <SheetContent side="top" className="h-[500px]">
+            <div className="flex flex-col space-y-4 h-full">
+              <div className="flex items-center justify-center">
+                <h3 className="text-lg font-semibold">Select Date Range</h3>
+              </div>
+              <div className="flex-1 overflow-y-auto flex justify-center">
+                <DateRangePicker 
+                  date={date} 
+                  onDateChange={(newDate) => {
+                    setDate(newDate);
+                    setMobileDatePickerOpen(false);
+                  }} 
+                  forceOpen={true}
+                />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
         
         {/* Logout Confirmation Dialog */}
         <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
