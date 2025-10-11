@@ -100,11 +100,11 @@ export function UserEditModal({ user, isOpen, onClose, onSave }: UserEditModalPr
         setModuleAccess({
           dashboard: true,
           transactions: true,
-          loans: false,
-          reports: false,
+          loans: true,
+          reports: true,
           settings: true,
           accounts: true,
-          budgets: false,
+          budgets: true,
           categories: true
         });
         break;

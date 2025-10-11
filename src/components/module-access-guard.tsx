@@ -43,13 +43,13 @@ const moduleInfo = {
     name: 'Loans',
     description: 'Loan management and tracking',
     icon: Crown,
-    requiredTier: 'premium' as const
+    requiredTier: 'free' as const
   },
   reports: {
     name: 'Reports',
     description: 'Advanced analytics and insights',
     icon: Shield,
-    requiredTier: 'premium' as const
+    requiredTier: 'free' as const
   },
   settings: {
     name: 'Settings',
@@ -67,7 +67,7 @@ const moduleInfo = {
     name: 'Budgets',
     description: 'Budget planning and tracking',
     icon: Crown,
-    requiredTier: 'premium' as const
+    requiredTier: 'free' as const
   },
   categories: {
     name: 'Categories',
