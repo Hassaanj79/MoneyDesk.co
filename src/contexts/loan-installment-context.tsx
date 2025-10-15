@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './auth-context';
+import { useLoans } from './loan-context';
 import { 
   addLoanInstallment, 
   updateLoanInstallment, 
@@ -37,6 +38,7 @@ export const LoanInstallmentProvider = ({ children }: { children: ReactNode }) =
   const [installments, setInstallments] = useState<LoanInstallment[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { updateLoan } = useLoans();
 
   useEffect(() => {
     if (user) {
@@ -105,6 +107,9 @@ export const LoanInstallmentProvider = ({ children }: { children: ReactNode }) =
       await payInstallment(user.uid, id, paidDate);
       await fetchInstallments(); // Refresh the list
       
+      // Update loan status based on installment payments
+      await updateLoanStatusBasedOnInstallments(id);
+      
     // Show success toast
     toast.success("Installment paid successfully!", {
       description: "Payment has been recorded"
@@ -153,6 +158,36 @@ export const LoanInstallmentProvider = ({ children }: { children: ReactNode }) =
 
   const getInstallmentsByLoan = (loanId: string) => {
     return installments.filter(installment => installment.loanId === loanId);
+  };
+
+  const updateLoanStatusBasedOnInstallments = async (installmentId: string) => {
+    try {
+      // Find the installment to get the loan ID
+      const installment = installments.find(inst => inst.id === installmentId);
+      if (!installment) return;
+
+      const loanId = installment.loanId;
+      const loanInstallments = getInstallmentsByLoan(loanId);
+      
+      // Count paid and total installments
+      const paidInstallments = loanInstallments.filter(inst => inst.status === 'paid');
+      const totalInstallments = loanInstallments.length;
+      
+      // Determine new status
+      let newStatus: 'active' | 'completed' | 'partially_paid' = 'active';
+      
+      if (paidInstallments.length === totalInstallments) {
+        newStatus = 'completed';
+      } else if (paidInstallments.length > 0) {
+        newStatus = 'partially_paid';
+      }
+      
+      // Update the loan status
+      await updateLoan(loanId, { status: newStatus });
+      
+    } catch (error) {
+      console.error('Error updating loan status:', error);
+    }
   };
 
   return (

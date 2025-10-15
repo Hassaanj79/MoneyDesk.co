@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLoanInstallments } from "@/contexts/loan-installment-context";
+import { useLoans } from "@/contexts/loan-context";
 import { useCurrency } from "@/hooks/use-currency";
 // import { useNotifications } from "@/contexts/notification-context";
 import { useAccounts } from "@/contexts/account-context";
@@ -23,6 +24,7 @@ interface LoanInstallmentsProps {
 
 export function LoanInstallments({ loan }: LoanInstallmentsProps) {
   const { getInstallmentsByLoan, payInstallmentPayment, loading } = useLoanInstallments();
+  const { updateLoan } = useLoans();
   const { formatCurrency } = useCurrency();
   // const { addNotification } = useNotifications();
   const { accounts } = useAccounts();
@@ -74,6 +76,28 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
         console.warn('No appropriate category found for loan payment transaction');
       }
       
+      // Update loan financial data based on all paid installments
+      const loanInstallments = getInstallmentsByLoan(loan.id);
+      const paidInstallments = loanInstallments.filter(inst => inst.status === 'paid');
+      const totalPaidAmount = paidInstallments.reduce((sum, inst) => sum + inst.amount, 0);
+      const remainingAmount = Math.max(0, loan.amount - totalPaidAmount);
+      
+      // Determine new status
+      let newStatus: 'active' | 'completed' | 'partially_paid' = 'active';
+      if (paidInstallments.length === loanInstallments.length) {
+        newStatus = 'completed';
+      } else if (paidInstallments.length > 0) {
+        newStatus = 'partially_paid';
+      }
+      
+      // Update the loan with new financial data
+      await updateLoan(loan.id, {
+        totalPaid: totalPaidAmount,
+        remainingAmount: remainingAmount,
+        status: newStatus,
+        lastPaymentDate: paymentDate
+      });
+      
       // addNotification({
       //   type: 'installment_paid',
       //   title: 'Payment Recorded',
@@ -88,6 +112,7 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
       setSelectedInstallment(null);
       setPaymentAccountId("");
     } catch (error) {
+      console.error('Error paying installment:', error);
       // addNotification({
       //   type: 'error',
       //   title: 'Payment Failed',

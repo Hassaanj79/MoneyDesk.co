@@ -3,9 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { useTransactions } from '@/contexts/transaction-context';
+import { useDraftTransactions } from '@/contexts/draft-transaction-context';
 // import { useNotifications } from '@/contexts/notification-context';
 import { Transaction } from '@/types';
-import { parseISO, addDays, addWeeks, addMonths, addYears, isTomorrow, format } from 'date-fns';
+import { parseISO, addDays, addWeeks, addMonths, addYears, isTomorrow, format, isToday } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { useCurrency } from './use-currency';
 
@@ -63,9 +64,11 @@ const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
 
 export const useRecurringNotifications = () => {
     const { transactions } = useTransactions();
+    const { createFromRecurring } = useDraftTransactions();
     // const { addNotification } = useNotifications();
     const { formatCurrency } = useCurrency();
     const [sentNotifications, setSentNotifications] = useState<Record<string, string>>({});
+    const [createdDrafts, setCreatedDrafts] = useState<Record<string, string>>({});
 
     useEffect(() => {
         try {
@@ -79,25 +82,40 @@ export const useRecurringNotifications = () => {
     }, []);
 
     useEffect(() => {
-        const recurringExpenses = transactions.filter(
-            (t) => t.type === 'expense' && t.isRecurring && t.recurrenceFrequency
+        const recurringTransactions = transactions.filter(
+            (t) => t.isRecurring && t.recurrenceFrequency
         );
 
         const newSentNotifications: Record<string, string> = { ...sentNotifications };
+        const newCreatedDrafts: Record<string, string> = { ...createdDrafts };
         let updated = false;
 
-        for (const transaction of recurringExpenses) {
+        for (const transaction of recurringTransactions) {
             const nextDueDate = getNextRecurrenceDate(transaction);
 
-            if (nextDueDate && isTomorrow(nextDueDate)) {
+            if (nextDueDate && isToday(nextDueDate)) {
+                const draftId = `${transaction.id}-${format(nextDueDate, 'yyyy-MM-dd')}`;
+                
+                // Create draft transaction if not already created
+                if (!createdDrafts[draftId]) {
+                    try {
+                        createFromRecurring(transaction, format(nextDueDate, 'yyyy-MM-dd'));
+                        newCreatedDrafts[draftId] = 'created';
+                        updated = true;
+                    } catch (error) {
+                        console.error('Error creating draft transaction:', error);
+                    }
+                }
+            } else if (nextDueDate && isTomorrow(nextDueDate)) {
                 const notificationId = `${transaction.id}-${format(nextDueDate, 'yyyy-MM-dd')}`;
                 
+                // Send notification reminder
                 if (!sentNotifications[notificationId]) {
                     // addNotification({
                     //     type: 'recurring_reminder',
-                    //     title: 'Upcoming Recurring Expense',
-                    //     message: `Your payment for "${transaction.description}" of ${formatCurrency(transaction.amount)} is due tomorrow.`,
-                    //     navigationPath: '/transactions',
+                    //     title: 'Upcoming Recurring Transaction',
+                    //     message: `Your ${transaction.type} for "${transaction.name}" of ${formatCurrency(transaction.amount)} is due tomorrow.`,
+                    //     navigationPath: '/draft-transactions',
                     //     relatedEntityId: transaction.id,
                     //     relatedEntityType: 'transaction'
                     // });
@@ -109,13 +127,14 @@ export const useRecurringNotifications = () => {
 
         if (updated) {
             setSentNotifications(newSentNotifications);
+            setCreatedDrafts(newCreatedDrafts);
             try {
                 localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(newSentNotifications));
             } catch (error) {
                 console.error("Could not write to localStorage", error);
             }
         }
-    }, [transactions, formatCurrency, sentNotifications]);
+    }, [transactions, formatCurrency, sentNotifications, createdDrafts, createFromRecurring]);
 
     return null; 
 };

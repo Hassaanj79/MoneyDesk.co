@@ -151,6 +151,26 @@ service cloud.firestore {
           // Admins can read all report logs
           allow read: if request.auth != null && isAdmin();
         }
+        
+        // Draft transactions - users can read/write their own draft transactions, admins can read all
+        match /draftTransactions/{draftId} {
+          // Users can read/write their own draft transactions
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+          // Users can create their own draft transactions
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+          // Admins can read all draft transactions
+          allow read: if request.auth != null && isAdmin();
+        }
+        
+        // Recurring transaction status - users can read/write their own statuses, admins can read all
+        match /recurringTransactionStatus/{statusId} {
+          // Users can read/write their own recurring transaction statuses
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+          // Users can create their own recurring transaction statuses
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+          // Admins can read all recurring transaction statuses
+          allow read: if request.auth != null && isAdmin();
+        }
     
     // Admin access to all collections for dashboard stats
     match /{document=**} {

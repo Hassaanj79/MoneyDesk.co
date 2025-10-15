@@ -20,6 +20,7 @@ import {
   Shield,
   Bot,
   Calendar,
+  FileText,
 } from "lucide-react";
 import { SmartNotifications } from "@/components/ai/smart-notifications";
 import { Logo } from "@/components/icons/logo";

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyDesk - Personal Finance Management Made Simple</title>
+    <meta name="description" content="Take control of your finances with MoneyDesk. AI-powered expense tracking, budget management, and financial insights in one powerful platform.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="logo.svg" alt="MoneyDesk" class="nav-logo">
+                <span class="nav-title">MoneyDesk</span>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="features.html" class="nav-link">Features</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <a href="#" class="btn btn-outline">Sign In</a>
+                <a href="#" class="btn btn-primary">Get Started</a>
+            </div>
+            <div class="nav-toggle" id="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Take Control of Your 
+                    <span class="text-gradient">Financial Future</span>
+                </h1>
+                <p class="hero-description">
+                    MoneyDesk is your all-in-one personal finance management platform. 
+                    Track expenses, manage budgets, and get AI-powered insights to make smarter financial decisions.
+                </p>
+                <div class="hero-actions">
+                    <a href="#" class="btn btn-primary btn-large">Start Free Trial</a>
+                    <a href="#features" class="btn btn-outline btn-large">Learn More</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Active Users</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">$2M+</span>
+                        <span class="stat-label">Tracked</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">4.9★</span>
+                        <span class="stat-label">Rating</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-phone-mockup">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-header">
+                                <div class="phone-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <span class="phone-title">MoneyDesk</span>
+                            </div>
+                            <div class="phone-content">
+                                <div class="phone-balance-card">
+                                    <div class="phone-balance-label">Total Balance</div>
+                                    <div class="phone-balance-amount">$12,450.00</div>
+                                    <div class="phone-balance-change">+$1,200 this month</div>
+                                </div>
+                                <div class="phone-stats">
+                                    <div class="phone-stat">
+                                        <div class="phone-stat-label">Income</div>
+                                        <div class="phone-stat-value">$3,500</div>
+                                    </div>
+                                    <div class="phone-stat">
+                                        <div class="phone-stat-label">Expenses</div>
+                                        <div class="phone-stat-value">$2,100</div>
+                                    </div>
+                                </div>
+                                <div class="phone-recent-transactions">
+                                    <div class="phone-transaction">
+                                        <div class="phone-transaction-icon">☕</div>
+                                        <div class="phone-transaction-details">
+                                            <div class="phone-transaction-desc">Starbucks Coffee</div>
+                                            <div class="phone-transaction-category">Food & Dining</div>
+                                        </div>
+                                        <div class="phone-transaction-amount">-$5.50</div>
+                                    </div>
+                                    <div class="phone-transaction">
+                                        <div class="phone-transaction-icon">⛽</div>
+                                        <div class="phone-transaction-details">
+                                            <div class="phone-transaction-desc">Gas Station</div>
+                                            <div class="phone-transaction-category">Transportation</div>
+                                        </div>
+                                        <div class="phone-transaction-amount">-$45.20</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- App Screenshots Section -->
+    <section class="app-showcase">
+        <div class="container">
+            <div class="showcase-header">
+                <h2 class="showcase-title">See MoneyDesk in Action</h2>
+                <p class="showcase-description">
+                    Experience the power of AI-driven financial management with our intuitive interface
+                </p>
+            </div>
+            
+            <div class="app-screenshots-grid">
+                <!-- Dashboard Screen -->
+                <div class="screenshot-container dashboard-container">
+                    <div class="screenshot-label">
+                        <span class="screenshot-icon">📊</span>
+                        <span>Dashboard Overview</span>
+                    </div>
+                    <div class="app-screen dashboard-screen">
+                        <div class="screen-header">
+                            <div class="screen-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="screen-title">MoneyDesk Dashboard</span>
+                        </div>
+                        <div class="screen-content">
+                            <div class="dashboard-cards">
+                                <div class="balance-card">
+                                    <div class="card-icon">💳</div>
+                                    <div class="card-content">
+                                        <span class="card-label">Total Balance</span>
+                                        <span class="card-amount">$12,450.00</span>
+                                    </div>
+                                </div>
+                                <div class="balance-card income">
+                                    <div class="card-icon">📈</div>
+                                    <div class="card-content">
+                                        <span class="card-label">Income</span>
+                                        <span class="card-amount">$3,500</span>
+                                        <span class="card-change">+12%</span>
+                                    </div>
+                                </div>
+                                <div class="balance-card expense">
+                                    <div class="card-icon">📉</div>
+                                    <div class="card-content">
+                                        <span class="card-label">Expenses</span>
+                                        <span class="card-amount">$2,100</span>
+                                        <span class="card-change">-5%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="loan-summary">
+                                <div class="loan-item">
+                                    <span class="loan-label">Loans Given</span>
+                                    <span class="loan-amount">$2,500</span>
+                                </div>
+                                <div class="loan-item">
+                                    <span class="loan-label">Loans Taken</span>
+                                    <span class="loan-amount">$1,200</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Management Screen -->
+                <div class="screenshot-container transaction-container">
+                    <div class="screenshot-label">
+                        <span class="screenshot-icon">💳</span>
+                        <span>Smart Transaction Management</span>
+                    </div>
+                    <div class="app-screen transactions-screen">
+                        <div class="screen-header">
+                            <div class="screen-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="screen-title">Add Transaction</span>
+                        </div>
+                        <div class="screen-content">
+                            <div class="transaction-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label>Type</label>
+                                        <div class="type-buttons">
+                                            <button class="type-btn income active">Income</button>
+                                            <button class="type-btn expense">Expense</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label>Description</label>
+                                        <input type="text" placeholder="Enter transaction description" value="Starbucks Coffee">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label>Amount</label>
+                                        <input type="text" placeholder="0.00" value="$5.50">
+                                    </div>
+                                    <div class="form-field">
+                                        <label>Category</label>
+                                        <select>
+                                            <option>Food & Dining</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label>Account</label>
+                                        <select>
+                                            <option>Chase Checking</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label>Date</label>
+                                        <input type="date" value="2024-10-14">
+                                    </div>
+                                </div>
+                                <div class="ai-suggestion">
+                                    <div class="ai-icon">🤖</div>
+                                    <span class="ai-text">AI suggests: Food & Dining category</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Overview Screen -->
+                <div class="screenshot-container budget-container">
+                    <div class="screenshot-label">
+                        <span class="screenshot-icon">🎯</span>
+                        <span>Budget Tracking</span>
+                    </div>
+                    <div class="app-screen budget-screen">
+                        <div class="screen-header">
+                            <div class="screen-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="screen-title">Budget Overview</span>
+                        </div>
+                        <div class="screen-content">
+                            <div class="budget-header">
+                                <h3>Monthly Budgets</h3>
+                                <span class="budget-period">October 2024</span>
+                            </div>
+                            <div class="budget-items">
+                                <div class="budget-item">
+                                    <div class="budget-info">
+                                        <span class="budget-category">Groceries</span>
+                                        <span class="budget-amount">$600 / $800</span>
+                                    </div>
+                                    <div class="budget-progress">
+                                        <div class="progress-bar" style="width: 75%"></div>
+                                    </div>
+                                    <span class="budget-status good">On Track</span>
+                                </div>
+                                <div class="budget-item">
+                                    <div class="budget-info">
+                                        <span class="budget-category">Entertainment</span>
+                                        <span class="budget-amount">$90 / $200</span>
+                                    </div>
+                                    <div class="budget-progress">
+                                        <div class="progress-bar" style="width: 45%"></div>
+                                    </div>
+                                    <span class="budget-status good">Good</span>
+                                </div>
+                                <div class="budget-item">
+                                    <div class="budget-info">
+                                        <span class="budget-category">Transportation</span>
+                                        <span class="budget-amount">$300 / $300</span>
+                                    </div>
+                                    <div class="budget-progress">
+                                        <div class="progress-bar warning" style="width: 100%"></div>
+                                    </div>
+                                    <span class="budget-status warning">Over Budget</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights Screen -->
+                <div class="screenshot-container ai-container">
+                    <div class="screenshot-label">
+                        <span class="screenshot-icon">🤖</span>
+                        <span>AI Financial Insights</span>
+                    </div>
+                    <div class="app-screen ai-screen">
+                        <div class="screen-header">
+                            <div class="screen-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="screen-title">AI Financial Insights</span>
+                        </div>
+                        <div class="screen-content">
+                            <div class="ai-insights-header">
+                                <div class="ai-icon">🤖</div>
+                                <span>Smart Financial Analysis</span>
+                            </div>
+                            <div class="ai-insights">
+                                <div class="insight-card high-priority">
+                                    <div class="insight-header">
+                                        <span class="insight-icon">⚠️</span>
+                                        <span class="insight-title">Spending Alert</span>
+                                    </div>
+                                    <p class="insight-text">You're spending 25% more on dining this month compared to last month.</p>
+                                </div>
+                                <div class="insight-card medium-priority">
+                                    <div class="insight-header">
+                                        <span class="insight-icon">💡</span>
+                                        <span class="insight-title">Savings Opportunity</span>
+                                    </div>
+                                    <p class="insight-text">Consider setting up automatic transfers to your savings account.</p>
+                                </div>
+                                <div class="insight-card low-priority">
+                                    <div class="insight-header">
+                                        <span class="insight-icon">📊</span>
+                                        <span class="insight-title">Trend Analysis</span>
+                                    </div>
+                                    <p class="insight-text">Your income has increased by 8% this quarter. Great job!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Powerful Features for Smart Money Management</h2>
+                <p class="section-description">
+                    Everything you need to take control of your finances, all in one place.
+                </p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3h18v18H3zM9 9h6v6H9z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">AI-Powered Categorization</h3>
+                    <p class="feature-description">
+                        Automatically categorize your transactions with AI that learns from your spending patterns.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Smart Budget Planning</h3>
+                    <p class="feature-description">
+                        Get AI-powered budget suggestions based on your income, expenses, and financial goals.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3v18h18V3H3zm16 16H5V5h14v14z"/>
+                            <path d="M7 7h10v10H7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Comprehensive Dashboard</h3>
+                    <p class="feature-description">
+                        Visualize your financial health with interactive charts and real-time insights.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Multi-Account Management</h3>
+                    <p class="feature-description">
+                        Track multiple bank accounts, credit cards, and investment accounts in one place.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"/>
+                            <path d="M9 7V3a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/>
+                            <path d="M9 11h6"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Loan Tracking</h3>
+                    <p class="feature-description">
+                        Monitor your loans, track payments, and get insights on debt management strategies.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10,9 9,9 8,9"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Detailed Reports</h3>
+                    <p class="feature-description">
+                        Generate comprehensive financial reports to understand your spending patterns and trends.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Feature Showcase Grid -->
+            <div class="feature-showcase-section">
+                <div class="section-header">
+                    <h2 class="section-title">Explore Our Features in Detail</h2>
+                    <p class="section-description">
+                        Dive deeper into each feature with detailed explanations and app screenshots
+                    </p>
+                </div>
+                
+                <div class="feature-showcase-grid">
+                    <div class="feature-showcase-card">
+                        <div class="showcase-icon">📊</div>
+                        <h3 class="showcase-title">Dashboard & Analytics</h3>
+                        <p class="showcase-description">
+                            Get a comprehensive overview of your financial health with real-time insights and interactive charts.
+                        </p>
+                        <a href="dashboard-feature.html" class="showcase-link">Explore Dashboard →</a>
+                    </div>
+                    
+                    <div class="feature-showcase-card">
+                        <div class="showcase-icon">🤖</div>
+                        <h3 class="showcase-title">AI Financial Insights</h3>
+                        <p class="showcase-description">
+                            Smart AI analyzes your spending patterns and provides personalized recommendations for better financial decisions.
+                        </p>
+                        <a href="ai-insights-feature.html" class="showcase-link">Discover AI Features →</a>
+                    </div>
+                    
+                    <div class="feature-showcase-card">
+                        <div class="showcase-icon">🎯</div>
+                        <h3 class="showcase-title">Budget Management</h3>
+                        <p class="showcase-description">
+                            Create, track, and manage budgets with intelligent planning tools and real-time progress monitoring.
+                        </p>
+                        <a href="budget-feature.html" class="showcase-link">Learn About Budgeting →</a>
+                    </div>
+                    
+                    <div class="feature-showcase-card">
+                        <div class="showcase-icon">💳</div>
+                        <h3 class="showcase-title">Transaction Management</h3>
+                        <p class="showcase-description">
+                            Effortlessly track and categorize transactions with AI-powered automation and receipt scanning.
+                        </p>
+                        <a href="transactions-feature.html" class="showcase-link">See Transaction Tools →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Choose Your Plan</h2>
+                <p class="section-description">
+                    Start free and upgrade as you grow. No hidden fees, cancel anytime.
+                </p>
+            </div>
+
+            <div class="pricing-grid single-plan">
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-header">
+                        <h3 class="pricing-title">MoneyDesk Pro</h3>
+                        <div class="pricing-price">
+                            <span class="price">$9.99</span>
+                            <span class="period">/month</span>
+                        </div>
+                        <p class="pricing-description">Complete financial management with AI-powered insights</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Dashboard & Overview</li>
+                        <li>✓ Transaction Management</li>
+                        <li>✓ Account Tracking</li>
+                        <li>✓ AI-Powered Categorization</li>
+                        <li>✓ Smart Budget Planning</li>
+                        <li>✓ Loan Management</li>
+                        <li>✓ Advanced Reports</li>
+                        <li>✓ Priority Support</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary btn-full">Start Free Trial</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">Ready to Transform Your Financial Life?</h2>
+                <p class="cta-description">
+                    Join thousands of users who have taken control of their finances with MoneyDesk.co.
+                </p>
+                <div class="cta-actions">
+                    <a href="#" class="btn btn-primary btn-large">Start Your Free Trial</a>
+                    <a href="#" class="btn btn-outline btn-large">Schedule Demo</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <img src="logo.svg" alt="MoneyDesk" class="footer-logo-img">
+                        <span class="footer-title">MoneyDesk</span>
+                    </div>
+                    <p class="footer-description">
+                        Your trusted partner in personal finance management. 
+                        Take control of your money with AI-powered insights.
+                    </p>
+                </div>
+                
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Product</h4>
+                        <ul class="footer-list">
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#pricing">Pricing</a></li>
+                            <li><a href="#">Security</a></li>
+                            <li><a href="#">Integrations</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Company</h4>
+                        <ul class="footer-list">
+                            <li><a href="about.html">About</a></li>
+                            <li><a href="#">Blog</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Support</h4>
+                        <ul class="footer-list">
+                            <li><a href="#">Help Center</a></li>
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">Community</a></li>
+                            <li><a href="#">Status</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <p>&copy; 2024 MoneyDesk. All rights reserved.</p>
+                </div>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

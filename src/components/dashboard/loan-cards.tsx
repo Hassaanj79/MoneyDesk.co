@@ -40,6 +40,7 @@ export function LoanCards() {
     const due = new Date(dueDate);
     
     if (status === 'completed') return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    if (status === 'partially_paid') return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
     if (isAfter(now, due)) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
   };
@@ -49,6 +50,7 @@ export function LoanCards() {
     const due = new Date(dueDate);
     
     if (status === 'completed') return <CheckCircle className="h-4 w-4" />;
+    if (status === 'partially_paid') return <CreditCard className="h-4 w-4" />;
     if (isAfter(now, due)) return <AlertTriangle className="h-4 w-4" />;
     return <HandCoins className="h-4 w-4" />;
   };
@@ -167,6 +169,7 @@ export function LoanCards() {
                         {getStatusIcon(loan.status, loan.dueDate)}
                         <span className="ml-1">
                           {loan.status === 'completed' ? 'Completed' : 
+                           loan.status === 'partially_paid' ? 'Partially Paid' :
                            isAfter(new Date(), new Date(loan.dueDate)) ? 'Overdue' : 'Active'}
                         </span>
                       </Badge>

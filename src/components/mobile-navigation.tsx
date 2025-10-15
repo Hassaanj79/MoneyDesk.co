@@ -8,6 +8,7 @@ import {
   BarChart3,
   LayoutDashboard,
   HandCoins,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

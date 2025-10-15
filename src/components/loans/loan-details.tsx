@@ -30,6 +30,8 @@ export function LoanDetails({ loan, children }: LoanDetailsProps) {
         return isOverdue ? 'destructive' : 'default';
       case 'completed':
         return 'secondary';
+      case 'partially_paid':
+        return 'default';
       case 'overdue':
         return 'destructive';
       default:
@@ -43,10 +45,21 @@ export function LoanDetails({ loan, children }: LoanDetailsProps) {
         return isOverdue ? <AlertTriangle className="h-4 w-4" /> : <HandCoins className="h-4 w-4" />;
       case 'completed':
         return <CheckCircle className="h-4 w-4" />;
+      case 'partially_paid':
+        return <CreditCard className="h-4 w-4" />;
       case 'overdue':
         return <AlertTriangle className="h-4 w-4" />;
       default:
         return <HandCoins className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'partially_paid':
+        return 'Partially Paid';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -112,7 +125,7 @@ export function LoanDetails({ loan, children }: LoanDetailsProps) {
               <span className="text-muted-foreground">Status:</span>
               <Badge variant={getStatusColor(loan.status)} className="flex items-center gap-1">
                 {getStatusIcon(loan.status)}
-                {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                {getStatusText(loan.status)}
                 {isOverdue && ' (Overdue)'}
               </Badge>
             </div>

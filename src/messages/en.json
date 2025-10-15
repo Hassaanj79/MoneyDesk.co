@@ -36,6 +36,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "transactions": "Transactions",
+    "draft_transactions": "Draft Transactions",
     "loans": "Loans",
     "reports": "Reports",
     "settings": "Settings",

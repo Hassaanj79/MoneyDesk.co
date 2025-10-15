@@ -182,6 +182,10 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
           await updateAccountBalance(transaction.accountId, newTransaction);
         }
 
+        // Note: We don't create statuses immediately for recurring transactions
+        // Statuses will be created automatically when the transaction becomes due
+        // This is handled by the recurring transaction status system
+
                 // Clear AI insights cache to ensure fresh insights
                 if (user) {
                   aiCache.clearUserCache(user.uid);

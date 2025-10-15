@@ -136,6 +136,8 @@ function LoansPageContent() {
         return isOverdue ? 'destructive' : 'default';
       case 'completed':
         return 'secondary';
+      case 'partially_paid':
+        return 'default';
       case 'overdue':
         return 'destructive';
       default:
@@ -150,10 +152,21 @@ function LoansPageContent() {
         return isOverdue ? <AlertTriangle className="h-4 w-4" /> : <HandCoins className="h-4 w-4" />;
       case 'completed':
         return <CheckCircle className="h-4 w-4" />;
+      case 'partially_paid':
+        return <CreditCard className="h-4 w-4" />;
       case 'overdue':
         return <AlertTriangle className="h-4 w-4" />;
       default:
         return <HandCoins className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'partially_paid':
+        return 'Partially Paid';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -452,6 +465,8 @@ function LoansPageContent() {
                     <TableHead className="hidden sm:table-cell">Type</TableHead>
                     <TableHead className="hidden md:table-cell">Amount</TableHead>
                     <TableHead className="hidden lg:table-cell">Remaining</TableHead>
+                    <TableHead className="hidden xl:table-cell">Interest Rate</TableHead>
+                    <TableHead className="hidden xl:table-cell">Installments</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
                     <TableHead className="hidden md:table-cell">Due Date</TableHead>
                     <TableHead className="hidden lg:table-cell">Account</TableHead>
@@ -477,11 +492,6 @@ function LoansPageContent() {
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
                               <span className="truncate">{loan.borrowerName}</span>
-                              {loan.interestRate && loan.interestRate > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  {loan.interestRate}% APR
-                                </Badge>
-                              )}
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
                               <Badge variant={loan.type === 'given' ? 'default' : 'secondary'} className="text-xs">
@@ -493,7 +503,7 @@ function LoansPageContent() {
                                 className="flex items-center gap-1 text-xs"
                               >
                                 {getStatusIcon(loan.status, loan.dueDate)}
-                                {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                                {getStatusText(loan.status)}
                                 {isOverdue && ' (Overdue)'}
                               </Badge>
                             </div>
@@ -510,13 +520,26 @@ function LoansPageContent() {
                         <TableCell className="hidden lg:table-cell font-bold" onClick={() => handleRowClick(loan)}>
                           {formatCurrency(loan.remainingAmount)}
                         </TableCell>
+                        <TableCell className="hidden xl:table-cell" onClick={() => handleRowClick(loan)}>
+                          <span className="text-sm">
+                            {loan.interestRate && loan.interestRate > 0 ? `${loan.interestRate}%` : 'No Interest'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell" onClick={() => handleRowClick(loan)}>
+                          <span className="text-sm">
+                            {loan.isInstallment && loan.installmentCount ? 
+                              `${loan.installmentCount} installments` : 
+                              'Single Payment'
+                            }
+                          </span>
+                        </TableCell>
                         <TableCell className="hidden sm:table-cell" onClick={() => handleRowClick(loan)}>
                           <Badge 
                             variant={getStatusColor(loan.status, loan.dueDate)} 
                             className="flex items-center gap-1 w-fit"
                           >
                             {getStatusIcon(loan.status, loan.dueDate)}
-                            {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                            {getStatusText(loan.status)}
                             {isOverdue && ' (Overdue)'}
                           </Badge>
                         </TableCell>

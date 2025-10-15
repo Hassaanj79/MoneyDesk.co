@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Management - MoneyDesk Features</title>
+    <meta name="description" content="Effortlessly manage your transactions with MoneyDesk's smart categorization, receipt scanning, and AI-powered insights for better financial tracking.">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="index.html" class="nav-logo">
+                    <img src="logo.svg" alt="MoneyDesk" class="nav-logo-img">
+                    <span class="nav-title">MoneyDesk</span>
+                </a>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="about.html" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="features.html" class="nav-link">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a href="pricing.html" class="nav-link">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+            <div class="nav-actions">
+                <a href="#" class="btn btn-outline">Sign In</a>
+                <a href="#" class="btn btn-primary">Get Started</a>
+            </div>
+            <div class="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Feature Hero -->
+    <section class="feature-hero">
+        <div class="container">
+            <div class="feature-hero-content">
+                <div class="feature-hero-text">
+                    <div class="feature-badge">💳 Transaction Management</div>
+                    <h1 class="feature-hero-title">Smart Transaction Tracking</h1>
+                    <p class="feature-hero-description">
+                        Effortlessly manage all your financial transactions with AI-powered categorization, 
+                        receipt scanning, and intelligent insights that help you understand your spending patterns.
+                    </p>
+                    <div class="feature-benefits">
+                        <div class="benefit-item">
+                            <span class="benefit-icon">🤖</span>
+                            <span class="benefit-text">AI categorization</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">📱</span>
+                            <span class="benefit-text">Receipt scanning</span>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">🔄</span>
+                            <span class="benefit-text">Recurring transactions</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feature-hero-image">
+                    <div class="feature-mockup transaction-mockup">
+                        <div class="mockup-header">
+                            <div class="mockup-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="mockup-title">Add Transaction</span>
+                        </div>
+                        <div class="mockup-content">
+                            <div class="transaction-form-demo">
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label>Type</label>
+                                            <div class="type-buttons">
+                                                <button class="type-btn income active">Income</button>
+                                                <button class="type-btn expense">Expense</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label>Description</label>
+                                            <input type="text" placeholder="Enter transaction description" value="Starbucks Coffee">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label>Amount</label>
+                                            <input type="text" placeholder="0.00" value="$5.50">
+                                        </div>
+                                        <div class="form-field">
+                                            <label>Category</label>
+                                            <select>
+                                                <option>Food & Dining</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label>Account</label>
+                                            <select>
+                                                <option>Chase Checking</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-field">
+                                            <label>Date</label>
+                                            <input type="date" value="2024-10-14">
+                                        </div>
+                                    </div>
+                                    <div class="ai-suggestion">
+                                        <div class="ai-icon">🤖</div>
+                                        <span class="ai-text">AI suggests: Food & Dining category</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Details -->
+    <section class="feature-details">
+        <div class="container">
+            <div class="feature-detailed">
+                <div class="feature-detailed-content">
+                    <div class="feature-detailed-text">
+                        <h2 class="feature-detailed-title">Effortless Transaction Management</h2>
+                        <p class="feature-detailed-description">
+                            Our intelligent transaction system automatically categorizes your spending, 
+                            learns from your patterns, and provides insights that help you make better 
+                            financial decisions. From receipt scanning to recurring transaction management, 
+                            we've made tracking your money simple and smart.
+                        </p>
+                        <div class="feature-benefits">
+                            <ul class="feature-benefits-list">
+                                <li>AI-powered automatic categorization</li>
+                                <li>Receipt scanning with OCR technology</li>
+                                <li>Recurring transaction detection</li>
+                                <li>Smart duplicate detection</li>
+                                <li>Multi-account transaction tracking</li>
+                                <li>Custom transaction rules</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="feature-detailed-image">
+                        <div class="feature-mockup transaction-list">
+                            <div class="mockup-header">
+                                <div class="mockup-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <span class="mockup-title">Recent Transactions</span>
+                            </div>
+                            <div class="mockup-content">
+                                <div class="transaction-list-demo">
+                                    <div class="transaction-item ai-categorized">
+                                        <div class="transaction-icon">☕</div>
+                                        <div class="transaction-details">
+                                            <div class="transaction-desc">Starbucks Coffee</div>
+                                            <div class="transaction-category">Food & Dining</div>
+                                        </div>
+                                        <div class="transaction-amount">-$5.50</div>
+                                        <div class="ai-badge">AI</div>
+                                    </div>
+                                    <div class="transaction-item">
+                                        <div class="transaction-icon">⛽</div>
+                                        <div class="transaction-details">
+                                            <div class="transaction-desc">Gas Station</div>
+                                            <div class="transaction-category">Transportation</div>
+                                        </div>
+                                        <div class="transaction-amount">-$45.20</div>
+                                    </div>
+                                    <div class="transaction-item">
+                                        <div class="transaction-icon">🛒</div>
+                                        <div class="transaction-details">
+                                            <div class="transaction-desc">Grocery Store</div>
+                                            <div class="transaction-category">Groceries</div>
+                                        </div>
+                                        <div class="transaction-amount">-$89.50</div>
+                                    </div>
+                                    <div class="transaction-item">
+                                        <div class="transaction-icon">💰</div>
+                                        <div class="transaction-details">
+                                            <div class="transaction-desc">Salary Deposit</div>
+                                            <div class="transaction-category">Income</div>
+                                        </div>
+                                        <div class="transaction-amount positive">+$3,500.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transaction Features -->
+    <section class="transaction-features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Powerful Transaction Management</h2>
+                <p class="section-description">
+                    Everything you need to track, categorize, and analyze your financial transactions with ease.
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI Categorization</h3>
+                    <p class="feature-description">
+                        Automatically categorize transactions using machine learning that learns 
+                        from your spending patterns and preferences.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Receipt Scanning</h3>
+                    <p class="feature-description">
+                        Simply take a photo of your receipt and let our OCR technology extract 
+                        all the transaction details automatically.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3 class="feature-title">Recurring Transactions</h3>
+                    <p class="feature-description">
+                        Automatically detect and manage recurring transactions like subscriptions, 
+                        bills, and regular income.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3 class="feature-title">Smart Search</h3>
+                    <p class="feature-description">
+                        Find any transaction instantly with our powerful search that understands 
+                        natural language queries.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Transaction Analytics</h3>
+                    <p class="feature-description">
+                        Get detailed insights into your spending patterns with visual charts 
+                        and trend analysis.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏷️</div>
+                    <h3 class="feature-title">Custom Tags</h3>
+                    <p class="feature-description">
+                        Organize your transactions with custom tags and labels that make 
+                        it easy to find and analyze specific spending.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Receipt Scanning Demo -->
+    <section class="receipt-scanning">
+        <div class="container">
+            <div class="scanning-content">
+                <div class="scanning-text">
+                    <h2 class="section-title">Smart Receipt Scanning</h2>
+                    <p class="scanning-description">
+                        Never manually enter transaction details again. Our advanced OCR technology 
+                        can read receipts from any vendor and automatically extract all the important 
+                        information including amount, date, merchant, and even suggested categories.
+                    </p>
+                    <div class="scanning-features">
+                        <div class="scanning-feature">
+                            <span class="scanning-icon">📷</span>
+                            <span class="scanning-text">Camera integration</span>
+                        </div>
+                        <div class="scanning-feature">
+                            <span class="scanning-icon">🔍</span>
+                            <span class="scanning-text">OCR text recognition</span>
+                        </div>
+                        <div class="scanning-feature">
+                            <span class="scanning-icon">🤖</span>
+                            <span class="scanning-text">AI categorization</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scanning-demo">
+                    <div class="receipt-mockup">
+                        <div class="receipt-paper">
+                            <div class="receipt-header">
+                                <span class="receipt-merchant">Starbucks Coffee</span>
+                                <span class="receipt-date">Oct 14, 2024</span>
+                            </div>
+                            <div class="receipt-items">
+                                <div class="receipt-item">
+                                    <span class="item-name">Grande Latte</span>
+                                    <span class="item-price">$4.50</span>
+                                </div>
+                                <div class="receipt-item">
+                                    <span class="item-name">Muffin</span>
+                                    <span class="item-price">$1.00</span>
+                                </div>
+                            </div>
+                            <div class="receipt-total">
+                                <span class="total-label">Total</span>
+                                <span class="total-amount">$5.50</span>
+                            </div>
+                        </div>
+                        <div class="scan-arrow">📱</div>
+                        <div class="transaction-result">
+                            <div class="result-header">AI Extracted</div>
+                            <div class="result-details">
+                                <div class="result-item">
+                                    <span class="result-label">Merchant</span>
+                                    <span class="result-value">Starbucks Coffee</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Amount</span>
+                                    <span class="result-value">$5.50</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Category</span>
+                                    <span class="result-value">Food & Dining</span>
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Date</span>
+                                    <span class="result-value">Oct 14, 2024</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">Simplify Your Financial Tracking</h2>
+                <p class="cta-description">
+                    Start managing your transactions smarter with MoneyDesk's AI-powered tools.
+                </p>
+                <div class="cta-actions">
+                    <a href="#" class="btn btn-primary btn-large">Start Free Trial</a>
+                    <a href="features.html" class="btn btn-outline btn-large">View All Features</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <img src="logo.svg" alt="MoneyDesk" class="footer-logo-img">
+                        <span class="footer-title">MoneyDesk</span>
+                    </div>
+                    <p class="footer-description">
+                        Take control of your financial future with AI-powered insights and intuitive design.
+                    </p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Product</h4>
+                        <ul class="footer-list">
+                            <li><a href="features.html">Features</a></li>
+                            <li><a href="pricing.html">Pricing</a></li>
+                            <li><a href="#">Security</a></li>
+                            <li><a href="#">Integrations</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Company</h4>
+                        <ul class="footer-list">
+                            <li><a href="about.html">About</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Press</a></li>
+                            <li><a href="#">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Support</h4>
+                        <ul class="footer-list">
+                            <li><a href="#">Help Center</a></li>
+                            <li><a href="#">Contact</a></li>
+                            <li><a href="#">Status</a></li>
+                            <li><a href="#">Community</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2024 MoneyDesk. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
