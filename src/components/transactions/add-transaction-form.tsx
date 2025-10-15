@@ -41,6 +41,7 @@ import { useCategories } from "@/contexts/category-context";
 import { useAuth } from "@/contexts/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { CameraCapture } from "./camera-capture";
+import { SmartCategorySelector } from "./smart-category-selector";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -271,21 +272,16 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           name="categoryId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SmartCategorySelector
+                value={field.value}
+                onChange={field.onChange}
+                transactionType={form.watch("type")}
+                transactionName={form.watch("name")}
+                onFormUpdate={(categoryId) => {
+                  form.setValue("categoryId", categoryId);
+                  field.onChange(categoryId);
+                }}
+              />
               <FormMessage />
             </FormItem>
           )}

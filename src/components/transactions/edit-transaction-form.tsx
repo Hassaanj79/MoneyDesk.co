@@ -35,6 +35,7 @@ import { useTransactions } from "@/contexts/transaction-context";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
 import { useCurrency } from "@/hooks/use-currency";
+import { SmartCategorySelector } from "./smart-category-selector";
 
 
 const formSchema = z.object({
@@ -221,21 +222,16 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
           name="categoryId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SmartCategorySelector
+                value={field.value}
+                onChange={field.onChange}
+                transactionType={form.watch("type")}
+                transactionName={form.watch("name")}
+                onFormUpdate={(categoryId) => {
+                  form.setValue("categoryId", categoryId);
+                  field.onChange(categoryId);
+                }}
+              />
               <FormMessage />
             </FormItem>
           )}

@@ -1,29 +1,31 @@
 import { useState, useCallback } from 'react';
+import { useCategories } from '@/contexts/category-context';
 
-export interface CategorySuggestion {
+interface CategorySuggestion {
   name: string;
   confidence: number;
-  reason: string;
+  isExisting: boolean;
+  categoryId?: string;
 }
 
-export interface CategorySuggestionsResponse {
+interface CategorySuggestionResponse {
   suggestions: CategorySuggestion[];
-  aiPowered?: boolean;
-  fallback?: boolean;
-  error?: string;
+  newCategories: string[];
 }
 
-export function useCategorySuggestions() {
+export const useCategorySuggestions = () => {
+  const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { categories } = useCategories();
 
   const getSuggestions = useCallback(async (
-    description: string,
-    type: 'income' | 'expense',
-    existingCategories: string[] = []
-  ): Promise<CategorySuggestion[]> => {
-    if (!description.trim()) {
-      return [];
+    transactionName: string,
+    transactionType: 'income' | 'expense'
+  ) => {
+    if (!transactionName.trim()) {
+      setSuggestions([]);
+      return;
     }
 
     setLoading(true);
@@ -36,31 +38,41 @@ export function useCategorySuggestions() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          description: description.trim(),
-          type,
-          existingCategories,
+          transactionName,
+          transactionType,
+          existingCategories: categories.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            type: cat.type
+          }))
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get category suggestions');
+        throw new Error('Failed to get suggestions');
       }
 
-      const data: CategorySuggestionsResponse = await response.json();
-      return data.suggestions || [];
+      const data: CategorySuggestionResponse = await response.json();
+      setSuggestions(data.suggestions);
     } catch (err) {
       console.error('Error getting category suggestions:', err);
-      // Don't set error state for fallback suggestions - they should work silently
-      setError(null);
-      return [];
+      setError('Failed to get category suggestions');
+      setSuggestions([]);
     } finally {
       setLoading(false);
     }
+  }, [categories]);
+
+  const clearSuggestions = useCallback(() => {
+    setSuggestions([]);
+    setError(null);
   }, []);
 
   return {
-    getSuggestions,
+    suggestions,
     loading,
     error,
+    getSuggestions,
+    clearSuggestions
   };
-}
+};
