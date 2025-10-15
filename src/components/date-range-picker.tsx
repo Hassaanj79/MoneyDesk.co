@@ -69,7 +69,6 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
   }, [date]);
 
   const handlePresetChange = (value: string) => {
-    console.log('Preset changed to:', value);
     setPreset(value);
     const now = new Date();
     let from: Date | undefined;
@@ -109,7 +108,7 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
         to = now;
         break;
       case 'custom':
-        onDateChange(undefined);
+        // Don't change the date when custom is selected, just allow manual selection
         return;
     }
     onDateChange({ from, to });
@@ -157,10 +156,7 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
 
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover open={isOpen} onOpenChange={(open) => {
-        console.log('Popover open state changed to:', open);
-        setIsOpen(open);
-      }}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
