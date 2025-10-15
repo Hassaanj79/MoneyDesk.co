@@ -13,12 +13,25 @@ interface CategorySuggestionResponse {
 }
 
 class AICategorySuggestionsService {
-  private groq: Groq;
+  private groq: Groq | null = null;
+  private isAvailable: boolean = false;
 
   constructor() {
-    this.groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY,
-    });
+    const apiKey = process.env.GROQ_API_KEY;
+    if (apiKey && apiKey.trim() !== '') {
+      try {
+        this.groq = new Groq({
+          apiKey: apiKey,
+        });
+        this.isAvailable = true;
+      } catch (error) {
+        console.warn('Failed to initialize Groq client:', error);
+        this.isAvailable = false;
+      }
+    } else {
+      console.warn('GROQ_API_KEY is not set, AI suggestions will use fallback mode');
+      this.isAvailable = false;
+    }
   }
 
   async getCategorySuggestions(
@@ -26,6 +39,11 @@ class AICategorySuggestionsService {
     transactionType: 'income' | 'expense',
     existingCategories: Array<{ id: string; name: string; type: 'income' | 'expense' }>
   ): Promise<CategorySuggestionResponse> {
+    // If AI service is not available, use fallback immediately
+    if (!this.isAvailable || !this.groq) {
+      return this.getFallbackSuggestions(transactionName, transactionType, existingCategories);
+    }
+
     try {
       const prompt = this.buildCategorySuggestionPrompt(
         transactionName,
