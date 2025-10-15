@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -98,6 +97,8 @@ const formatDate = (date: Date, format: string): string => {
           day: '2-digit', 
           year: 'numeric' 
         });
+      case 'yyyy-MM-dd':
+        return date.toISOString().split('T')[0];
       default:
         return date.toLocaleDateString();
     }
@@ -158,9 +159,6 @@ function TransactionsPageContent() {
   const { user } = useAuth();
   
 
-  // Debug logging
-  console.log('TransactionsPageContent - transactions count:', transactions.length);
-  console.log('TransactionsPageContent - loading:', loading);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -599,6 +597,8 @@ function TransactionsPageContent() {
                     variant="default"
                     size="sm"
                     onClick={() => {
+                      // Generate report with filtered data
+                      
                       // Generate and download Excel report
                       const reportData = {
                         totalTransactions: filteredTransactions.length,
@@ -632,9 +632,11 @@ Recurring Transactions: ${reportData.recurringTransactions}
 
 Transaction Details:
 Date,Name,Type,Amount,Category
-${filteredTransactions.map(t => 
-  `${format(new Date(t.date), 'yyyy-MM-dd')},"${t.name}",${t.type},${t.amount},"${getCategoryName(t.categoryId)}"`
-).join('\n')}`;
+${filteredTransactions.map(t => {
+  const transactionDate = getDate(t.date);
+  const formattedDate = formatDate(transactionDate, 'yyyy-MM-dd');
+  return `${formattedDate},"${t.name}",${t.type},${t.amount},"${getCategoryName(t.categoryId)}"`;
+}).join('\n')}`;
 
                       const blob = new Blob([csvContent], { type: 'text/csv' });
                       const url = window.URL.createObjectURL(blob);
@@ -658,6 +660,8 @@ ${filteredTransactions.map(t =>
                     variant="outline"
                     size="sm"
                     onClick={() => {
+                      // Generate PDF report with filtered data
+                      
                       // Generate and download PDF report
                       const reportData = {
                         totalTransactions: filteredTransactions.length,
@@ -726,15 +730,19 @@ ${filteredTransactions.map(t =>
                                 </tr>
                               </thead>
                               <tbody>
-                                ${filteredTransactions.map(t => `
-                                  <tr>
-                                    <td>${format(new Date(t.date), 'yyyy-MM-dd')}</td>
-                                    <td>${t.name}</td>
-                                    <td>${t.type}</td>
-                                    <td>${formatCurrency(t.amount)}</td>
-                                    <td>${getCategoryName(t.categoryId)}</td>
-                                  </tr>
-                                `).join('')}
+                                ${filteredTransactions.map(t => {
+                                  const transactionDate = getDate(t.date);
+                                  const formattedDate = formatDate(transactionDate, 'yyyy-MM-dd');
+                                  return `
+                                    <tr>
+                                      <td>${formattedDate}</td>
+                                      <td>${t.name}</td>
+                                      <td>${t.type}</td>
+                                      <td>${formatCurrency(t.amount)}</td>
+                                      <td>${getCategoryName(t.categoryId)}</td>
+                                    </tr>
+                                  `;
+                                }).join('')}
                               </tbody>
                             </table>
                           </div>

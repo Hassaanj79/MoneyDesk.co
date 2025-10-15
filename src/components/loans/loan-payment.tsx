@@ -51,23 +51,25 @@ export function LoanPayment({ loan }: LoanPaymentProps) {
       });
       
       // Create a transaction for the payment
+      // For "taken" loans: You're paying back (expense)
+      // For "given" loans: You're receiving payment (income)
       const loanCategory = categories.find(cat => 
         cat.name.toLowerCase().includes('loan') && 
-        cat.type === (loan.type === 'given' ? 'income' : 'expense')
+        cat.type === (loan.type === 'taken' ? 'expense' : 'income')
       );
       
       // If no loan category exists, find any appropriate category as fallback
       const fallbackCategory = loanCategory || categories.find(cat => 
-        cat.type === (loan.type === 'given' ? 'income' : 'expense')
+        cat.type === (loan.type === 'taken' ? 'expense' : 'income')
       );
       
       if (fallbackCategory) {
         await addTransaction({
-          name: `Loan ${loan.type === 'given' ? 'payment received' : 'payment made'} - ${loan.borrowerName}`,
+          name: `Loan ${loan.type === 'taken' ? 'payment made' : 'payment received'} - ${loan.borrowerName}`,
           categoryId: fallbackCategory.id,
           date: paymentDate,
           amount: paymentAmount,
-          type: loan.type === 'given' ? 'income' : 'expense',
+          type: loan.type === 'taken' ? 'expense' : 'income',
           accountId: paymentAccountId,
         });
       } else {

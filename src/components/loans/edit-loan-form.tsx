@@ -105,25 +105,25 @@ export function EditLoanForm({ loan, onSuccess }: EditLoanFormProps) {
       if (wasCompleted) {
         const loanCategory = categories.find(cat => 
           cat.name.toLowerCase().includes('loan') && 
-          cat.type === (loan.type === 'given' ? 'income' : 'expense')
+          cat.type === (loan.type === 'taken' ? 'expense' : 'income')
         );
         
         // If no loan category exists, find any appropriate category as fallback
         const fallbackCategory = loanCategory || categories.find(cat => 
-          cat.type === (loan.type === 'given' ? 'income' : 'expense')
+          cat.type === (loan.type === 'taken' ? 'expense' : 'income')
         );
         
         if (fallbackCategory) {
           await addTransaction({
-            name: `Loan ${loan.type === 'given' ? 'repaid by' : 'repaid to'} ${values.borrowerName}`,
+            name: `Loan ${loan.type === 'taken' ? 'repaid to' : 'repaid by'} ${values.borrowerName}`,
             categoryId: fallbackCategory.id,
             date: new Date().toISOString(),
             amount: values.amount,
-            type: loan.type === 'given' ? 'income' : 'expense',
+            type: loan.type === 'taken' ? 'expense' : 'income',
             accountId: values.accountId,
           });
         } else {
-          console.warn(`No ${loan.type === 'given' ? 'income' : 'expense'} category found for loan completion transaction`);
+          console.warn(`No ${loan.type === 'taken' ? 'expense' : 'income'} category found for loan completion transaction`);
         }
       }
 

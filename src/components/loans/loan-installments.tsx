@@ -47,29 +47,34 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
   const handlePayInstallment = async () => {
     if (!selectedInstallment || !paymentAccountId) return;
     
+    // Prevent duplicate calls
+    if (isPaying) return;
+    
     setIsPaying(true);
     try {
       // Record the installment payment
       await payInstallmentPayment(selectedInstallment.id, paymentDate);
       
       // Create a transaction for the payment
+      // For "taken" loans: You're paying back (expense)
+      // For "given" loans: You're receiving payment (income)
       const loanCategory = categories.find(cat => 
         cat.name.toLowerCase().includes('loan') && 
-        cat.type === (loan.type === 'given' ? 'income' : 'expense')
+        cat.type === (loan.type === 'taken' ? 'expense' : 'income')
       );
       
       // If no loan category exists, find any appropriate category as fallback
       const fallbackCategory = loanCategory || categories.find(cat => 
-        cat.type === (loan.type === 'given' ? 'income' : 'expense')
+        cat.type === (loan.type === 'taken' ? 'expense' : 'income')
       );
       
       if (fallbackCategory) {
         await addTransaction({
-          name: `Loan ${loan.type === 'given' ? 'payment received' : 'payment made'} - Installment #${selectedInstallment.installmentNumber}`,
+          name: `Loan ${loan.type === 'taken' ? 'payment made' : 'payment received'} - Installment #${selectedInstallment.installmentNumber}`,
           categoryId: fallbackCategory.id,
           date: paymentDate,
           amount: selectedInstallment.amount,
-          type: loan.type === 'given' ? 'income' : 'expense',
+          type: loan.type === 'taken' ? 'expense' : 'income',
           accountId: paymentAccountId,
         });
       } else {

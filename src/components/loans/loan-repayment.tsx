@@ -75,6 +75,8 @@ export function LoanRepayment({ onSuccess }: LoanRepaymentProps) {
       });
       
       // Create a transaction for the payment
+      // For "pay" type: You're paying back (expense)
+      // For "receive" type: You're receiving payment (income)
       const loanCategory = categories.find(cat => 
         cat.name.toLowerCase().includes('loan') && 
         cat.type === (repaymentType === 'pay' ? 'expense' : 'income')

@@ -43,6 +43,7 @@ import { useDateRange } from "@/contexts/date-range-context";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useReportLogs } from "@/contexts/report-logs-context";
 import { formatAmount } from "@/utils/format-amount";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -152,6 +153,7 @@ function ReportsPageContent() {
   const { accounts } = useAccounts();
   const { budgets } = useBudgets();
   const { loans } = useLoans();
+  const { logReport } = useReportLogs();
   // const { addNotification } = useNotifications();
   const { formatCurrency, currency } = useCurrency();
 
