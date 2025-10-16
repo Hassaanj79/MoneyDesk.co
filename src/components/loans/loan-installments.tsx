@@ -70,7 +70,7 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
       
       if (fallbackCategory) {
         await addTransaction({
-          name: `Loan ${loan.type === 'taken' ? 'payment made' : 'payment received'} - Installment #${selectedInstallment.installmentNumber}`,
+          name: `Loan ${loan.type === 'taken' ? 'payment made' : 'payment received'} - ${loan.borrowerName} - Installment #${selectedInstallment.installmentNumber}`,
           categoryId: fallbackCategory.id,
           date: paymentDate,
           amount: selectedInstallment.amount,
@@ -225,7 +225,7 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
                       setIsPaymentDialogOpen(true);
                     }}
                   >
-                    Pay
+                    {loan.type === 'given' ? 'Receive' : 'Pay'}
                   </Button>
                 )}
               </div>
@@ -237,9 +237,11 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
         <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Record Payment</DialogTitle>
+              <DialogTitle>
+                {loan.type === 'given' ? 'Record Payment Received' : 'Record Payment Made'}
+              </DialogTitle>
               <DialogDescription>
-                Record payment for Installment #{selectedInstallment?.installmentNumber}
+                {loan.type === 'given' ? 'Record payment received for' : 'Record payment made for'} Installment #{selectedInstallment?.installmentNumber}
               </DialogDescription>
             </DialogHeader>
             
@@ -290,7 +292,7 @@ export function LoanInstallments({ loan }: LoanInstallmentsProps) {
                 onClick={handlePayInstallment}
                 disabled={isPaying || !paymentAccountId}
               >
-                {isPaying ? 'Recording...' : 'Record Payment'}
+                {isPaying ? 'Recording...' : (loan.type === 'given' ? 'Record Payment Received' : 'Record Payment Made')}
               </Button>
             </DialogFooter>
           </DialogContent>
