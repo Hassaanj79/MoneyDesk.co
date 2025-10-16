@@ -100,7 +100,13 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
             <FormItem>
               <FormLabel>Initial Balance</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="0.00" {...field} step="0.01" />
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  {...field} 
+                  step="0.01"
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -61,7 +61,8 @@ export function EditLoanForm({ loan, onSuccess }: EditLoanFormProps) {
     
     const accountTransactions = transactions.filter(t => t.accountId === accountId);
     const currentBalance = account.initialBalance + accountTransactions.reduce((sum, t) => {
-      return sum + (t.type === 'income' ? t.amount : -t.amount);
+      const positiveAmount = Math.abs(t.amount);
+      return sum + (t.type === 'income' ? positiveAmount : -positiveAmount);
     }, 0);
     
     return currentBalance;

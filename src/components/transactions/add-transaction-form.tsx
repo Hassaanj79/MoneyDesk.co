@@ -183,6 +183,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                   step="0.01"
                   value={field.value || ''}
                   onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </FormControl>
               <FormMessage />

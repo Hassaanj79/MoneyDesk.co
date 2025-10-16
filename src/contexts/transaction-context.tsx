@@ -107,7 +107,9 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       const allTransactions = [...currentTransactions, newTransaction];
       
       const updatedBalance = allTransactions.reduce((sum, t) => {
-        return sum + (t.type === 'income' ? t.amount : -t.amount);
+        // Ensure amount is always positive, then apply the correct sign based on transaction type
+        const positiveAmount = Math.abs(t.amount);
+        return sum + (t.type === 'income' ? positiveAmount : -positiveAmount);
       }, account.initialBalance || 0);
 
       // Update account balance in Firestore
@@ -145,7 +147,9 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       for (const [accountId, accountTransactions] of Object.entries(accountTransactionsMap)) {
         const initialBalance = accountsData[accountId]?.initialBalance || 0;
         const balance = accountTransactions.reduce((sum: number, transaction: Transaction) => {
-          return sum + (transaction.type === 'income' ? transaction.amount : -transaction.amount);
+          // Ensure amount is always positive, then apply the correct sign based on transaction type
+          const positiveAmount = Math.abs(transaction.amount);
+          return sum + (transaction.type === 'income' ? positiveAmount : -positiveAmount);
         }, initialBalance);
 
         await updateAccountService(user.uid, accountId, { balance });

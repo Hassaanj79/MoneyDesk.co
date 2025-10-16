@@ -70,7 +70,8 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
     // Calculate balance from transactions
     const balance = transactions.reduce((acc, t) => {
       if (t.accountId === accountId) {
-        return acc + (t.type === 'income' ? t.amount : -t.amount);
+        const positiveAmount = Math.abs(t.amount);
+        return acc + (t.type === 'income' ? positiveAmount : -positiveAmount);
       }
       return acc;
     }, account.initialBalance || 0);
@@ -253,6 +254,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                     placeholder="0.00"
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </FormControl>
                 <FormMessage />
@@ -273,6 +275,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                     placeholder="0.00"
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </FormControl>
                 <FormDescription>

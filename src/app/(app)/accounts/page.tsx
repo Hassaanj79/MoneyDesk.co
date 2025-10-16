@@ -72,7 +72,8 @@ export default function AccountsPage() {
       // Calculate balance from transactions to ensure accuracy
       const accountTransactions = transactions.filter(t => t.accountId === account.id);
       const calculatedBalance = accountTransactions.reduce((sum, t) => {
-        return sum + (t.type === 'income' ? t.amount : -t.amount);
+        const positiveAmount = Math.abs(t.amount);
+        return sum + (t.type === 'income' ? positiveAmount : -positiveAmount);
       }, account.initialBalance || 0);
       
       return { ...account, balance: calculatedBalance };

@@ -246,7 +246,8 @@ function ReportsPageContent() {
     const netSavings = accounts.reduce((total, account) => {
       const accountBalance = transactions.reduce((acc, t) => {
         if (t.accountId === account.id) {
-          return acc + (t.type === 'income' ? t.amount : -t.amount);
+          const positiveAmount = Math.abs(t.amount);
+          return acc + (t.type === 'income' ? positiveAmount : -positiveAmount);
         }
         return acc;
       }, account.initialBalance || 0);
@@ -367,7 +368,8 @@ function ReportsPageContent() {
     const accountBalances = accounts.map((account, index) => {
       const balance = transactions.reduce((acc, t) => {
         if (t.accountId === account.id) {
-          return acc + (t.type === 'income' ? t.amount : -t.amount);
+          const positiveAmount = Math.abs(t.amount);
+          return acc + (t.type === 'income' ? positiveAmount : -positiveAmount);
         }
         return acc;
       }, account.initialBalance || 0);

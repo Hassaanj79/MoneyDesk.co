@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
     for (const [accountId, accountTransactions] of Object.entries(accountTransactionsMap)) {
       const initialBalance = accountsData[accountId]?.initialBalance || 0;
       const balance = accountTransactions.reduce((sum: number, transaction: any) => {
-        return sum + (transaction.type === 'income' ? transaction.amount : -transaction.amount);
+        const positiveAmount = Math.abs(transaction.amount);
+        return sum + (transaction.type === 'income' ? positiveAmount : -positiveAmount);
       }, initialBalance);
 
       await updateDoc(doc(db, 'users', userId, 'accounts', accountId), { balance });
