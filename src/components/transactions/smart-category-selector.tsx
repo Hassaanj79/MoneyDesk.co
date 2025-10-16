@@ -80,6 +80,22 @@ export const SmartCategorySelector: React.FC<SmartCategorySelectorProps> = ({
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
 
+    // Check for duplicate category names (case-insensitive)
+    const trimmedName = newCategoryName.trim();
+    const isDuplicate = categories.some(cat => 
+      cat.name.toLowerCase() === trimmedName.toLowerCase() && 
+      cat.type === transactionType
+    );
+
+    if (isDuplicate) {
+      toast({
+        title: "Duplicate Category",
+        description: `A ${transactionType} category with this name already exists.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreating(true);
     try {
       const newCategory = await addCategory({

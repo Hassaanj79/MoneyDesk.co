@@ -109,6 +109,8 @@ Please suggest:
 1. The best matching existing category (if any) with confidence score
 2. Up to 3 new category suggestions if no good existing match
 
+IMPORTANT: Do NOT suggest categories that already exist in the list above. Only suggest truly new categories that don't already exist.
+
 Return your response as JSON in this format:
 {
   "existingMatch": {
@@ -127,6 +129,7 @@ Focus on:
 - For income: salary, freelance, investment, business, gifts, etc.
 - Be specific and relevant to the transaction name
 - Consider common financial categories
+- Avoid suggesting categories that already exist
 `;
   }
 
@@ -161,16 +164,28 @@ Focus on:
         }
       }
 
-      // Add new category suggestions
+      // Add new category suggestions with duplicate checking
       if (data.newSuggestions && Array.isArray(data.newSuggestions)) {
         data.newSuggestions.forEach((suggestion: string) => {
           if (suggestion && typeof suggestion === 'string') {
-            suggestions.push({
-              name: suggestion,
-              confidence: 0.7,
-              isExisting: false
-            });
-            newCategories.push(suggestion);
+            // Check for duplicates against existing categories
+            const isDuplicate = existingCategories.some(
+              cat => cat.name.toLowerCase() === suggestion.toLowerCase()
+            );
+            
+            // Check for duplicates against already suggested categories
+            const isAlreadySuggested = suggestions.some(
+              s => s.name.toLowerCase() === suggestion.toLowerCase()
+            );
+            
+            if (!isDuplicate && !isAlreadySuggested) {
+              suggestions.push({
+                name: suggestion,
+                confidence: 0.7,
+                isExisting: false
+              });
+              newCategories.push(suggestion);
+            }
           }
         });
       }
@@ -190,33 +205,61 @@ Focus on:
     const suggestions: CategorySuggestion[] = [];
     const newCategories: string[] = [];
 
+    // Helper function to check for duplicates
+    const isDuplicate = (categoryName: string) => {
+      return existingCategories.some(
+        cat => cat.name.toLowerCase() === categoryName.toLowerCase()
+      );
+    };
+
     // Simple keyword-based fallback
     const name = transactionName.toLowerCase();
     
     if (transactionType === 'expense') {
       if (name.includes('food') || name.includes('restaurant') || name.includes('coffee')) {
-        suggestions.push({ name: 'Food & Dining', confidence: 0.8, isExisting: false });
-        newCategories.push('Food & Dining');
+        const categoryName = 'Food & Dining';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.8, isExisting: false });
+          newCategories.push(categoryName);
+        }
       } else if (name.includes('gas') || name.includes('fuel') || name.includes('transport')) {
-        suggestions.push({ name: 'Transportation', confidence: 0.8, isExisting: false });
-        newCategories.push('Transportation');
+        const categoryName = 'Transportation';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.8, isExisting: false });
+          newCategories.push(categoryName);
+        }
       } else if (name.includes('grocery') || name.includes('supermarket')) {
-        suggestions.push({ name: 'Groceries', confidence: 0.9, isExisting: false });
-        newCategories.push('Groceries');
+        const categoryName = 'Groceries';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.9, isExisting: false });
+          newCategories.push(categoryName);
+        }
       } else {
-        suggestions.push({ name: 'General Expense', confidence: 0.6, isExisting: false });
-        newCategories.push('General Expense');
+        const categoryName = 'General Expense';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.6, isExisting: false });
+          newCategories.push(categoryName);
+        }
       }
     } else {
       if (name.includes('salary') || name.includes('payroll')) {
-        suggestions.push({ name: 'Salary', confidence: 0.9, isExisting: false });
-        newCategories.push('Salary');
+        const categoryName = 'Salary';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.9, isExisting: false });
+          newCategories.push(categoryName);
+        }
       } else if (name.includes('freelance') || name.includes('contract')) {
-        suggestions.push({ name: 'Freelance', confidence: 0.8, isExisting: false });
-        newCategories.push('Freelance');
+        const categoryName = 'Freelance';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.8, isExisting: false });
+          newCategories.push(categoryName);
+        }
       } else {
-        suggestions.push({ name: 'Other Income', confidence: 0.6, isExisting: false });
-        newCategories.push('Other Income');
+        const categoryName = 'Other Income';
+        if (!isDuplicate(categoryName)) {
+          suggestions.push({ name: categoryName, confidence: 0.6, isExisting: false });
+          newCategories.push(categoryName);
+        }
       }
     }
 

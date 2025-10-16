@@ -30,6 +30,17 @@ export function CategoryManager() {
     
     if (!newCategory.name.trim()) {
       newErrors.name = 'Category name is required'
+    } else {
+      // Check for duplicate category names (case-insensitive)
+      const trimmedName = newCategory.name.trim()
+      const isDuplicate = categories.some(cat => 
+        cat.name.toLowerCase() === trimmedName.toLowerCase() && 
+        cat.type === newCategory.type
+      )
+      
+      if (isDuplicate) {
+        newErrors.name = `A ${newCategory.type} category with this name already exists`
+      }
     }
     
     setErrors(newErrors)
@@ -57,8 +68,29 @@ export function CategoryManager() {
     }
   }
 
+  const validateUpdateForm = (category: Category) => {
+    if (!category.name.trim()) return false
+    
+    // Check for duplicate category names (case-insensitive) excluding current category
+    const trimmedName = category.name.trim()
+    const isDuplicate = categories.some(cat => 
+      cat.id !== category.id && 
+      cat.name.toLowerCase() === trimmedName.toLowerCase() && 
+      cat.type === category.type
+    )
+    
+    return !isDuplicate
+  }
+
   const handleUpdateCategory = async () => {
     if (!editingCategory || !editingCategory.name.trim()) return
+
+    // Validate for duplicates before updating
+    if (!validateUpdateForm(editingCategory)) {
+      // You could show an error message here if needed
+      console.error('Category name already exists')
+      return
+    }
 
     try {
       await updateCategory(editingCategory.id, {
