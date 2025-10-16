@@ -26,7 +26,7 @@ import { useAccounts } from "@/contexts/account-context";
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   type: z.enum(['bank', 'cash', 'credit-card', 'debit-card', 'paypal', 'zelle', 'cash-app', 'custom']),
-  initialBalance: z.coerce.number(),
+  initialBalance: z.coerce.number().optional(),
 });
 
 type AddAccountFormProps = {
@@ -40,12 +40,16 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
     defaultValues: {
       name: "",
       type: "bank",
-      initialBalance: 0,
+      initialBalance: undefined,
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await addAccount(values);
+    const accountData = {
+      ...values,
+      initialBalance: values.initialBalance ?? 0, // Default to 0 if undefined
+    };
+    await addAccount(accountData);
     onSuccess(values.name);
     form.reset();
   }
@@ -101,14 +105,23 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
               <FormLabel>Initial Balance</FormLabel>
               <FormControl>
                 <Input 
-                  type="number" 
-                  placeholder="0.00" 
-                  {...field} 
+                  type="text" 
+                  placeholder="Enter initial balance (can be negative)" 
+                  value={field.value || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only numbers, decimal point, and minus sign
+                    if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
+                      field.onChange(value ? parseFloat(value) : undefined);
+                    }
+                  }}
                   step="0.01"
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </FormControl>
               <FormMessage />
+              <div className="text-sm text-muted-foreground">
+                Enter the current balance of this account. Use negative values for debts or overdrafts.
+              </div>
             </FormItem>
           )}
         />
