@@ -51,19 +51,19 @@ export function LoanSummaryCards() {
     
     const currentPeriodGiven = currentPeriod ? givenLoans.filter(loan => 
       isWithinInterval(new Date(loan.startDate), { start: currentPeriod.from, end: currentPeriod.to })
-    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
+    ).reduce((sum, loan) => sum + loan.remainingAmount, 0) : 0;
     
     const previousPeriodGiven = previousPeriod ? givenLoans.filter(loan => 
       isWithinInterval(new Date(loan.startDate), { start: previousPeriod.from, end: previousPeriod.to })
-    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
+    ).reduce((sum, loan) => sum + loan.remainingAmount, 0) : 0;
     
     const currentPeriodTaken = currentPeriod ? takenLoans.filter(loan => 
       isWithinInterval(new Date(loan.startDate), { start: currentPeriod.from, end: currentPeriod.to })
-    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
+    ).reduce((sum, loan) => sum + loan.remainingAmount, 0) : 0;
     
     const previousPeriodTaken = previousPeriod ? takenLoans.filter(loan => 
       isWithinInterval(new Date(loan.startDate), { start: previousPeriod.from, end: previousPeriod.to })
-    ).reduce((sum, loan) => sum + loan.amount, 0) : 0;
+    ).reduce((sum, loan) => sum + loan.remainingAmount, 0) : 0;
     
     const receivableChange = previousPeriodGiven === 0 ? (currentPeriodGiven > 0 ? "New this period" : "No change") : 
       `${((currentPeriodGiven - previousPeriodGiven) / previousPeriodGiven * 100).toFixed(1)}%`;

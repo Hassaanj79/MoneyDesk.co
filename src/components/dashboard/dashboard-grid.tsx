@@ -26,7 +26,6 @@ import BalanceBreakdown from "@/components/dashboard/balance-breakdown";
 import IncomeBreakdown from "@/components/dashboard/income-breakdown";
 import ExpenseBreakdown from "@/components/dashboard/expense-breakdown";
 import { LoanCards } from "@/components/dashboard/loan-cards";
-import { LoanSummaryCards } from "@/components/dashboard/loan-summary-cards";
 import { AIInsightsCard } from "@/components/dashboard/ai-insights-card";
 import { ArrowDown, ArrowUp, Wallet } from "lucide-react";
 import { useDateRange } from "@/contexts/date-range-context";
@@ -105,10 +104,19 @@ export default function DashboardGrid() {
       .reduce((sum, t) => sum + t.amount, 0);
 
     const calculatePercentageChange = (current: number, previous: number) => {
-        if (previous === 0) {
-            if (current > 0) return "New this period";
+        // If both current and previous are 0, show "No change"
+        if (current === 0 && previous === 0) {
             return "No change";
         }
+        // If previous is 0 but current > 0, show "New this period"
+        if (previous === 0 && current > 0) {
+            return "New this period";
+        }
+        // If current is 0 but previous > 0, show "No activity this period"
+        if (current === 0 && previous > 0) {
+            return "No activity this period";
+        }
+        // Calculate percentage change for both non-zero values
         const change = ((current - previous) / previous) * 100;
         return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
     }
@@ -177,11 +185,6 @@ export default function DashboardGrid() {
         />
       ),
       colSpan: "sm:col-span-1 lg:col-span-1",
-    },
-    {
-      id: "loan-summary",
-      component: <LoanSummaryCards />,
-      colSpan: "sm:col-span-2 lg:col-span-3",
     },
     {
       id: "chart",

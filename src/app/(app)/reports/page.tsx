@@ -230,9 +230,15 @@ function ReportsPageContent() {
     loanStatusData,
     transactionFrequencyData
   } = useMemo(() => {
+    // Debug: Log the date range being used
+    console.log('Reports: Date range filter:', { from, to });
+    console.log('Reports: Total transactions:', transactions.length);
+    
     const currentPeriodTransactions = transactions.filter((t) =>
       from && to ? isWithinInterval(getDate(t.date), { start: from, end: to }) : true
     );
+    
+    console.log('Reports: Filtered transactions:', currentPeriodTransactions.length);
 
     const totalIncome = currentPeriodTransactions
       .filter((t) => t.type === "income")
@@ -265,11 +271,28 @@ function ReportsPageContent() {
             return acc;
         }, {} as Record<string, number>);
 
+    // Show all spending categories individually with precise percentage calculations
     const spendingData = Object.entries(spendingByCategory)
-        .map(([category, amount]) => ({ category, amount }))
-        .sort((a,b) => b.amount - a.amount);
+      .map(([category, amount]) => {
+        const totalSpending = Object.values(spendingByCategory).reduce((sum, amt) => sum + amt, 0);
+        const percentage = totalSpending > 0 ? (amount / totalSpending) * 100 : 0;
+        
+        // Ensure minimum visibility for very small categories (1% minimum display size)
+        const minDisplayValue = Math.max(amount, totalSpending * 0.01);
+        
+        return {
+          category,
+          amount,
+          percentage,
+          displayValue: minDisplayValue,
+          isMinimumSize: amount < totalSpending * 0.01,
+          // Add precise percentage for very small values
+          precisePercentage: percentage < 0.01 ? percentage : percentage
+        };
+      })
+      .sort((a, b) => b.amount - a.amount);
 
-    // Calculate expenses by account name
+    // Calculate expenses by account name with improved handling
     const expensesByAccountNameData = currentPeriodTransactions
         .filter(t => t.type === 'expense')
         .reduce((acc, t) => {
@@ -284,9 +307,26 @@ function ReportsPageContent() {
             return acc;
         }, {} as Record<string, number>);
 
+    // Show all expense accounts individually with precise percentage calculations
     const expensesByAccountName = Object.entries(expensesByAccountNameData)
-        .map(([accountName, amount]) => ({ accountName, amount }))
-        .sort((a,b) => b.amount - a.amount);
+      .map(([accountName, amount]) => {
+        const totalExpenses = Object.values(expensesByAccountNameData).reduce((sum, amt) => sum + amt, 0);
+        const percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
+        
+        // Ensure minimum visibility for very small accounts (1% minimum display size)
+        const minDisplayValue = Math.max(amount, totalExpenses * 0.01);
+        
+        return {
+          accountName,
+          amount,
+          percentage,
+          displayValue: minDisplayValue,
+          isMinimumSize: amount < totalExpenses * 0.01,
+          // Add precise percentage for very small values
+          precisePercentage: percentage < 0.01 ? percentage : percentage
+        };
+      })
+      .sort((a, b) => b.amount - a.amount);
 
 
     // Calculate monthly trends data
@@ -384,17 +424,22 @@ function ReportsPageContent() {
     // Calculate total balance for percentage calculation
     const totalBalance = accountBalances.reduce((sum, account) => sum + account.balance, 0);
     
-    // Create pie chart data with minimum segment size for visibility
+    // Show all accounts individually with precise percentage calculations
     const accountBalanceDistribution = accountBalances.map(account => {
       const percentage = (account.balance / totalBalance) * 100;
+      
+      // Ensure minimum visibility for very small accounts (2% minimum display size)
+      const minDisplayValue = Math.max(account.balance, totalBalance * 0.02);
       
       return {
         name: account.name,
         value: account.balance,
         percentage: percentage,
         color: account.color,
-        // Ensure minimum visibility for very small accounts
-        displayValue: percentage < 1 ? Math.max(account.balance, totalBalance * 0.01) : account.balance
+        displayValue: minDisplayValue,
+        isMinimumSize: account.balance < totalBalance * 0.02,
+        // Add precise percentage for very small values
+        precisePercentage: percentage < 0.01 ? percentage : percentage
       };
     });
 
@@ -416,18 +461,25 @@ function ReportsPageContent() {
       };
     });
 
-    // Calculate loan status overview
+    // Calculate loan status overview with improved handling
     const statusCounts = loans.reduce((acc, loan) => {
-      const status = loan.status === 'completed' ? 'Completed' : 'Active';
+      const status = loan.status === 'completed' ? 'Completed' : 
+                    loan.status === 'partially_paid' ? 'Partially Paid' : 'Active';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const loanStatusData = Object.entries(statusCounts).map(([status, count]) => ({
-      name: status,
-      value: count,
-      color: status === 'Completed' ? '#10b981' : '#f59e0b'
-    }));
+    const totalLoans = loans.length;
+    const loanStatusData = Object.entries(statusCounts).map(([status, count]) => {
+      const percentage = totalLoans > 0 ? (count / totalLoans) * 100 : 0;
+      return {
+        name: status,
+        value: count,
+        percentage: percentage,
+        color: status === 'Completed' ? '#10b981' : 
+               status === 'Partially Paid' ? '#f59e0b' : '#3b82f6'
+      };
+    });
 
     // Calculate transaction frequency data
     const frequencyData: Record<string, number> = {};
@@ -916,12 +968,21 @@ function ReportsPageContent() {
                                     content={({ active, payload }) => {
                                       if (active && payload && payload.length) {
                                         const data = payload[0].payload;
+                                        // Show more decimal places for very small percentages
+                                        const displayPercentage = data.percentage < 0.01 
+                                          ? data.percentage.toFixed(6) 
+                                          : data.percentage.toFixed(2);
                                         return (
                                           <div className="bg-background border rounded-lg p-3 shadow-lg">
                                             <p className="font-medium">{data.name}</p>
                                             <p className="text-sm text-muted-foreground">
-                                              {formatCurrency(data.value)} ({data.percentage.toFixed(1)}%)
+                                              {formatCurrency(data.value)} ({displayPercentage}%)
                                             </p>
+                                            {data.isMinimumSize && (
+                                              <p className="text-xs text-amber-600 mt-1">
+                                                *Minimum size for visibility
+                                              </p>
+                                            )}
                                           </div>
                                         );
                                       }
@@ -932,18 +993,30 @@ function ReportsPageContent() {
                               </ChartContainer>
                             </div>
                             <div className="flex flex-wrap justify-center gap-4 mt-4">
-                              {accountBalanceDistribution.map((account, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                  <div 
-                                    className="w-3 h-3 rounded-full" 
-                                    style={{ backgroundColor: account.color }}
-                                  ></div>
-                                  <span className="text-sm text-muted-foreground">
-                                    {account.name}: {formatCurrency(account.value)} ({account.percentage.toFixed(1)}%)
-                                  </span>
-                                </div>
-                              ))}
+                              {accountBalanceDistribution.map((account, index) => {
+                                // Show more decimal places for very small percentages
+                                const displayPercentage = account.percentage < 0.01 
+                                  ? account.percentage.toFixed(6) 
+                                  : account.percentage.toFixed(2);
+                                return (
+                                  <div key={index} className="flex items-center gap-2">
+                                    <div 
+                                      className="w-3 h-3 rounded-full" 
+                                      style={{ backgroundColor: account.color }}
+                                    ></div>
+                                    <span className="text-sm text-muted-foreground">
+                                      {account.name}: {formatCurrency(account.value)} ({displayPercentage}%)
+                                      {account.isMinimumSize && <span className="text-amber-600 ml-1">*</span>}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
+                            {accountBalanceDistribution.some(account => account.isMinimumSize) && (
+                              <p className="text-xs text-amber-600 text-center mt-2">
+                                * Minimum size for visibility
+                              </p>
+                            )}
                           </CardContent>
                         </Card>
                       </SortableCard>
@@ -1083,7 +1156,20 @@ function ReportsPageContent() {
                                     ))}
                                   </Pie>
                                   <Tooltip
-                                    content={<ChartTooltipContent formatter={(value) => `${value} loans`}/>}
+                                    content={({ active, payload }) => {
+                                      if (active && payload && payload.length) {
+                                        const data = payload[0].payload;
+                                        return (
+                                          <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                            <p className="font-medium">{data.name}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                              {data.value} loans ({data.percentage.toFixed(1)}%)
+                                            </p>
+                                          </div>
+                                        );
+                                      }
+                                      return null;
+                                    }}
                                   />
                                 </PieChart>
                               </ChartContainer>
@@ -1096,7 +1182,7 @@ function ReportsPageContent() {
                                     style={{ backgroundColor: status.color }}
                                   ></div>
                                   <span className="text-sm text-muted-foreground">
-                                    {status.name}: {status.value} loans
+                                    {status.name}: {status.value} loans ({status.percentage.toFixed(1)}%)
                                   </span>
                                 </div>
                               ))}

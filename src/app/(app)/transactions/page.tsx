@@ -190,11 +190,33 @@ function TransactionsPageContent() {
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
 
-    // Date range filter (from date picker)
+    // Debug: Log the date range being used
+    console.log('Transactions: Date range filter:', { from: date?.from, to: date?.to });
+    console.log('Transactions: Total transactions:', transactions.length);
+
+    // Date range filter (from date picker) - this takes precedence over custom date filters
     if (date?.from && date?.to) {
       filtered = filtered.filter((t) =>
         isWithinInterval(getDate(t.date), { start: date.from!, end: date.to! })
       );
+      console.log('Transactions: After date range filter:', filtered.length);
+    } else {
+      // Only apply custom date filters if no date range is selected
+      if (filters.startDate) {
+        const startDate = new Date(filters.startDate);
+        filtered = filtered.filter(transaction => {
+          const transactionDate = new Date(transaction.date);
+          return transactionDate >= startDate;
+        });
+      }
+      
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate);
+        filtered = filtered.filter(transaction => {
+          const transactionDate = new Date(transaction.date);
+          return transactionDate <= endDate;
+        });
+      }
     }
 
     // Custom filters
@@ -213,23 +235,6 @@ function TransactionsPageContent() {
       // Name filter
       if (filters.name && !transaction.name.toLowerCase().includes(filters.name.toLowerCase())) {
         return false;
-      }
-      
-      // Date range filter (from custom filters)
-      if (filters.startDate) {
-        const transactionDate = new Date(transaction.date);
-        const startDate = new Date(filters.startDate);
-        if (transactionDate < startDate) {
-          return false;
-        }
-      }
-      
-      if (filters.endDate) {
-        const transactionDate = new Date(transaction.date);
-        const endDate = new Date(filters.endDate);
-        if (transactionDate > endDate) {
-          return false;
-        }
       }
       
       // Category filter
@@ -254,6 +259,8 @@ function TransactionsPageContent() {
       
       return true;
     });
+
+    console.log('Transactions: Final filtered count:', filtered.length);
 
     return filtered.sort((a,b) => {
       // Sort by createdAt timestamp for newest first
