@@ -34,7 +34,7 @@ type AddAccountFormProps = {
 };
 
 export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
-  const { addAccount } = useAccounts();
+  const { addAccount, accounts } = useAccounts();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,6 +45,20 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Check for duplicate account names (case-insensitive)
+    const trimmedName = values.name.trim();
+    const isDuplicate = accounts.some(account => 
+      account.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      form.setError("name", {
+        type: "manual",
+        message: "An account with this name already exists"
+      });
+      return;
+    }
+
     const accountData = {
       ...values,
       initialBalance: values.initialBalance ?? 0, // Default to 0 if undefined

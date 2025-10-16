@@ -48,6 +48,16 @@ export function AccountsSettings() {
     
     if (!newAccount.name.trim()) {
       newErrors.name = 'Account name is required'
+    } else {
+      // Check for duplicate account names (case-insensitive)
+      const trimmedName = newAccount.name.trim()
+      const isDuplicate = accounts.some(account => 
+        account.name.toLowerCase() === trimmedName.toLowerCase()
+      )
+      
+      if (isDuplicate) {
+        newErrors.name = 'An account with this name already exists'
+      }
     }
     
     if (isNaN(newAccount.initialBalance) || newAccount.initialBalance < 0) {
@@ -80,8 +90,28 @@ export function AccountsSettings() {
     }
   }
 
+  const validateUpdateForm = (account: Account) => {
+    if (!account.name.trim()) return false
+    
+    // Check for duplicate account names (case-insensitive) excluding current account
+    const trimmedName = account.name.trim()
+    const isDuplicate = accounts.some(acc => 
+      acc.id !== account.id && 
+      acc.name.toLowerCase() === trimmedName.toLowerCase()
+    )
+    
+    return !isDuplicate
+  }
+
   const handleUpdateAccount = async () => {
     if (!editingAccount || !editingAccount.name.trim()) return
+
+    // Validate for duplicates before updating
+    if (!validateUpdateForm(editingAccount)) {
+      // You could show an error message here if needed
+      console.error('Account name already exists')
+      return
+    }
 
     try {
       await updateAccount(editingAccount.id, {
