@@ -679,7 +679,7 @@ function ReportsPageContent() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 sm:px-6">
           <div>
             <CardTitle className="text-lg sm:text-xl">Reports</CardTitle>
             {fromDate && toDate && (

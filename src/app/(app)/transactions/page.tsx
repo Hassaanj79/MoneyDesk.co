@@ -526,11 +526,11 @@ function TransactionsPageContent() {
 
 
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 sm:px-6">
           <div>
             <CardTitle className="text-lg sm:text-xl">{t('transactions.title')}</CardTitle>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto justify-end">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto justify-end">
             <TooltipProvider>
               <Tooltip>
                   <TooltipTrigger asChild>
@@ -570,16 +570,17 @@ function TransactionsPageContent() {
         <CardContent>
           {/* Filter Section */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 px-4 sm:px-6">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="gap-2"
+                  className="gap-2 flex-1 sm:flex-initial"
                 >
                   <Filter className="h-4 w-4" />
-                  Filters
+                  <span className="hidden sm:inline">Filters</span>
+                  <span className="sm:hidden">Filters</span>
                   {(filters.name || filters.startDate || filters.endDate || filters.categoryId || filters.minAmount || filters.maxAmount || filters.type !== 'all') && (
                     <Badge variant="secondary" className="ml-1">
                       Active
@@ -588,18 +589,18 @@ function TransactionsPageContent() {
                 </Button>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={clearFilters}
-                  className="gap-2"
+                  className="gap-2 flex-1 sm:flex-initial"
                 >
                   <X className="h-4 w-4" />
                   Clear
                 </Button>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <Button
                     variant="default"
                     size="sm"
@@ -657,10 +658,11 @@ ${filteredTransactions.map(t => {
                       
                       toast.success('Excel report downloaded successfully!');
                     }}
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-initial"
                   >
                     <FileText className="h-4 w-4" />
-                    Download Excel
+                    <span className="hidden sm:inline">Download Excel</span>
+                    <span className="sm:hidden">Excel</span>
                   </Button>
                   
                   <Button
@@ -766,17 +768,18 @@ ${filteredTransactions.map(t => {
                       
                       toast.success('PDF report opened for printing!');
                     }}
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-initial"
                   >
                     <FileText className="h-4 w-4" />
-                    Download PDF
+                    <span className="hidden sm:inline">Download PDF</span>
+                    <span className="sm:hidden">PDF</span>
                   </Button>
                 </div>
               </div>
             </div>
             
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/50 mx-4 sm:mx-6">
                 {/* Transaction Type Filter */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Type</label>
@@ -926,7 +929,8 @@ ${filteredTransactions.map(t => {
                 </div>
               </div>
             )}
-            <Table>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
@@ -1056,6 +1060,7 @@ ${filteredTransactions.map(t => {
                 )}
               </TableBody>
             </Table>
+            </div>
               </Tabs>
         </CardContent>
       </Card>

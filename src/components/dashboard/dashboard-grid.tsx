@@ -242,7 +242,7 @@ export default function DashboardGrid() {
         onDragEnd={handleDragEnd}
       >
       <SortableContext items={items.map(i => i.id)} strategy={rectSwappingStrategy}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 px-2 sm:px-0">
           {items.map((item) => (
              <SortableItem key={item.id} id={item.id} className={item.colSpan}>
                 {item.id === 'balance' ? <div 

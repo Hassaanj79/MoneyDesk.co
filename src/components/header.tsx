@@ -324,7 +324,7 @@ export function Header() {
           </Button>
         </div>
 
-        <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 lg:gap-2 pr-4">
+        <div className="flex w-full items-center gap-1 sm:gap-2 md:ml-auto md:gap-2 lg:gap-2 pr-2 sm:pr-4">
             {/* Date Range Picker - hidden on mobile */}
             <div className="hidden md:block ml-auto">
                 <DateRangePicker date={date} onDateChange={setDate} />
@@ -342,8 +342,8 @@ export function Header() {
                      <Input
                        ref={searchInputRef}
                        type="search"
-                       placeholder={t('common.search', 'Search transactions, loans, accounts...')}
-                       className="w-full rounded-lg bg-background pl-8 sm:w-[200px] lg:w-[250px] xl:w-[300px] focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       placeholder={t('common.search', 'Search...')}
+                       className="w-full rounded-lg bg-background pl-8 sm:w-[180px] lg:w-[220px] xl:w-[280px] focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                        value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}
                        onFocus={() => {

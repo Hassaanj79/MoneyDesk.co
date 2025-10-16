@@ -364,14 +364,14 @@ function LoansPageContent() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-6">
             <div>
               <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold">Loans</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Manage your given and taken loans
               </p>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
