@@ -35,7 +35,7 @@ export function AccountsSettings() {
   const [newAccount, setNewAccount] = useState({
     name: '',
     type: 'bank' as Account['type'],
-    initialBalance: 0
+    initialBalance: undefined as number | undefined
   })
   const [errors, setErrors] = useState<{name?: string, initialBalance?: string}>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -60,7 +60,7 @@ export function AccountsSettings() {
       }
     }
     
-    if (isNaN(newAccount.initialBalance) || newAccount.initialBalance < 0) {
+    if (newAccount.initialBalance !== undefined && isNaN(newAccount.initialBalance)) {
       newErrors.initialBalance = 'Initial balance must be a valid number'
     }
     
@@ -76,10 +76,10 @@ export function AccountsSettings() {
       await addAccount({
         name: newAccount.name.trim(),
         type: newAccount.type,
-        initialBalance: newAccount.initialBalance
+        initialBalance: newAccount.initialBalance || 0
       })
       
-      setNewAccount({ name: '', type: 'bank', initialBalance: 0 })
+      setNewAccount({ name: '', type: 'bank', initialBalance: undefined })
       setErrors({})
       setIsAddDialogOpen(false)
     } catch (error) {
@@ -247,14 +247,17 @@ export function AccountsSettings() {
                 <Label htmlFor="initial-balance">Initial Balance</Label>
                 <Input
                   id="initial-balance"
-                  type="number"
-                  step="0.01"
-                  value={newAccount.initialBalance}
+                  type="text"
+                  value={newAccount.initialBalance || ''}
                   onChange={(e) => {
-                    setNewAccount({...newAccount, initialBalance: parseFloat(e.target.value) || 0})
-                    if (errors.initialBalance) setErrors({...errors, initialBalance: undefined})
+                    const value = e.target.value;
+                    // Allow only numbers, decimal point, and minus sign
+                    if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
+                      setNewAccount({...newAccount, initialBalance: value === '' ? undefined : parseFloat(value) || 0})
+                      if (errors.initialBalance) setErrors({...errors, initialBalance: undefined})
+                    }
                   }}
-                  placeholder="0.00"
+                  placeholder="Enter initial balance (can be negative)"
                   className={errors.initialBalance ? 'border-red-500' : ''}
                 />
                 {errors.initialBalance && <p className="text-sm text-red-500 mt-1">{errors.initialBalance}</p>}
@@ -264,7 +267,7 @@ export function AccountsSettings() {
               <Button variant="outline" onClick={() => {
                 setIsAddDialogOpen(false)
                 setErrors({})
-                setNewAccount({ name: '', type: 'bank', initialBalance: 0 })
+                setNewAccount({ name: '', type: 'bank', initialBalance: undefined })
               }}>
                 Cancel
               </Button>
@@ -434,11 +437,16 @@ export function AccountsSettings() {
                 <Label htmlFor="edit-initial-balance">Initial Balance</Label>
                 <Input
                   id="edit-initial-balance"
-                  type="number"
-                  step="0.01"
-                  value={editingAccount.initialBalance}
-                  onChange={(e) => setEditingAccount({...editingAccount, initialBalance: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
+                  type="text"
+                  value={editingAccount.initialBalance || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only numbers, decimal point, and minus sign
+                    if (value === '' || /^-?\d*\.?\d*$/.test(value)) {
+                      setEditingAccount({...editingAccount, initialBalance: value === '' ? undefined : parseFloat(value) || 0})
+                    }
+                  }}
+                  placeholder="Enter initial balance (can be negative)"
                 />
               </div>
             </div>
