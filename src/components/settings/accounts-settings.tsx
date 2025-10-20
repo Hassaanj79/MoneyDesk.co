@@ -283,6 +283,24 @@ export function AccountsSettings() {
         </div>
       </div>
 
+      {/* Information Banner */}
+      <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="flex items-start gap-2">
+          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mt-0.5">
+            <span className="text-blue-600 dark:text-blue-400 text-xs font-bold">i</span>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">
+              Account Deletion Policy
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              Accounts with associated transactions cannot be deleted to maintain data integrity. 
+              To delete an account, first delete or reassign all its transactions from the Transactions page.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-3 sm:gap-4">
         {accounts.length === 0 ? (
           <Card>
@@ -352,48 +370,48 @@ export function AccountsSettings() {
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={`h-8 w-8 p-0 ${hasTransactions 
-                              ? 'text-gray-400 cursor-not-allowed' 
-                              : 'text-red-600 hover:text-red-700'
-                            }`}
-                            title={hasTransactions 
-                              ? `Cannot delete account with ${accountTransactions.length} transaction${accountTransactions.length === 1 ? '' : 's'}` 
-                              : 'Delete account'
-                            }
-                            disabled={hasTransactions}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Account</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {hasTransactions 
-                                ? `Cannot delete "${account.name}" because it has ${accountTransactions.length} associated transaction${accountTransactions.length === 1 ? '' : 's'}. Please delete or reassign these transactions first.`
-                                : `Are you sure you want to delete "${account.name}"? This action cannot be undone.`
-                              }
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            {!hasTransactions && (
+                      {hasTransactions ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-800"
+                          title={`Cannot delete account with ${accountTransactions.length} transaction${accountTransactions.length === 1 ? '' : 's'}. Delete or reassign transactions first.`}
+                          disabled
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              title="Delete account"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{account.name}"? This action cannot be undone and will permanently remove the account from your financial records.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteAccount(account.id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
-                                Delete
+                                Delete Account
                               </AlertDialogAction>
-                            )}
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 </CardContent>
