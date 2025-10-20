@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, User, Loader2, MessageSquare } from "lucide-react"
 import { CancelAccountForm } from "@/components/settings/cancel-account-form"
+import { ThemeSelector } from "@/components/settings/theme-selector"
 import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 // import { useNotifications } from "@/contexts/notification-context"
@@ -291,6 +292,11 @@ export function ProfileForm() {
                 </FormItem>
             )}
             />
+        </div>
+        
+        {/* Theme Selection */}
+        <div className="mt-6 pt-6 border-t border-border">
+          <ThemeSelector />
         </div>
         
         <Button type="submit" disabled={loading}>

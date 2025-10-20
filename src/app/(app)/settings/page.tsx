@@ -21,6 +21,7 @@ import { ProfileForm } from "@/components/settings/profile-form"
 import { AppConfigForm } from "@/components/settings/app-config-form"
 import { SecuritySettings } from "@/components/settings/security-settings"
 import { AIPrivacyToggle } from "@/components/ai/ai-privacy-toggle"
+import { LoginNotificationSettings } from "@/components/settings/login-notification-settings"
 
 export default function SettingsPage() {
   const searchParams = useSearchParams()
@@ -29,7 +30,7 @@ export default function SettingsPage() {
   // Handle URL parameters for direct navigation
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['profile', 'security', 'app-config'].includes(tab)) {
+    if (tab && ['profile', 'security', 'notifications', 'app-config'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -43,12 +44,15 @@ export default function SettingsPage() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsList className="grid w-full grid-cols-4 h-auto">
             <TabsTrigger value="profile" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>Profile</span>
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center justify-center p-3 text-xs sm:text-sm">
+              <span>Notifications</span>
             </TabsTrigger>
             <TabsTrigger value="app-config" className="flex items-center justify-center p-3 text-xs sm:text-sm">
               <span>App Config</span>
@@ -59,6 +63,11 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="security">
             <SecuritySettings />
+          </TabsContent>
+          <TabsContent value="notifications">
+            <div className="space-y-6">
+              <LoginNotificationSettings />
+            </div>
           </TabsContent>
           <TabsContent value="app-config">
             <div className="space-y-6">
