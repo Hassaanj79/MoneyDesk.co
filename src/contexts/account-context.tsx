@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { Account } from '@/types';
+import type { Account, Transaction } from '@/types';
 import { useAuth } from './auth-context';
 import { addAccount as addAccountService, deleteAccount as deleteAccountService, getAccounts, updateAccount as updateAccountService } from '@/services/accounts';
 import { onSnapshot } from 'firebase/firestore';
@@ -11,7 +11,7 @@ interface AccountContextType {
   accounts: Account[];
   addAccount: (account: Omit<Account, 'id' | 'userId'>) => Promise<string | undefined>;
   updateAccount: (id: string, updatedAccount: Partial<Omit<Account, 'id' | 'userId'>>) => Promise<void>;
-  deleteAccount: (id: string) => Promise<void>;
+  deleteAccount: (id: string, transactions?: Transaction[]) => Promise<void>;
   loading: boolean;
   refreshTrigger: number; // Add refresh trigger for forcing re-renders
 }
@@ -95,8 +95,15 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteAccount = async (id: string) => {
+  const deleteAccount = async (id: string, transactions: Transaction[] = []) => {
     if (!user) throw new Error("User not authenticated");
+    
+    // Check if account has associated transactions
+    const accountTransactions = transactions.filter(t => t.accountId === id);
+    if (accountTransactions.length > 0) {
+      toast.error(`Cannot delete account. It has ${accountTransactions.length} associated transaction${accountTransactions.length === 1 ? '' : 's'}. Please delete or reassign these transactions first.`);
+      throw new Error(`Account has ${accountTransactions.length} associated transactions`);
+    }
     
     try {
       await deleteAccountService(user.uid, id);

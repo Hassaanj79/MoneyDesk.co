@@ -28,7 +28,7 @@ const accountTypes = [
 
 export function AccountsSettings() {
   const { accounts, addAccount, updateAccount, deleteAccount, loading } = useAccounts()
-  const { recalculateAllAccountBalances } = useTransactions()
+  const { transactions, recalculateAllAccountBalances } = useTransactions()
   const { formatCurrency } = useCurrency()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
@@ -128,7 +128,7 @@ export function AccountsSettings() {
 
   const handleDeleteAccount = async (accountId: string) => {
     try {
-      await deleteAccount(accountId)
+      await deleteAccount(accountId, transactions)
     } catch (error) {
       console.error('Error deleting account:', error)
     }
@@ -301,6 +301,8 @@ export function AccountsSettings() {
         ) : (
           accounts.map((account) => {
             const IconComponent = getAccountIcon(account.type)
+            const accountTransactions = transactions.filter(t => t.accountId === account.id)
+            const hasTransactions = accountTransactions.length > 0
             return (
               <Card key={account.id} className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardContent className="p-3 sm:p-4">
@@ -355,8 +357,15 @@ export function AccountsSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                            title="Delete account"
+                            className={`h-8 w-8 p-0 ${hasTransactions 
+                              ? 'text-gray-400 cursor-not-allowed' 
+                              : 'text-red-600 hover:text-red-700'
+                            }`}
+                            title={hasTransactions 
+                              ? `Cannot delete account with ${accountTransactions.length} transaction${accountTransactions.length === 1 ? '' : 's'}` 
+                              : 'Delete account'
+                            }
+                            disabled={hasTransactions}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Trash2 className="h-3 w-3" />
@@ -366,17 +375,22 @@ export function AccountsSettings() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Account</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete "{account.name}"? This action cannot be undone and will remove all associated transactions.
+                              {hasTransactions 
+                                ? `Cannot delete "${account.name}" because it has ${accountTransactions.length} associated transaction${accountTransactions.length === 1 ? '' : 's'}. Please delete or reassign these transactions first.`
+                                : `Are you sure you want to delete "${account.name}"? This action cannot be undone.`
+                              }
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteAccount(account.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Delete
-                            </AlertDialogAction>
+                            {!hasTransactions && (
+                              <AlertDialogAction
+                                onClick={() => handleDeleteAccount(account.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            )}
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>

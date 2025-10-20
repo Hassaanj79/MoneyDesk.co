@@ -97,13 +97,18 @@ export default function AccountsPage() {
   
   const confirmDelete = async () => {
     if (selectedAccount) {
-      await deleteAccount(selectedAccount.id);
-       // addNotification({
-       //   type: 'account_deleted',
-       //   title: 'Account Deleted',
-       //   message: `The account "${selectedAccount.name}" has been deleted.`,
-       //   navigationPath: '/accounts'
-       // });
+      try {
+        await deleteAccount(selectedAccount.id, transactions);
+        // addNotification({
+        //   type: 'account_deleted',
+        //   title: 'Account Deleted',
+        //   message: `The account "${selectedAccount.name}" has been deleted.`,
+        //   navigationPath: '/accounts'
+        // });
+      } catch (error) {
+        // Error is already handled by the context (toast message shown)
+        console.error('Error deleting account:', error);
+      }
     }
     setDeleteDialogOpen(false);
     setSelectedAccount(null);
