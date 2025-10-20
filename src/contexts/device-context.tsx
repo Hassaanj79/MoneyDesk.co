@@ -35,6 +35,7 @@ export const DeviceProvider = ({ children }: { children: ReactNode }) => {
   // Load initial sessions
   const loadSessions = async () => {
     if (!user) {
+      console.log('DeviceContext: No user, clearing sessions');
       setSessions([]);
       setSessionCount(0);
       setLoading(false);
@@ -42,16 +43,20 @@ export const DeviceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      console.log('DeviceContext: Loading sessions for user:', user.uid);
       setLoading(true);
       setError(null);
       
       const activeSessions = await getUserActiveSessions(user.uid);
       const count = await getSessionCount(user.uid);
       
+      console.log('DeviceContext: Loaded sessions:', activeSessions);
+      console.log('DeviceContext: Session count:', count);
+      
       setSessions(activeSessions);
       setSessionCount(count);
     } catch (err: any) {
-      console.error('Error loading sessions:', err);
+      console.error('DeviceContext: Error loading sessions:', err);
       setError(err.message || 'Failed to load sessions');
     } finally {
       setLoading(false);

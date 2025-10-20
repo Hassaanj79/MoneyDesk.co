@@ -137,23 +137,40 @@ export const createOrUpdateDeviceSession = async (
 // Get user's active sessions
 export const getUserActiveSessions = async (userId: string): Promise<DeviceSession[]> => {
   try {
+    console.log('getUserActiveSessions: Fetching sessions for userId:', userId);
     const sessionsQuery = query(
       collection(db, DEVICE_SESSIONS_COLLECTION),
       where('userId', '==', userId)
     );
     
     const snapshot = await getDocs(sessionsQuery);
-    return snapshot.docs
-      .map(doc => ({
+    console.log('getUserActiveSessions: Raw snapshot size:', snapshot.size);
+    
+    const allSessions = snapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('getUserActiveSessions: Session data:', {
         id: doc.id,
-        ...doc.data()
-      }))
-      .filter(session => session.isActive === true) // Filter in memory
-      .sort((a, b) => {
-        const aTime = a.lastActivity?.toDate ? a.lastActivity.toDate().getTime() : 0;
-        const bTime = b.lastActivity?.toDate ? b.lastActivity.toDate().getTime() : 0;
-        return bTime - aTime; // Sort in memory
-      }) as DeviceSession[];
+        userId: data.userId,
+        isActive: data.isActive,
+        deviceName: data.deviceName
+      });
+      return {
+        id: doc.id,
+        ...data
+      };
+    });
+    
+    const activeSessions = allSessions.filter(session => session.isActive === true);
+    console.log('getUserActiveSessions: Active sessions count:', activeSessions.length);
+    
+    const sortedSessions = activeSessions.sort((a, b) => {
+      const aTime = a.lastActivity?.toDate ? a.lastActivity.toDate().getTime() : 0;
+      const bTime = b.lastActivity?.toDate ? b.lastActivity.toDate().getTime() : 0;
+      return bTime - aTime; // Sort in memory
+    }) as DeviceSession[];
+    
+    console.log('getUserActiveSessions: Final sorted sessions:', sortedSessions);
+    return sortedSessions;
   } catch (error) {
     console.error('Error fetching user sessions:', error);
     throw new Error('Failed to fetch user sessions');

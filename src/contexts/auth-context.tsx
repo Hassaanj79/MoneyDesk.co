@@ -142,7 +142,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           region: 'Unknown'
         };
         
-        await createOrUpdateDeviceSession(
+        console.log('Creating device session with data:', {
+          userId: result.user.uid,
+          deviceId,
+          deviceName,
+          userAgent,
+          ipAddress,
+          location
+        });
+        
+        const sessionId = await createOrUpdateDeviceSession(
           result.user.uid,
           deviceId,
           deviceName,
@@ -152,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           false // Default to not remembered
         );
         
-        console.log('Device session created successfully');
+        console.log('Device session created successfully with ID:', sessionId);
       } catch (deviceError) {
         console.error('Error creating device session:', deviceError);
         // Don't fail login if device session creation fails
