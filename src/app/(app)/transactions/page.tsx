@@ -193,6 +193,13 @@ function TransactionsPageContent() {
     // Debug: Log the date range being used
     console.log('Transactions: Date range filter:', { from: date?.from, to: date?.to });
     console.log('Transactions: Total transactions:', transactions.length);
+    console.log('Transactions: Tab filter:', filter);
+
+    // Apply tab filter first (all, income, expense)
+    if (filter !== 'all') {
+      filtered = filtered.filter(transaction => transaction.type === filter);
+      console.log('Transactions: After tab filter:', filtered.length);
+    }
 
     // Date range filter (from date picker) - this takes precedence over custom date filters
     if (date?.from && date?.to) {
@@ -269,7 +276,7 @@ function TransactionsPageContent() {
       }
       return 0;
     });
-  }, [transactions, filters, date]);
+  }, [transactions, filters, date, filter]);
 
   // Filter functions
   const updateFilter = (key: keyof typeof filters, value: string) => {
