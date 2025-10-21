@@ -59,15 +59,8 @@ export const getDefaultAccount = async (userId: string) => {
   const accountsSnapshot = await getDocs(accountsCol);
   
   if (accountsSnapshot.empty) {
-    // Create a default account if none exists
-    const defaultAccount = {
-      name: 'Default Account',
-      type: 'bank' as const,
-      initialBalance: 0,
-      balance: 0
-    };
-    const accountDoc = await addDoc(accountsCol, defaultAccount);
-    return accountDoc.id;
+    // Don't auto-create accounts - let users create their own
+    throw new Error('No accounts found. Please create an account first.');
   }
   
   return accountsSnapshot.docs[0].id;

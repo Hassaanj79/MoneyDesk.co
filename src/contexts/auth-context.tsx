@@ -197,6 +197,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
     
+    // Initialize clean user account (no dummy data)
+    try {
+      const { initializeCleanUser } = await import('@/services/clean-user-initialization');
+      await initializeCleanUser(userCredential.user.uid, {
+        email: userCredential.user.email || email,
+        displayName: name,
+        phone: phone,
+        createdAt: new Date(),
+        isCleanAccount: true
+      });
+      console.log('✅ Clean user account initialized successfully');
+    } catch (cleanInitError) {
+      console.error('Error initializing clean user account:', cleanInitError);
+      // Don't fail signup if clean initialization fails, but log it
+    }
+    
     // Store phone number in user profile if provided
     if (phone) {
       try {
@@ -216,6 +232,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Create the user account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
+      
+      // Initialize clean user account (no dummy data)
+      try {
+        const { initializeCleanUser } = await import('@/services/clean-user-initialization');
+        await initializeCleanUser(userCredential.user.uid, {
+          email: userCredential.user.email || email,
+          displayName: name,
+          phone: phone,
+          createdAt: new Date(),
+          isCleanAccount: true
+        });
+        console.log('✅ Clean user account initialized successfully');
+      } catch (cleanInitError) {
+        console.error('Error initializing clean user account:', cleanInitError);
+        // Don't fail signup if clean initialization fails, but log it
+      }
       
       // Store phone number in user profile if provided
       if (phone) {

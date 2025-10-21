@@ -374,6 +374,7 @@ function TransactionsPageContent() {
     setDeleteDialogOpen(false);
     setSelectedTransaction(null);
   }
+
   
   const getCategoryName = (categoryId: string) => {
       return categories.find(c => c.id === categoryId)?.name || 'N/A'

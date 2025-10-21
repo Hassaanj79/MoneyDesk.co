@@ -45,18 +45,12 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       const q = getCategories(user.uid);
       const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-        if (querySnapshot.empty) {
-            // Create default categories for new user
-            for (const cat of defaultCategories) {
-                await addCategoryService(user.uid, cat);
-            }
-        } else {
-            const userCategories: Category[] = [];
-            querySnapshot.forEach((doc) => {
-            userCategories.push({ id: doc.id, ...doc.data() } as Category);
-            });
-            setCategories(userCategories);
-        }
+        // Don't auto-create default categories - let users start with a clean slate
+        const userCategories: Category[] = [];
+        querySnapshot.forEach((doc) => {
+          userCategories.push({ id: doc.id, ...doc.data() } as Category);
+        });
+        setCategories(userCategories);
         setLoading(false);
       }, (error) => {
         console.error("Error fetching categories:", error);
