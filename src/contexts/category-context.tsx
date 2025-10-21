@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { Category } from '@/types';
+import type { Category, Transaction } from '@/types';
 import { useAuth } from './auth-context';
 import { addCategory as addCategoryService, getCategories, updateCategory as updateCategoryService, deleteCategory as deleteCategoryService, deleteCategoriesBulk as deleteCategoriesBulkService } from '@/services/categories';
 import { onSnapshot } from 'firebase/firestore';
@@ -13,8 +13,8 @@ interface CategoryContextType {
   categories: Category[];
   addCategory: (category: Omit<Category, 'id' | 'userId'>) => Promise<string | undefined>;
   updateCategory: (categoryId: string, category: Partial<Omit<Category, 'id' | 'userId'>>) => Promise<void>;
-  deleteCategory: (categoryId: string) => Promise<void>;
-  deleteCategoriesBulk: (categoryIds: string[]) => Promise<void>;
+  deleteCategory: (categoryId: string, transactions: Transaction[]) => Promise<void>;
+  deleteCategoriesBulk: (categoryIds: string[], transactions: Transaction[]) => Promise<void>;
   loading: boolean;
 }
 
@@ -26,12 +26,16 @@ const defaultCategories: Omit<Category, 'id'|'userId'>[] = [
     { name: "Salary", type: "income" },
     { name: "Freelance", type: "income" },
     { name: "Business", type: "income" },
+    { name: "Loan Taken", type: "income" },
+    { name: "Loan Received", type: "income" },
     
     // Expense categories
     { name: "Shopping", type: "expense" },
     { name: "Groceries", type: "expense" },
     { name: "Housing", type: "expense" },
     { name: "Entertainment", type: "expense" },
+    { name: "Loan Given", type: "expense" },
+    { name: "Loan Repayed", type: "expense" },
 ];
 
 
@@ -45,12 +49,18 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       const q = getCategories(user.uid);
       const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-        // Don't auto-create default categories - let users start with a clean slate
-        const userCategories: Category[] = [];
-        querySnapshot.forEach((doc) => {
-          userCategories.push({ id: doc.id, ...doc.data() } as Category);
-        });
-        setCategories(userCategories);
+        if (querySnapshot.empty) {
+          // Create default categories for new user
+          for (const cat of defaultCategories) {
+            await addCategoryService(user.uid, cat);
+          }
+        } else {
+          const userCategories: Category[] = [];
+          querySnapshot.forEach((doc) => {
+            userCategories.push({ id: doc.id, ...doc.data() } as Category);
+          });
+          setCategories(userCategories);
+        }
         setLoading(false);
       }, (error) => {
         console.error("Error fetching categories:", error);
@@ -125,8 +135,18 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     // });
   };
 
-  const deleteCategory = async (categoryId: string) => {
+  const deleteCategory = async (categoryId: string, transactions: Transaction[]) => {
     if (!user) throw new Error("User not authenticated");
+    
+    // Check if category is used in any transactions
+    const categoryTransactions = transactions.filter(t => t.categoryId === categoryId);
+    if (categoryTransactions.length > 0) {
+      const category = categories.find(c => c.id === categoryId);
+      const categoryName = category?.name || 'Category';
+      
+      throw new Error(`Cannot delete "${categoryName}" because it is used in ${categoryTransactions.length} transaction(s). Please change the category of these transactions first.`);
+    }
+    
     await deleteCategoryService(user.uid, categoryId);
     
     // Show success toast
@@ -150,9 +170,26 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     // });
   };
 
-  const deleteCategoriesBulk = async (categoryIds: string[]) => {
+  const deleteCategoriesBulk = async (categoryIds: string[], transactions: Transaction[]) => {
     if (!user) throw new Error("User not authenticated");
     if (categoryIds.length === 0) return;
+    
+    // Check if any categories are used in transactions
+    const usedCategories: string[] = [];
+    const categoryNames: string[] = [];
+    
+    for (const categoryId of categoryIds) {
+      const categoryTransactions = transactions.filter(t => t.categoryId === categoryId);
+      if (categoryTransactions.length > 0) {
+        usedCategories.push(categoryId);
+        const category = categories.find(c => c.id === categoryId);
+        categoryNames.push(category?.name || 'Category');
+      }
+    }
+    
+    if (usedCategories.length > 0) {
+      throw new Error(`Cannot delete categories: ${categoryNames.join(', ')}. These categories are used in transactions. Please change the category of these transactions first.`);
+    }
     
     await deleteCategoriesBulkService(user.uid, categoryIds);
     

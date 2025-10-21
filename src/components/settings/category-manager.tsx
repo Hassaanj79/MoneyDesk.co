@@ -9,11 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { useCategories } from "@/contexts/category-context"
-import { Plus, Edit, Trash2, Tag, CheckSquare, Square } from "lucide-react"
+import { useTransactions } from "@/contexts/transaction-context"
+import { Plus, Edit, Trash2, Tag, CheckSquare, Square, Lock } from "lucide-react"
 import type { Category } from "@/types"
+import { toast } from "sonner"
 
 export function CategoryManager() {
   const { categories, addCategory, updateCategory, deleteCategory, deleteCategoriesBulk, loading } = useCategories()
+  const { transactions } = useTransactions()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [newCategory, setNewCategory] = useState({
@@ -106,19 +109,21 @@ export function CategoryManager() {
 
   const handleDeleteCategory = async (categoryId: string) => {
     try {
-      await deleteCategory(categoryId)
+      await deleteCategory(categoryId, transactions)
     } catch (error) {
       console.error('Error deleting category:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete category')
     }
   }
 
   const handleBulkDelete = async () => {
     try {
-      await deleteCategoriesBulk(Array.from(selectedCategories))
+      await deleteCategoriesBulk(Array.from(selectedCategories), transactions)
       setSelectedCategories(new Set())
       setIsBulkDeleteDialogOpen(false)
     } catch (error) {
       console.error('Error deleting categories:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete categories')
     }
   }
 
@@ -141,6 +146,16 @@ export function CategoryManager() {
     setSelectedCategories(new Set())
   }
 
+  // Helper function to check if category is used in transactions
+  const isCategoryUsed = (categoryId: string) => {
+    return transactions.some(t => t.categoryId === categoryId)
+  }
+
+  // Helper function to get transaction count for a category
+  const getCategoryTransactionCount = (categoryId: string) => {
+    return transactions.filter(t => t.categoryId === categoryId).length
+  }
+
   const incomeCategories = categories.filter(cat => cat.type === 'income')
   const expenseCategories = categories.filter(cat => cat.type === 'expense')
 
@@ -157,6 +172,23 @@ export function CategoryManager() {
 
   return (
     <div className="space-y-6">
+      {/* Information Banner */}
+      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="flex items-start gap-2">
+          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mt-0.5">
+            <span className="text-blue-600 dark:text-blue-400 text-xs font-bold">i</span>
+          </div>
+          <div className="text-sm">
+            <p className="text-blue-800 dark:text-blue-200 font-medium">
+              Category Deletion Protection
+            </p>
+            <p className="text-blue-700 dark:text-blue-300 mt-1">
+              Categories that are used in transactions cannot be deleted. You'll need to change the category of those transactions first.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold">Categories</h3>
@@ -324,34 +356,46 @@ export function CategoryManager() {
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{category.name}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteCategory(category.id)}
-                              className="bg-red-600 hover:bg-red-700"
+                      {isCategoryUsed(category.id) ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled
+                          className="h-8 w-8 p-0 text-gray-400 cursor-not-allowed"
+                          title={`Cannot delete "${category.name}" because it is used in ${getCategoryTransactionCount(category.id)} transaction(s). Please change the category of these transactions first.`}
+                        >
+                          <Lock className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{category.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteCategory(category.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -417,34 +461,46 @@ export function CategoryManager() {
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{category.name}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteCategory(category.id)}
-                              className="bg-red-600 hover:bg-red-700"
+                      {isCategoryUsed(category.id) ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled
+                          className="h-8 w-8 p-0 text-gray-400 cursor-not-allowed"
+                          title={`Cannot delete "${category.name}" because it is used in ${getCategoryTransactionCount(category.id)} transaction(s). Please change the category of these transactions first.`}
+                        >
+                          <Lock className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{category.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteCategory(category.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </div>
                 ))}
