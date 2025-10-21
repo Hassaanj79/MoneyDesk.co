@@ -1,64 +1,80 @@
-"use client"
+"use client";
 
-import { useLanguage } from '@/contexts/language-context'
-import { useState, useEffect } from 'react'
+import { useLanguage } from '@/contexts/language-context';
+import { useState, useEffect } from 'react';
 
-// Simple translation hook that loads translations dynamically
+// Simple translation function that loads messages dynamically
 export function useTranslation() {
-  const { language } = useLanguage()
-  const [translations, setTranslations] = useState<Record<string, any>>({})
-  const [loading, setLoading] = useState(true)
+  const languageContext = useLanguage();
+  const [messages, setMessages] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Handle case where context might not be available
+  const locale = languageContext?.locale || 'en';
 
   useEffect(() => {
-    const loadTranslations = async () => {
+    const loadMessages = async () => {
       try {
-        setLoading(true)
-        const response = await fetch(`/messages/${language}.json`)
+        setLoading(true);
+        // Try to load the specific language file
+        const response = await fetch(`/messages/${locale}.json`);
         if (response.ok) {
-          const data = await response.json()
-          setTranslations(data)
+          const data = await response.json();
+          setMessages(data);
         } else {
           // Fallback to English if language file doesn't exist
-          const fallbackResponse = await fetch('/messages/en.json')
+          const fallbackResponse = await fetch('/messages/en.json');
           if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json()
-            setTranslations(fallbackData)
+            const fallbackData = await fallbackResponse.json();
+            setMessages(fallbackData);
           }
         }
       } catch (error) {
-        console.error('Error loading translations:', error)
+        console.error('Error loading messages:', error);
         // Fallback to English
         try {
-          const fallbackResponse = await fetch('/messages/en.json')
+          const fallbackResponse = await fetch('/messages/en.json');
           if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json()
-            setTranslations(fallbackData)
+            const fallbackData = await fallbackResponse.json();
+            setMessages(fallbackData);
           }
         } catch (fallbackError) {
-          console.error('Error loading fallback translations:', fallbackError)
+          console.error('Error loading fallback messages:', fallbackError);
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadTranslations()
-  }, [language])
+    loadMessages();
+  }, [locale]);
 
-  const t = (key: string, fallback?: string): string => {
-    const keys = key.split('.')
-    let value: any = translations
-
+  const t = (key: string, params?: Record<string, any>): string => {
+    if (!messages) return key;
+    
+    const keys = key.split('.');
+    let value: any = messages;
+    
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k]
+        value = value[k];
       } else {
-        return fallback || key
+        return key; // Return the key if translation not found
       }
     }
+    
+    if (typeof value === 'string') {
+      // Simple parameter replacement
+      if (params) {
+        return value.replace(/\{(\w+)\}/g, (match, paramKey) => {
+          return params[paramKey] || match;
+        });
+      }
+      return value;
+    }
+    
+    return key;
+  };
 
-    return typeof value === 'string' ? value : fallback || key
-  }
-
-  return { t, loading, language }
+  return { t, loading, locale };
 }

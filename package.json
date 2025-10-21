@@ -56,7 +56,7 @@
     "libphonenumber-js": "^1.12.18",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
-    "next-intl": "^4.3.9",
+    "next-intl": "^4.3.12",
     "next-themes": "^0.3.0",
     "openai": "^6.1.0",
     "patch-package": "^8.0.0",

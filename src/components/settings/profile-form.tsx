@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, User, Loader2, MessageSquare } from "lucide-react"
 import { CancelAccountForm } from "@/components/settings/cancel-account-form"
 import { ThemeSelector } from "@/components/settings/theme-selector"
+import { LanguageSelectorDropdown } from "@/components/settings/language-selector-dropdown"
 import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 // import { useNotifications } from "@/contexts/notification-context"
@@ -292,6 +293,11 @@ export function ProfileForm() {
                 </FormItem>
             )}
             />
+        </div>
+        
+        {/* Language Selection */}
+        <div className="mt-6 pt-6 border-t border-border">
+          <LanguageSelectorDropdown />
         </div>
         
         {/* Theme Selection */}
