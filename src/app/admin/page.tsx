@@ -21,7 +21,6 @@ import { UserSearch } from '@/components/admin/user-search';
 import { EnhancedSubscriptionManagement } from '@/components/admin/enhanced-subscription-management';
 import { AuthUsersManagement } from '@/components/admin/auth-users-management';
 import { CancellationInbox } from '@/components/admin/cancellation-inbox';
-import { DebugStats } from '@/components/admin/debug-stats';
 import { AdminProvider } from '@/contexts/admin-context';
 import { useRouter } from 'next/navigation';
 
@@ -159,12 +158,6 @@ export default function AdminPage() {
           icon: Settings,
           description: 'System configuration'
         },
-        {
-          id: 'debug',
-          label: 'Debug',
-          icon: AlertTriangle,
-          description: 'Debug information'
-        }
       ];
 
   return (
@@ -312,9 +305,6 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="debug" className="space-y-6">
-            <DebugStats />
-          </TabsContent>
         </Tabs>
         </div>
       </div>
