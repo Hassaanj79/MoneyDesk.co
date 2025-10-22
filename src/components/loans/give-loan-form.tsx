@@ -186,11 +186,6 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
 
       form.reset();
       onSuccess?.();
-      
-      // Auto-refresh the page to show updated data
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error) {
       console.error("Failed to give loan", error);
       // addNotification({

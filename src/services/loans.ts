@@ -10,13 +10,18 @@ export const getLoans = (userId: string) => {
 }
 
 export const addLoan = async (userId: string, loan: Omit<Loan, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    console.log('addLoan service called with:', { userId, loan });
     const loansCol = getLoansCollection(userId);
     const now = new Date().toISOString();
-    return await addDoc(loansCol, {
+    const loanData = {
         ...loan,
         createdAt: now,
         updatedAt: now
-    });
+    };
+    console.log('Creating loan document with data:', loanData);
+    const result = await addDoc(loansCol, loanData);
+    console.log('Loan document created with ID:', result.id);
+    return result;
 };
 
 export const updateLoan = async (userId: string, loanId: string, updates: Partial<Omit<Loan, 'id' | 'userId' | 'createdAt'>>) => {

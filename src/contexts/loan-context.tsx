@@ -57,9 +57,21 @@ export const LoanProvider = ({ children }: { children: ReactNode }) => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      console.log('Adding loan:', loan);
       const newDoc = await addLoanService(user.uid, loan);
+      console.log('Loan service response:', newDoc);
       
       if (newDoc?.id) {
+        // Optimistically update the local state immediately
+        const newLoan: Loan = {
+          id: newDoc.id,
+          ...loan,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        setLoans(prevLoans => [newLoan, ...prevLoans]);
+        
         // Trigger refresh for components that depend on loan data
         setRefreshTrigger(prev => prev + 1);
         
@@ -68,6 +80,9 @@ export const LoanProvider = ({ children }: { children: ReactNode }) => {
         
         console.log('Loan added successfully:', newDoc.id);
         return newDoc.id;
+      } else {
+        console.error('No document ID returned from addLoanService');
+        throw new Error('Failed to create loan - no ID returned');
       }
     } catch (error) {
       console.error('Error adding loan:', error);
