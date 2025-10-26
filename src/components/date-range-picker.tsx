@@ -8,7 +8,7 @@ import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { EnhancedCalendar } from "@/components/ui/enhanced-calendar"
 import {
   Popover,
   PopoverContent,
@@ -201,13 +201,15 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
                 </Select>
             </div>
             <Separator />
-          <Calendar
+          <EnhancedCalendar
             initialFocus
             mode="range"
             defaultMonth={date?.from}
             selected={date}
             onSelect={handleDateSelect}
             numberOfMonths={2}
+            showYearSelector={true}
+            yearRange={{ min: 1900, max: new Date().getFullYear() + 10 }}
           />
           <Separator />
           <div className="flex justify-end p-2">

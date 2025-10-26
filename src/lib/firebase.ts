@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+// import { getAI, VertexAIBackend } from "firebase/ai";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -19,3 +20,13 @@ export const auth = getAuth(app);
 
 // Use the default database (no need to specify '(default)' as it's the default)
 export const db = getFirestore(app);
+
+// Initialize Firebase AI Logic with Vertex AI Backend (temporarily disabled)
+// let ai: any = null;
+// try {
+//   ai = getAI(app, { backend: new VertexAIBackend() });
+// } catch (error) {
+//   console.warn('Firebase AI initialization failed:', error);
+//   ai = null;
+// }
+export const ai = null;

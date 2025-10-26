@@ -4,6 +4,7 @@ import { aiCategorization } from '@/services/ai-categorization';
 import { aiDuplicateDetection, DuplicateDetectionResult } from '@/services/ai-duplicate-detection';
 import { aiSpendingInsights, SpendingInsight } from '@/services/ai-spending-insights';
 import { aiNotifications, SmartNotification } from '@/services/ai-notifications';
+import { firebaseGemini } from '@/services/firebase-gemini';
 import { useCurrency } from '@/hooks/use-currency';
 import { useCategories } from '@/contexts/category-context';
 
@@ -13,6 +14,11 @@ export interface AIFeatures {
   getCategorizationConfidence: (transaction: Partial<Transaction>) => number;
   suggestCategories: (transaction: Partial<Transaction>) => Array<{category: string, confidence: number}>;
   learnFromUser: (transactionName: string, category: string) => void;
+
+  // Enhanced Gemini-powered features
+  getGeminiCategorySuggestions: (transactionName: string, amount: number) => Promise<Array<{category: string, confidence: number, reasoning: string}>>;
+  generateGeminiSpendingAnalysis: (transactions: Transaction[]) => Promise<{insights: string[], recommendations: string[], trends: string[], alerts: string[]}>;
+  detectGeminiDuplicates: (transaction: Transaction, existingTransactions: Transaction[]) => Promise<{isDuplicate: boolean, confidence: number, reason: string}>;
 
   // Duplicate Detection
   detectDuplicate: (transaction: Partial<Transaction>, existingTransactions: Transaction[]) => DuplicateDetectionResult;
@@ -40,19 +46,22 @@ export interface AIFeatures {
   notifications: SmartNotification[];
   unreadCount: number;
   isLoading: boolean;
+  geminiAvailable: boolean;
 }
 
 export const useAIFeatures = (): AIFeatures => {
   const [notifications, setNotifications] = useState<SmartNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [geminiAvailable, setGeminiAvailable] = useState(false);
   const { formatCurrency } = useCurrency();
   const { categories } = useCategories();
 
-  // Initialize notifications
+  // Initialize notifications and check Gemini availability
   useEffect(() => {
     setNotifications(aiNotifications.getNotifications());
     setUnreadCount(aiNotifications.getNotificationCount());
+    setGeminiAvailable(firebaseGemini.isAvailable());
   }, []);
 
   // Categorization functions
@@ -70,6 +79,59 @@ export const useAIFeatures = (): AIFeatures => {
 
   const learnFromUser = useCallback((transactionName: string, category: string) => {
     aiCategorization.learnFromUser(transactionName, category);
+  }, []);
+
+  // Enhanced Gemini-powered features
+  const getGeminiCategorySuggestions = useCallback(async (
+    transactionName: string, 
+    amount: number
+  ): Promise<Array<{category: string, confidence: number, reasoning: string}>> => {
+    if (!firebaseGemini.isAvailable()) {
+      throw new Error('Firebase Gemini is not available');
+    }
+
+    const existingCategoryNames = categories.map(c => c.name);
+    return await firebaseGemini.getCategorySuggestions(transactionName, amount, existingCategoryNames);
+  }, [categories]);
+
+  const generateGeminiSpendingAnalysis = useCallback(async (
+    transactions: Transaction[]
+  ): Promise<{insights: string[], recommendations: string[], trends: string[], alerts: string[]}> => {
+    if (!firebaseGemini.isAvailable()) {
+      throw new Error('Firebase Gemini is not available');
+    }
+
+    const transactionData = transactions.map(t => ({
+      name: t.name,
+      amount: t.amount,
+      category: t.categoryName || 'Unknown',
+      date: t.date.toISOString().split('T')[0]
+    }));
+
+    return await firebaseGemini.generateSpendingAnalysis(transactionData);
+  }, []);
+
+  const detectGeminiDuplicates = useCallback(async (
+    transaction: Transaction,
+    existingTransactions: Transaction[]
+  ): Promise<{isDuplicate: boolean, confidence: number, reason: string}> => {
+    if (!firebaseGemini.isAvailable()) {
+      throw new Error('Firebase Gemini is not available');
+    }
+
+    const newTransaction = {
+      name: transaction.name,
+      amount: transaction.amount,
+      date: transaction.date.toISOString().split('T')[0]
+    };
+
+    const existingData = existingTransactions.map(t => ({
+      name: t.name,
+      amount: t.amount,
+      date: t.date.toISOString().split('T')[0]
+    }));
+
+    return await firebaseGemini.detectDuplicates(newTransaction, existingData);
   }, []);
 
   // Duplicate detection functions
@@ -206,6 +268,11 @@ export const useAIFeatures = (): AIFeatures => {
     suggestCategories,
     learnFromUser,
 
+    // Enhanced Gemini-powered features
+    getGeminiCategorySuggestions,
+    generateGeminiSpendingAnalysis,
+    detectGeminiDuplicates,
+
     // Duplicate Detection
     detectDuplicate,
     findPotentialDuplicates,
@@ -227,6 +294,7 @@ export const useAIFeatures = (): AIFeatures => {
     // State
     notifications,
     unreadCount,
-    isLoading
+    isLoading,
+    geminiAvailable
   };
 };

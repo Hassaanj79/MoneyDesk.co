@@ -44,6 +44,8 @@ import { CameraCapture } from "./camera-capture";
 import { SmartCategorySelector } from "./smart-category-selector";
 import Image from "next/image";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { clientOCR } from "@/services/client-ocr";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -70,6 +72,8 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { categories, addCategory } = useCategories();
   const { user } = useAuth();
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -130,6 +134,9 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       onSuccess?.();
       form.reset();
       
+      // Reset auto-filled fields state
+      setAutoFilledFields(new Set());
+      
       // Auto refresh the page to ensure UI updates
       setTimeout(() => {
         window.location.reload();
@@ -143,6 +150,152 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const handlePhotoSelect = (photoDataUrl: string) => {
     form.setValue("receipt", photoDataUrl);
     setCameraOpen(false);
+    // Process OCR for captured photo
+    processReceiptOCR(photoDataUrl);
+  }
+
+  const processReceiptOCR = async (imageData: string) => {
+    if (!imageData) return;
+
+    setIsProcessingOCR(true);
+    try {
+      console.log('Starting OCR processing of uploaded image...');
+      
+      // Extract text from the actual uploaded image using client-side OCR
+      const ocrResult = await clientOCR.extractTextFromImage(imageData);
+      
+      console.log('OCR extracted text:', ocrResult.text);
+      console.log('OCR confidence:', ocrResult.confidence);
+
+      if (!ocrResult.text || ocrResult.text.trim().length < 5) {
+        toast.error('Could not extract text from the image. Please try a clearer image.');
+        return;
+      }
+
+      // Use Gemini AI to process the extracted text
+      const response = await fetch('/api/gemini-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'receipt-parsing',
+          data: { receiptText: ocrResult.text }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const receiptData = result.data;
+        
+        // Auto-fill form fields with extracted data
+        const filledFields = new Set<string>();
+        
+        console.log('Auto-filling form with data:', receiptData);
+        console.log('Current form values before update:', form.getValues());
+        
+        if (receiptData.merchant) {
+          console.log('Setting merchant name:', receiptData.merchant);
+          form.setValue("name", receiptData.merchant);
+          filledFields.add("name");
+          // Force form to re-render
+          form.trigger("name");
+        }
+        
+        if (receiptData.amount) {
+          console.log('Setting amount:', receiptData.amount);
+          form.setValue("amount", receiptData.amount);
+          filledFields.add("amount");
+          // Force form to re-render
+          form.trigger("amount");
+        }
+        
+        if (receiptData.date) {
+          console.log('Setting date:', receiptData.date);
+          form.setValue("date", new Date(receiptData.date));
+          filledFields.add("date");
+          // Force form to re-render
+          form.trigger("date");
+        }
+        
+        console.log('Auto-filled fields:', Array.from(filledFields));
+        console.log('Form values after update:', form.getValues());
+        setAutoFilledFields(filledFields);
+
+        // Add a small delay to ensure form updates are visible
+        setTimeout(() => {
+          console.log('Form values after delay:', form.getValues());
+        }, 100);
+
+        // Get AI-powered category suggestion
+        if (receiptData.merchant && receiptData.amount) {
+          try {
+            const categoryResponse = await fetch('/api/gemini-ai', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'category-suggestions',
+                data: {
+                  transactionName: receiptData.merchant,
+                  amount: receiptData.amount,
+                  existingCategories: filteredCategories.map(c => c.name)
+                }
+              }),
+            });
+
+            const categoryResult = await categoryResponse.json();
+            if (categoryResult.success && categoryResult.suggestions.length > 0) {
+              const suggestedCategory = categoryResult.suggestions[0];
+              const matchingCategory = filteredCategories.find(c => 
+                c.name.toLowerCase() === suggestedCategory.category.toLowerCase()
+              );
+              
+              if (matchingCategory) {
+                form.setValue("categoryId", matchingCategory.id);
+                toast.success(`AI suggested category: ${suggestedCategory.category}`);
+              }
+            }
+          } catch (categoryError) {
+            console.warn('Failed to get category suggestion:', categoryError);
+          }
+        }
+
+        // Show success message with extracted data
+        const fieldNames = Array.from(filledFields).map(field => {
+          switch(field) {
+            case 'name': return 'Merchant Name';
+            case 'amount': return 'Amount';
+            case 'date': return 'Date';
+            default: return field;
+          }
+        });
+        const autoFilledText = fieldNames.length > 0 ? `Auto-filled: ${fieldNames.join(', ')}` : 'No fields auto-filled';
+        
+        toast.success(`✅ Receipt processed successfully! 
+        📝 Merchant: ${receiptData.merchant || 'Unknown'} 
+        💰 Amount: ${formatCurrency(receiptData.amount || 0)} 
+        📅 Date: ${receiptData.date || 'Today'}
+        🤖 ${autoFilledText}
+        
+        Check the form fields above - they should now be filled!`, {
+          duration: 8000, // Show longer so user can see it
+        });
+        
+        // Log the extracted data for debugging
+        console.log('AI extracted data:', receiptData);
+        console.log('Raw OCR text:', ocrResult.text);
+      } else {
+        toast.error(result.error || 'Failed to process receipt');
+      }
+    } catch (error) {
+      console.error('Receipt processing error:', error);
+      toast.error('Failed to process receipt. Please try again.');
+    } finally {
+      setIsProcessingOCR(false);
+    }
   }
 
   const filteredCategories = categories.filter((c) => c.type === type);
@@ -162,8 +315,12 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 <Input 
                   placeholder="e.g., Coffee, Salary" 
                   {...field}
+                  className={autoFilledFields.has('name') ? 'bg-green-50 border-green-200' : ''}
                 />
               </FormControl>
+              {autoFilledFields.has('name') && (
+                <p className="text-xs text-green-600">🤖 Auto-filled by OCR</p>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -183,9 +340,12 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                   step="0.01"
                   value={field.value || ''}
                   onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className={`[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${autoFilledFields.has('amount') ? 'bg-green-50 border-green-200' : ''}`}
                 />
               </FormControl>
+              {autoFilledFields.has('amount') && (
+                <p className="text-xs text-green-600">🤖 Auto-filled by OCR</p>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -343,11 +503,26 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel>Receipt</FormLabel>
+                    <p className="text-sm text-muted-foreground mb-2">
+                        <strong>Smart Receipt Processing:</strong> Upload or capture a receipt image to automatically extract transaction details using OCR + AI. 
+                        The system will read your actual receipt and auto-fill the merchant name, amount, date, and suggest a category.
+                        <br />
+                        <span className="text-xs text-blue-600">💡 You can still manually enter details if preferred - OCR is optional!</span>
+                    </p>
                     <FormControl>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="mr-2 h-4 w-4" />
-                                Upload Image
+                            <Button 
+                                variant="outline" 
+                                type="button" 
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isProcessingOCR}
+                            >
+                                {isProcessingOCR ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Upload className="mr-2 h-4 w-4" />
+                                )}
+                                {isProcessingOCR ? 'Processing...' : 'Upload Image'}
                             </Button>
                             <Input 
                                 type="file" 
@@ -359,7 +534,10 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                                     if (file) {
                                         const reader = new FileReader();
                                         reader.onloadend = () => {
-                                            form.setValue("receipt", reader.result as string);
+                                            const imageData = reader.result as string;
+                                            form.setValue("receipt", imageData);
+                                            // Process OCR for uploaded file
+                                            processReceiptOCR(imageData);
                                         };
                                         reader.readAsDataURL(file);
                                     }
@@ -368,9 +546,17 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
                             <Dialog open={cameraOpen} onOpenChange={setCameraOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" type="button">
-                                        <Camera className="mr-2 h-4 w-4" />
-                                        Capture Image
+                                    <Button 
+                                        variant="outline" 
+                                        type="button"
+                                        disabled={isProcessingOCR}
+                                    >
+                                        {isProcessingOCR ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Camera className="mr-2 h-4 w-4" />
+                                        )}
+                                        {isProcessingOCR ? 'Processing...' : 'Capture Image'}
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>

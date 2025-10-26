@@ -33,7 +33,7 @@ import { AddTransactionForm } from "@/components/transactions/add-transaction-fo
 import { EditTransactionForm } from "@/components/transactions/edit-transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { cn } from "@/lib/utils";
-import { PlusCircle, Trash2, Pencil, Clock, FileText, Filter, X, Calendar, Search } from "lucide-react";
+import { PlusCircle, Trash2, Pencil, Clock, FileText, Filter, X, Calendar, Search, RefreshCw } from "lucide-react";
 import type { Transaction } from "@/types";
 import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO, format, addDays, addWeeks, addMonths, addYears } from "date-fns";
@@ -191,9 +191,11 @@ function TransactionsPageContent() {
     let filtered = transactions;
 
     // Debug: Log the date range being used
-    console.log('Transactions: Date range filter:', { from: date?.from, to: date?.to });
-    console.log('Transactions: Total transactions:', transactions.length);
-    console.log('Transactions: Tab filter:', filter);
+    console.log('📊 Transactions Page Debug:');
+    console.log('  📅 Date range filter:', { from: date?.from, to: date?.to });
+    console.log('  📈 Total transactions:', transactions.length);
+    console.log('  🔍 Tab filter:', filter);
+    console.log('  📝 Recent transactions:', transactions.slice(0, 3).map(t => ({ id: t.id, name: t.name, type: t.type, date: t.date })));
 
     // Apply tab filter first (all, income, expense)
     if (filter !== 'all') {
@@ -571,6 +573,22 @@ function TransactionsPageContent() {
                   <TooltipContent>
                       <p>{t('transactions.addExpense')}</p>
                   </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="gap-1 flex-1 sm:flex-initial"
+                    variant="outline"
+                    onClick={() => window.location.reload()}
+                    size="sm"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    <span className="sm:inline hidden">Refresh</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh transactions</p>
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>

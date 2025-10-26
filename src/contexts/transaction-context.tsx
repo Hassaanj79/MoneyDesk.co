@@ -34,7 +34,7 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       const q = getTransactions(user.uid);
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        console.log('Firestore listener triggered, documents:', querySnapshot.docs.length);
+        console.log('🔥 Firestore listener triggered, documents:', querySnapshot.docs.length);
         const userTransactions: Transaction[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
@@ -65,15 +65,15 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
           } as Transaction;
           
           userTransactions.push(transaction);
-          console.log('Processing transaction:', transaction.id, transaction.name, 'Date:', transaction.date);
+          console.log('📝 Processing transaction:', transaction.id, transaction.name, 'Type:', transaction.type, 'Date:', transaction.date);
         });
         // Sort by creation date, newest first
         userTransactions.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
-        console.log('Setting transactions:', userTransactions.length);
+        console.log('✅ Setting transactions:', userTransactions.length, 'Total transactions loaded');
         setTransactions(userTransactions);
         setLoading(false);
       }, (error) => {
-        console.error("Error fetching transactions:", error);
+        console.error("❌ Error fetching transactions:", error);
         setLoading(false);
         // Handle permission errors gracefully
         if (error.code === 'permission-denied') {

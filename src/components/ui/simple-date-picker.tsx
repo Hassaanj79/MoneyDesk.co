@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedCalendar } from "@/components/ui/enhanced-calendar";
 import {
   Popover,
   PopoverContent,
@@ -52,7 +52,7 @@ export function SimpleDatePicker({
           sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <Calendar
+          <EnhancedCalendar
             mode="single"
             selected={value}
             onSelect={(date) => {
@@ -61,6 +61,8 @@ export function SimpleDatePicker({
             }}
             disabled={(date) => date < new Date("1900-01-01")}
             initialFocus
+            showYearSelector={true}
+            yearRange={{ min: 1900, max: new Date().getFullYear() + 10 }}
           />
         </PopoverContent>
       </Popover>

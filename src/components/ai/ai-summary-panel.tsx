@@ -644,9 +644,13 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
                   <TrendingUp className="h-4 w-4 text-blue-600" />
                   <h3 className="font-semibold">Summary</h3>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                  {insights.summary}
-                </p>
+                <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                  {insights.summary.split('\n').map((line, index) => (
+                    <div key={index} className={line.trim() === '' ? 'h-2' : ''}>
+                      {line.trim() === '' ? null : line}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <Separator />
@@ -709,7 +713,7 @@ export function AISummaryPanel({ open, onOpenChange }: AISummaryPanelProps) {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Quote className="h-4 w-4 text-purple-600" />
-                  <h3 className="font-semibold">Daily Inspiration</h3>
+                  <h3 className="font-semibold">Tip of the Day</h3>
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border-l-4 border-l-purple-500">
                   <p className="text-sm italic text-purple-800 dark:text-purple-200">
