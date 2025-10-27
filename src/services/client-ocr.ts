@@ -36,11 +36,15 @@ export class ClientSideOCRService {
         img.onerror = reject;
       });
 
-      // Use Tesseract.js to extract text
+      // Use Tesseract.js to extract text with optimized settings for receipts
       const { data: { text, confidence } } = await Tesseract.recognize(
         img,
         'eng',
         {
+          // PSM 6: Uniform block of text (best for receipts)
+          tessedit_pageseg_mode: '6',
+          // PSM 11: Sparse text (try different orientations)
+          tessedit_ocr_engine_mode: '2', // Neural nets LSTM engine
           logger: (m) => {
             if (m.status === 'recognizing text') {
               console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);

@@ -28,8 +28,9 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X, RefreshCw, Info, Bot } from "lucide-react";
 import { format } from "date-fns";
 import type { Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
@@ -40,6 +41,7 @@ import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
 import { useAuth } from "@/contexts/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { CameraCapture } from "./camera-capture";
 import { SmartCategorySelector } from "./smart-category-selector";
 import Image from "next/image";
@@ -74,6 +76,8 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const [cameraOpen, setCameraOpen] = useState(false);
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingReceiptData, setPendingReceiptData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -154,21 +158,101 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     processReceiptOCR(photoDataUrl);
   }
 
+  // Function to get category suggestion
+  const getCategorySuggestion = async (merchant: string, amount: number) => {
+    try {
+      const categoryResponse = await fetch('/api/gemini-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'category-suggestions',
+          data: {
+            transactionName: merchant,
+            amount: amount,
+            existingCategories: filteredCategories.map(c => c.name)
+          }
+        }),
+      });
+
+      const categoryResult = await categoryResponse.json();
+      if (categoryResult.success && categoryResult.suggestions.length > 0) {
+        const suggestedCategory = categoryResult.suggestions[0];
+        const matchingCategory = filteredCategories.find(c => 
+          c.name.toLowerCase() === suggestedCategory.category.toLowerCase()
+        );
+        
+        if (matchingCategory) {
+          form.setValue("categoryId", matchingCategory.id);
+          toast.success(`AI suggested category: ${suggestedCategory.category}`);
+        }
+      }
+    } catch (categoryError) {
+      console.warn('Failed to get category suggestion:', categoryError);
+    }
+  }
+
+  // Function to apply receipt data to form
+  const applyReceiptData = (receiptData: any) => {
+    if (!receiptData) return;
+    
+    const filledFields = new Set<string>();
+    
+    if (receiptData.merchant) {
+      form.setValue("name", receiptData.merchant);
+      filledFields.add("name");
+      form.trigger("name");
+    }
+    
+    const amountValue = receiptData.amount || receiptData.total;
+    if (amountValue) {
+      form.setValue("amount", amountValue);
+      filledFields.add("amount");
+      form.trigger("amount");
+    }
+    
+    if (receiptData.date) {
+      form.setValue("date", new Date(receiptData.date));
+      filledFields.add("date");
+      form.trigger("date");
+    }
+    
+    setAutoFilledFields(filledFields);
+    
+    // Show success toast
+    toast.success(`✅ Receipt processed! Auto-filled: ${Array.from(filledFields).join(', ')}`);
+    
+    // Category suggestion
+    if (receiptData.merchant && amountValue) {
+      getCategorySuggestion(receiptData.merchant, amountValue);
+    }
+  }
+
   const processReceiptOCR = async (imageData: string) => {
-    if (!imageData) return;
+    if (!imageData) {
+      console.error('No image data provided');
+      toast.error('No receipt image uploaded');
+      return;
+    }
 
     setIsProcessingOCR(true);
     try {
       console.log('Starting OCR processing of uploaded image...');
+      toast.info('Processing receipt with AI... Please wait.');
       
-      // Extract text from the actual uploaded image using client-side OCR
+      // Extract text from the uploaded image using client-side OCR
+      // (Image enhancement happens automatically by Tesseract OCR preprocessing)
+      console.log('Extracting text from receipt image...');
       const ocrResult = await clientOCR.extractTextFromImage(imageData);
       
       console.log('OCR extracted text:', ocrResult.text);
+      console.log('OCR text length:', ocrResult.text?.length);
       console.log('OCR confidence:', ocrResult.confidence);
 
       if (!ocrResult.text || ocrResult.text.trim().length < 5) {
-        toast.error('Could not extract text from the image. Please try a clearer image.');
+        console.error('OCR failed: insufficient text extracted');
+        toast.error('Could not extract text from the image. Please try a clearer image with better lighting.');
         return;
       }
 
@@ -186,14 +270,37 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
       const result = await response.json();
 
+      if (!result.success) {
+        console.error('Receipt parsing failed:', result.error);
+        toast.error(result.error || 'Failed to process receipt with AI. Please try again.');
+        setIsProcessingOCR(false);
+        return;
+      }
+
       if (result.success && result.data) {
         const receiptData = result.data;
+        
+        // Check if user has already entered data manually
+        const currentValues = form.getValues();
+        const hasManualEntry = (currentValues.name && currentValues.name.trim() !== '') || 
+                               (currentValues.amount && currentValues.amount > 0);
+        
+        console.log('Current form values before update:', currentValues);
+        console.log('Has manual entry:', hasManualEntry);
+        console.log('Receipt data from AI:', receiptData);
+        
+        // If user has manual data, show confirmation dialog
+        if (hasManualEntry) {
+          setPendingReceiptData(receiptData);
+          setShowConfirmDialog(true);
+          setIsProcessingOCR(false);
+          return;
+        }
         
         // Auto-fill form fields with extracted data
         const filledFields = new Set<string>();
         
         console.log('Auto-filling form with data:', receiptData);
-        console.log('Current form values before update:', form.getValues());
         
         if (receiptData.merchant) {
           console.log('Setting merchant name:', receiptData.merchant);
@@ -203,9 +310,11 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           form.trigger("name");
         }
         
-        if (receiptData.amount) {
-          console.log('Setting amount:', receiptData.amount);
-          form.setValue("amount", receiptData.amount);
+        // Try both 'amount' and 'total' fields for the amount
+        const amountValue = receiptData.amount || receiptData.total;
+        if (amountValue) {
+          console.log('Setting amount:', amountValue);
+          form.setValue("amount", amountValue);
           filledFields.add("amount");
           // Force form to re-render
           form.trigger("amount");
@@ -229,7 +338,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
         }, 100);
 
         // Get AI-powered category suggestion
-        if (receiptData.merchant && receiptData.amount) {
+        if (receiptData.merchant && amountValue) {
           try {
             const categoryResponse = await fetch('/api/gemini-ai', {
               method: 'POST',
@@ -276,7 +385,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
         
         toast.success(`✅ Receipt processed successfully! 
         📝 Merchant: ${receiptData.merchant || 'Unknown'} 
-        💰 Amount: ${formatCurrency(receiptData.amount || 0)} 
+        💰 Amount: ${formatCurrency(amountValue || 0)} 
         📅 Date: ${receiptData.date || 'Today'}
         🤖 ${autoFilledText}
         
@@ -300,9 +409,8 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
-
-
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
@@ -319,7 +427,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 />
               </FormControl>
               {autoFilledFields.has('name') && (
-                <p className="text-xs text-green-600">🤖 Auto-filled by OCR</p>
+                <p className="text-xs text-green-600">🤖 Auto-filled by MoneyDesk AI</p>
               )}
               <FormMessage />
             </FormItem>
@@ -344,7 +452,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 />
               </FormControl>
               {autoFilledFields.has('amount') && (
-                <p className="text-xs text-green-600">🤖 Auto-filled by OCR</p>
+                <p className="text-xs text-green-600">🤖 Auto-filled by MoneyDesk AI</p>
               )}
               <FormMessage />
             </FormItem>
@@ -502,14 +610,17 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 name="receipt"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Receipt</FormLabel>
-                    <p className="text-sm text-muted-foreground mb-2">
-                        <strong>Smart Receipt Processing:</strong> Upload or capture a receipt image to automatically extract transaction details using OCR + AI. 
-                        The system will read your actual receipt and auto-fill the merchant name, amount, date, and suggest a category.
-                        <br />
-                        <span className="text-xs text-blue-600">💡 You can still manually enter details if preferred - OCR is optional!</span>
-                    </p>
+                    <div className="space-y-1">
+                        <FormLabel className="flex items-center gap-2">
+                            <Bot className="h-4 w-4 text-purple-600" />
+                            Smart Receipt
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground ml-6">
+                            Upload or capture receipt image to auto-fill details with MoneyDesk AI
+                        </p>
+                    </div>
                     <FormControl>
+                        {/* Receipt upload options */}
                         <div className="grid grid-cols-2 gap-2">
                             <Button 
                                 variant="outline" 
@@ -569,23 +680,25 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                         </div>
                     </FormControl>
                      {receiptPreview && (
-                        <div className="mt-4 relative w-48 h-48">
-                            <Image
-                                src={receiptPreview}
-                                alt="Receipt preview"
-                                layout="fill"
-                                objectFit="cover"
-                                className="rounded-md border"
-                            />
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                onClick={() => form.setValue("receipt", null)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
+                        <div className="mt-4 relative w-full max-w-2xl">
+                            <div className="relative border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                <Image
+                                    src={receiptPreview}
+                                    alt="Receipt preview"
+                                    width={800}
+                                    height={1200}
+                                    className="w-full h-auto object-contain"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg"
+                                    onClick={() => form.setValue("receipt", null)}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     )}
                     <FormMessage />
@@ -600,5 +713,43 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
         </Button>
       </form>
     </Form>
+
+    {/* Confirmation Dialog for Overwriting Manual Data */}
+    <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Use AI to Fill Form?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You've already entered transaction details manually. Would you like to replace them with data from the receipt image using MoneyDesk AI?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {pendingReceiptData && (
+          <div className="text-sm space-y-1 py-2">
+            <p><strong>Merchant:</strong> {pendingReceiptData.merchant || 'Unknown'}</p>
+            <p><strong>Amount:</strong> {formatCurrency((pendingReceiptData.amount || pendingReceiptData.total || 0))}</p>
+            <p><strong>Date:</strong> {pendingReceiptData.date || 'Today'}</p>
+          </div>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => {
+            setShowConfirmDialog(false);
+            setPendingReceiptData(null);
+            toast.info('Your manual entries are preserved');
+          }}>
+            Keep Manual Entry
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => {
+            if (pendingReceiptData) {
+              applyReceiptData(pendingReceiptData);
+            }
+            setShowConfirmDialog(false);
+            setPendingReceiptData(null);
+          }}>
+            Use AI Data
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
