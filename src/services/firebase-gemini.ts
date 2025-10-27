@@ -329,38 +329,40 @@ Rules:
       category: string;
       date: string;
     }>,
-    timeRange: string = 'last 30 days'
+    timeRange: string = 'last 30 days',
+    currency: string = 'PKR'
   ): Promise<GeminiSpendingAnalysis> {
     if (!this.model) {
       throw new Error('Firebase Gemini model not initialized');
     }
 
     const transactionSummary = transactions
-      .map(t => `${t.name}: $${t.amount} (${t.category})`)
+      .map(t => `${t.name}: ${currency} ${t.amount} (${t.category})`)
       .join('\n');
 
     const prompt = `
-You are a personal finance advisor. Analyze these transactions and provide insights.
+You are a personal finance advisor. Analyze these transactions and provide BRIEF, CONCISE insights.
 
 Time Range: ${timeRange}
+Currency: ${currency}
+
 Transactions:
 ${transactionSummary}
 
-Return ONLY a valid JSON object:
+Return ONLY a valid JSON object with SHORT, CONCISE text (max 50 words per item):
 {
-  "insights": ["Key insights about spending patterns"],
-  "recommendations": ["Actionable recommendations"],
-  "trends": ["Notable trends observed"],
-  "alerts": ["Important alerts or warnings"]
+  "insights": ["Brief key insights"],
+  "recommendations": ["Short actionable recommendations"],
+  "trends": ["Brief trends"],
+  "alerts": ["Brief alerts"]
 }
 
 Rules:
-1. Provide 3-5 insights maximum
-2. Give 2-4 actionable recommendations
-3. Identify 2-3 key trends
-4. Include any important alerts
-5. Be specific and helpful
-6. Only return valid JSON, no explanations
+1. Keep each insight/recommendation under 50 words
+2. Use ${currency} symbol for all amounts
+3. Be concise and actionable
+4. Maximum 3 insights, 2 recommendations, 2 trends
+5. Only return valid JSON, no explanations
 `;
 
     try {

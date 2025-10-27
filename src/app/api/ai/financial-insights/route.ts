@@ -124,7 +124,8 @@ export async function POST(request: NextRequest) {
                 category: t.categoryName || t.categoryId,
                 date: t.date
               })),
-              `${dateRange.from} to ${dateRange.to}`
+              `${dateRange.from} to ${dateRange.to}`,
+              currency
             );
             
             // Convert Gemini format to expected API format
@@ -284,52 +285,16 @@ function generateSummary(
   const dailySpending = daysDiff > 0 ? (totalExpenses / daysDiff) : 0;
   const monthlyProjection = dailySpending * 30;
   
-  let summary = `📊 Financial Overview for ${dateRangeStr}:\n\n`;
-  
-  // Income and Expense Analysis
-  summary += `• Total Income: ${currency}${totalIncome.toFixed(2)}\n`;
-  summary += `• Total Expenses: ${currency}${totalExpenses.toFixed(2)}\n`;
+  // Concise financial summary
+  let summary = `Total Income: ${currency}${totalIncome.toFixed(2)} | Expenses: ${currency}${totalExpenses.toFixed(2)}`;
   
   if (netIncome > 0) {
-    summary += `• ✅ Net Income: ${currency}${netIncome.toFixed(2)} (${savingsRate.toFixed(1)}% savings rate)\n`;
+    summary += ` | Net: ${currency}${netIncome.toFixed(2)} (${savingsRate.toFixed(1)}% saved)`;
   } else if (netIncome < 0) {
-    summary += `• ⚠️ Net Loss: ${currency}${Math.abs(netIncome).toFixed(2)} (${Math.abs(savingsRate).toFixed(1)}% overspending)\n`;
-  } else {
-    summary += `• ⚖️ Break-even: No net income\n`;
+    summary += ` | Loss: ${currency}${Math.abs(netIncome).toFixed(2)}`;
   }
   
-  // Spending Patterns
-  summary += `• ${transactionCount} transactions processed\n`;
-  summary += `• Average transaction: ${currency}${averageTransaction.toFixed(2)}\n`;
-  
-  if (daysDiff > 1) {
-    summary += `• Daily spending average: ${currency}${dailySpending.toFixed(2)}\n`;
-    summary += `• Monthly projection: ${currency}${monthlyProjection.toFixed(2)}\n`;
-  }
-  
-  // Top Categories Insight
-  if (topCategories.length > 0) {
-    const topCategory = topCategories[0];
-    const percentage = (topCategory.amount / totalExpenses) * 100;
-    summary += `• Top spending category: ${topCategory.name} (${currency}${topCategory.amount.toFixed(2)} - ${percentage.toFixed(1)}% of expenses)\n`;
-    
-    if (percentage > 40) {
-      summary += `• ⚠️ This category is unusually high - consider reviewing\n`;
-    } else if (percentage > 25) {
-      summary += `• 📊 This is your primary expense category\n`;
-    }
-  }
-  
-  // Financial Health Assessment
-  if (savingsRate > 20) {
-    summary += `• 🟢 Excellent savings rate - you're building wealth effectively\n`;
-  } else if (savingsRate > 10) {
-    summary += `• 🟡 Good savings rate - room for improvement\n`;
-  } else if (savingsRate > 0) {
-    summary += `• 🟠 Low savings rate - consider increasing income or reducing expenses\n`;
-  } else {
-    summary += `• 🔴 Negative savings rate - immediate attention needed\n`;
-  }
+  summary += ` | ${transactionCount} transactions | Avg: ${currency}${averageTransaction.toFixed(2)}`;
   
   return summary;
 }
