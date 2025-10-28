@@ -42,11 +42,13 @@ function initializeFirebaseAdmin() {
           console.log('Firebase Admin SDK initialized with service account key');
         } catch (parseError) {
           console.error('Failed to parse service account key:', parseError);
-          throw parseError;
+          console.log('Falling back to Application Default Credentials');
+          // Fall through to default credentials
         }
-      } else {
-        // For production, try to use the service account key from environment
-        // If not available, try Application Default Credentials
+      }
+      
+      // If service account key failed or doesn't exist, try default credentials
+      if (!adminApp) {
         console.log('No service account key found, trying Application Default Credentials');
         
         adminApp = initializeApp({

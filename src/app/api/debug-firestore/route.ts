@@ -1,40 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  try {
-    // Try to initialize with service account from environment
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    
-    if (serviceAccountKey) {
-      const serviceAccount = JSON.parse(serviceAccountKey);
-      initializeApp({
-        credential: cert(serviceAccount),
-        projectId: process.env.FIREBASE_PROJECT_ID || 'moneydesk-ai'
-      });
-    } else {
-      // Fallback to default credentials (for local development)
-      initializeApp({
-        projectId: process.env.FIREBASE_PROJECT_ID || 'moneydesk-ai'
-      });
-    }
-  } catch (error) {
-    console.error('Failed to initialize Firebase Admin:', error);
-  }
-}
-
-const db = getFirestore();
-const auth = getAuth();
+import { adminDb, adminAuth } from '@/lib/firebase-admin';
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Debugging Firestore Permissions...');
 
+    // Check if Firebase Admin is available
+    if (!adminDb) {
+      return NextResponse.json({
+        success: false,
+        error: 'Firebase Admin SDK not initialized',
+        message: 'Please check your Firebase configuration'
+      }, { status: 500 });
+    }
+
     // Get all users
-    const usersSnapshot = await db.collection('users').get();
+    const usersSnapshot = await adminDb.collection('users').get();
     console.log(`📊 Total users in database: ${usersSnapshot.size}`);
 
     if (usersSnapshot.empty) {
@@ -70,15 +51,15 @@ export async function GET(request: NextRequest) {
 
       try {
         // Check transactions
-        const transactionsSnapshot = await db.collection('users').doc(userId).collection('transactions').get();
+        const transactionsSnapshot = await adminDb.collection('users').doc(userId).collection('transactions').get();
         userDetail.transactions = transactionsSnapshot.size;
 
         // Check accounts
-        const accountsSnapshot = await db.collection('users').doc(userId).collection('accounts').get();
+        const accountsSnapshot = await adminDb.collection('users').doc(userId).collection('accounts').get();
         userDetail.accounts = accountsSnapshot.size;
 
         // Check categories
-        const categoriesSnapshot = await db.collection('users').doc(userId).collection('categories').get();
+        const categoriesSnapshot = await adminDb.collection('users').doc(userId).collection('categories').get();
         userDetail.categories = categoriesSnapshot.size;
 
       } catch (error) {
@@ -121,8 +102,17 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
+      // Check if Firebase Admin is available
+      if (!adminDb) {
+        return NextResponse.json({
+          success: false,
+          error: 'Firebase Admin SDK not initialized',
+          message: 'Please check your Firebase configuration'
+        }, { status: 500 });
+      }
+
       // Ensure user document exists
-      const userRef = db.collection('users').doc(userId);
+      const userRef = adminDb.collection('users').doc(userId);
       const userDoc = await userRef.get();
       
       if (!userDoc.exists) {
@@ -142,10 +132,10 @@ export async function POST(request: NextRequest) {
       }, { merge: true });
 
       // Check and create default account if needed
-      const accountsSnapshot = await db.collection('users').doc(userId).collection('accounts').get();
+      const accountsSnapshot = await adminDb.collection('users').doc(userId).collection('accounts').get();
       
       if (accountsSnapshot.empty) {
-        await db.collection('users').doc(userId).collection('accounts').add({
+        await adminDb.collection('users').doc(userId).collection('accounts').add({
           name: 'Default Account',
           type: 'checking',
           balance: 0,
@@ -157,7 +147,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Check and create default categories if needed
-      const categoriesSnapshot = await db.collection('users').doc(userId).collection('categories').get();
+      const categoriesSnapshot = await adminDb.collection('users').doc(userId).collection('categories').get();
       
       if (categoriesSnapshot.empty) {
         const defaultCategories = [
@@ -173,7 +163,7 @@ export async function POST(request: NextRequest) {
         ];
 
         for (const category of defaultCategories) {
-          await db.collection('users').doc(userId).collection('categories').add({
+          await adminDb.collection('users').doc(userId).collection('categories').add({
             ...category,
             userId: userId,
             createdAt: new Date(),
