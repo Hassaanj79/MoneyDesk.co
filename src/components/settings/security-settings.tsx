@@ -10,11 +10,10 @@ import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Shield, Key, Eye, EyeOff, Lock, UserCheck, Check, X, HelpCircle, Smartphone, CheckCircle } from "lucide-react"
+import { Loader2, Shield, Key, Eye, EyeOff, Lock, UserCheck, Check, X, HelpCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { DeviceManagement } from "./device-management"
 import { toast } from "sonner"
-import { enable2FA, disable2FA, is2FAEnabled, send2FACode } from "@/services/email-2fa"
 
 export function SecuritySettings() {
   const { user } = useAuth()
@@ -24,13 +23,6 @@ export function SecuritySettings() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  // 2FA state
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
-  const [twoFactorLoading, setTwoFactorLoading] = useState(false)
-  const [checking2FA, setChecking2FA] = useState(true)
-
-
-  
   // Security Questions state
   const [securityQuestionsOpen, setSecurityQuestionsOpen] = useState(false)
   const [securityQuestionsLoading, setSecurityQuestionsLoading] = useState(false)
@@ -89,23 +81,6 @@ export function SecuritySettings() {
 
   const [passwordSuggestions] = useState(generatePasswordSuggestions())
 
-  // Check 2FA status on component mount
-  useEffect(() => {
-    const check2FAStatus = async () => {
-      if (!user) return
-
-      try {
-        const isEnabled = await is2FAEnabled(user.uid)
-        setTwoFactorEnabled(isEnabled)
-      } catch (error) {
-        console.error('Error checking 2FA status:', error)
-      } finally {
-        setChecking2FA(false)
-      }
-    }
-
-    check2FAStatus()
-  }, [user])
 
   // Predefined security questions
   const predefinedQuestions = [
@@ -305,74 +280,6 @@ export function SecuritySettings() {
     }
   }
 
-  // 2FA handlers
-  const handleEnable2FA = async () => {
-    if (!user) return
-
-    setTwoFactorLoading(true)
-    try {
-      const result = await enable2FA(user.uid, user.email || '')
-      
-      if (result.success) {
-        setTwoFactorEnabled(true)
-        toast.success("2FA has been enabled successfully")
-        
-        // Send a test code to verify it works
-        const codeResult = await send2FACode(user.uid, user.email || '')
-        if (codeResult.success) {
-          toast.success("Verification code sent to your email")
-        }
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      console.error('Error enabling 2FA:', error)
-      toast.error("Failed to enable 2FA")
-    } finally {
-      setTwoFactorLoading(false)
-    }
-  }
-
-  const handleDisable2FA = async () => {
-    if (!user) return
-
-    setTwoFactorLoading(true)
-    try {
-      const result = await disable2FA(user.uid)
-      
-      if (result.success) {
-        setTwoFactorEnabled(false)
-        toast.success("2FA has been disabled successfully")
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      console.error('Error disabling 2FA:', error)
-      toast.error("Failed to disable 2FA")
-    } finally {
-      setTwoFactorLoading(false)
-    }
-  }
-
-  const handleSendTestCode = async () => {
-    if (!user) return
-
-    setTwoFactorLoading(true)
-    try {
-      const result = await send2FACode(user.uid, user.email || '')
-      
-      if (result.success) {
-        toast.success("Test verification code sent to your email")
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
-      console.error('Error sending test code:', error)
-      toast.error("Failed to send test code")
-    } finally {
-      setTwoFactorLoading(false)
-    }
-  }
 
   const handleSaveSettings = () => {
     setLoading(true)
@@ -380,11 +287,7 @@ export function SecuritySettings() {
     // Simulate API call for other settings
     setTimeout(() => {
       setMessage({ type: "success", text: "Security settings updated successfully!" })
-      console.log("Security settings saved:", {
-        twoFactorEnabled,
-        deviceManagementEnabled,
-        privacySettings,
-      })
+      console.log("Security settings saved")
       setLoading(false)
     }, 1500)
   }
@@ -622,98 +525,6 @@ export function SecuritySettings() {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Two-Factor Authentication */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5" />
-            Two-Factor Authentication
-          </CardTitle>
-          <CardDescription>
-            Add an extra layer of security to your account with email verification codes
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {checking2FA ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span className="text-muted-foreground">Checking 2FA status...</span>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email 2FA</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive verification codes via email when signing in
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {twoFactorEnabled ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-green-600">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Enabled</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDisable2FA}
-                        disabled={twoFactorLoading}
-                      >
-                        {twoFactorLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Disable
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={handleEnable2FA}
-                      disabled={twoFactorLoading}
-                    >
-                      {twoFactorLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Enable 2FA
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {twoFactorEnabled && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Test 2FA</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Send a test verification code to verify 2FA is working
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSendTestCode}
-                        disabled={twoFactorLoading}
-                      >
-                        {twoFactorLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Send Test Code
-                      </Button>
-                    </div>
-                    
-                    <Alert>
-                      <Shield className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Security Notice:</strong> When 2FA is enabled, you'll need to enter a verification code 
-                        sent to your email every time you sign in. Make sure you have access to your email account.
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                </>
-              )}
-            </>
-          )}
         </CardContent>
       </Card>
 
