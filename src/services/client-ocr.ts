@@ -17,6 +17,29 @@ export class ClientSideOCRService {
     return ClientSideOCRService.instance;
   }
 
+  constructor() {
+    this.initializeOCR();
+  }
+
+  private async initializeOCR() {
+    if (this.isInitialized || typeof window === 'undefined') return;
+    
+    try {
+      // Pre-load Tesseract.js worker for better performance
+      await Tesseract.createWorker('eng', 1, {
+        logger: (m) => {
+          if (m.status === 'loading tesseract core') {
+            console.log('Loading Tesseract core...');
+          }
+        }
+      });
+      this.isInitialized = true;
+      console.log('Tesseract.js OCR initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize Tesseract.js:', error);
+    }
+  }
+
   /**
    * Extract text from an image using client-side OCR
    */
@@ -26,6 +49,16 @@ export class ClientSideOCRService {
     try {
       console.log('Starting OCR processing...');
       
+      // Check if OCR is available
+      if (!this.isAvailable()) {
+        throw new Error('OCR is not available in this environment');
+      }
+      
+      // Validate image data
+      if (!imageData || !imageData.startsWith('data:image/')) {
+        throw new Error('Invalid image data format');
+      }
+      
       // Convert base64 to image element
       const img = new Image();
       img.src = imageData;
@@ -33,7 +66,7 @@ export class ClientSideOCRService {
       // Wait for image to load
       await new Promise((resolve, reject) => {
         img.onload = resolve;
-        img.onerror = reject;
+        img.onerror = () => reject(new Error('Failed to load image'));
       });
 
       // Use Tesseract.js to extract text with optimized settings for receipts
@@ -64,7 +97,7 @@ export class ClientSideOCRService {
       };
     } catch (error) {
       console.error('OCR processing failed:', error);
-      throw new Error('Failed to extract text from image');
+      throw new Error(`Failed to extract text from image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -72,7 +105,7 @@ export class ClientSideOCRService {
    * Check if OCR is available
    */
   public isAvailable(): boolean {
-    return typeof window !== 'undefined' && 'Tesseract' in window;
+    return typeof window !== 'undefined' && typeof Tesseract !== 'undefined';
   }
 }
 
