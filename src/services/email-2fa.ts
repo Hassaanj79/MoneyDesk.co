@@ -131,18 +131,43 @@ export const disable2FA = async (userId: string): Promise<{ success: boolean; me
 
 /**
  * Check if 2FA is enabled for a user
+ * Checks both Firebase UID and email address as document IDs
  */
-export const is2FAEnabled = async (userId: string): Promise<boolean> => {
+export const is2FAEnabled = async (userId: string, email?: string): Promise<boolean> => {
   try {
+    console.log('🔍 Checking 2FA status for userId:', userId, 'email:', email);
+    
+    // First try with the provided userId (Firebase UID)
     const user2FARef = doc(db, 'user_2fa', userId);
     const docSnap = await getDoc(user2FARef);
     
-    if (!docSnap.exists()) {
-      return false;
+    console.log('📄 Document exists with UID:', docSnap.exists());
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data() as TwoFactorAuthData;
+      console.log('📄 UID document data:', data);
+      if (data.enabled === true) {
+        return true;
+      }
     }
 
-    const data = docSnap.data() as TwoFactorAuthData;
-    return data.enabled === true;
+    // If not found with UID and email is provided, try with email
+    if (email && email !== userId) {
+      console.log('📧 Trying with email:', email);
+      const email2FARef = doc(db, 'user_2fa', email);
+      const emailDocSnap = await getDoc(email2FARef);
+      
+      console.log('📄 Document exists with email:', emailDocSnap.exists());
+      
+      if (emailDocSnap.exists()) {
+        const data = emailDocSnap.data() as TwoFactorAuthData;
+        console.log('📄 Email document data:', data);
+        return data.enabled === true;
+      }
+    }
+
+    console.log('❌ No 2FA settings found');
+    return false;
   } catch (error) {
     console.error('Error checking 2FA status:', error);
     return false;
@@ -154,8 +179,8 @@ export const is2FAEnabled = async (userId: string): Promise<boolean> => {
  */
 export const send2FACode = async (userId: string, email: string): Promise<{ success: boolean; message: string }> => {
   try {
-    // Check if 2FA is enabled
-    const isEnabled = await is2FAEnabled(userId);
+    // Check if 2FA is enabled (check both UID and email)
+    const isEnabled = await is2FAEnabled(userId, email);
     if (!isEnabled) {
       return { success: false, message: '2FA is not enabled for this account' };
     }
@@ -245,9 +270,9 @@ export const verify2FACode = async (userId: string, code: string): Promise<{ suc
 /**
  * Generate backup codes for 2FA
  */
-export const generateBackupCodes = async (userId: string): Promise<{ codes: string[]; message: string }> => {
+export const generateBackupCodes = async (userId: string, email?: string): Promise<{ codes: string[]; message: string }> => {
   try {
-    const isEnabled = await is2FAEnabled(userId);
+    const isEnabled = await is2FAEnabled(userId, email);
     if (!isEnabled) {
       throw new Error('2FA is not enabled for this account');
     }
