@@ -10,7 +10,6 @@ import {
   Bell,
   LayoutDashboard,
   Search,
-  Menu,
   X,
   Loader2,
   History,
@@ -551,7 +550,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
-                  <Menu className="h-5 w-5" />
+                  <Settings className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
