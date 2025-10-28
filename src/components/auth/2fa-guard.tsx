@@ -80,7 +80,7 @@ export function TwoFAGuard({ children }: TwoFAGuardProps) {
     }
 
     check2FA()
-  }, [user, hasChecked, isChecking])
+  }, [user, hasChecked])
 
   const handle2FASuccess = () => {
     sessionStorage.setItem('2fa_verified', 'true')
