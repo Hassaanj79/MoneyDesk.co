@@ -39,9 +39,19 @@ export async function POST(request: NextRequest) {
 
     console.log('🔐 Sending 2FA code to:', email);
 
-    // Check if 2FA is enabled
-    const user2FARef = doc(db, 'user_2fa', userId);
-    const userDoc = await getDoc(user2FARef);
+    // Check if 2FA is enabled - try both userId and email as document IDs
+    let user2FARef = doc(db, 'user_2fa', userId);
+    let userDoc = await getDoc(user2FARef);
+    
+    console.log('📄 Document exists with UID:', userDoc.exists());
+    
+    // If not found with UID, try with email
+    if (!userDoc.exists() && email && email !== userId) {
+      console.log('📧 Trying with email as document ID:', email);
+      user2FARef = doc(db, 'user_2fa', email);
+      userDoc = await getDoc(user2FARef);
+      console.log('📄 Document exists with email:', userDoc.exists());
+    }
     
     if (!userDoc.exists()) {
       return NextResponse.json(
