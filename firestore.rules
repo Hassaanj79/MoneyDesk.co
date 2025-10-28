@@ -65,28 +65,22 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.token.email == email;
     }
     
-    // 2FA settings - users can only access their own 2FA settings
+    // 2FA settings - allow server-side access for API routes
     match /user_2fa/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow admin to read all 2FA data for debugging
-      allow read: if request.auth != null && isAdmin();
+      // Allow server-side creation, updates, and reading (for API routes)
+      allow create, update, read: if true;
     }
     
-    // 2FA codes - users can only access their own 2FA codes
+    // 2FA codes - allow server-side access for API routes
     match /user_2fa_codes/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow admin to read all 2FA codes for debugging
-      allow read: if request.auth != null && isAdmin();
+      // Allow server-side creation, updates, and reading (for API routes)
+      allow create, update, read: if true;
     }
     
-    // 2FA backup codes - users can only access their own backup codes
+    // 2FA backup codes - allow server-side access for API routes
     match /user_2fa_backup_codes/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow admin to read all backup codes for debugging
-      allow read: if request.auth != null && isAdmin();
+      // Allow server-side creation, updates, and reading (for API routes)
+      allow create, update, read: if true;
     }
     
     // Device sessions - users can only access their own device sessions
@@ -171,6 +165,44 @@ service cloud.firestore {
           // Admins can read all recurring transaction statuses
           allow read: if request.auth != null && isAdmin();
         }
+    
+    // Password reset tokens - allow server-side access for password reset flow
+    match /password_reset_tokens/{email} {
+      // Allow creation of reset tokens (for password reset requests)
+      // Allow server-side creation without auth (for API routes)
+      allow create: if true;
+      
+      // Allow reading reset tokens (for verification)
+      // Allow server-side reading without auth (for API routes)
+      allow read: if true;
+      
+      // Allow updating reset tokens (for marking as used)
+      // Allow server-side updating without auth (for API routes)
+      allow update: if true;
+      
+      // Allow deletion of reset tokens (for cleanup)
+      // Allow server-side deletion without auth (for API routes)
+      allow delete: if true;
+    }
+
+    // Money pools - users can create pools and read their own
+    match /pools/{poolId} {
+      // Users can read pools they created
+      allow read: if request.auth != null && 
+                    (request.auth.uid == resource.data.createdBy || isAdmin());
+      
+      // Users can create pools
+      allow create: if request.auth != null && 
+                      request.auth.uid == request.resource.data.createdBy;
+      
+      // Users can update pools they created, or admins can update any
+      allow update: if request.auth != null && 
+                      (request.auth.uid == resource.data.createdBy || isAdmin());
+      
+      // Users can delete pools they created, or admins can delete any
+      allow delete: if request.auth != null && 
+                      (request.auth.uid == resource.data.createdBy || isAdmin());
+    }
     
     // Admin access to all collections for dashboard stats
     match /{document=**} {

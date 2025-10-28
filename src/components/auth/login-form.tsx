@@ -306,6 +306,8 @@ export function LoginForm() {
               <GoogleSignInButton
                 onSuccess={() => {
                   toast.success("Successfully signed in with Google!");
+                  // Let the 2FA guard handle navigation and verification
+                  // Don't navigate immediately - the auth state change will trigger the guard
                 }}
                 onError={(error) => {
                   setError(error.message || "Failed to sign in with Google");

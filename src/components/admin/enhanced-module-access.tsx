@@ -105,6 +105,14 @@ const moduleDefinitions = [
     required: false
   },
   {
+    key: 'pools' as keyof ModuleAccess,
+    name: 'Money Pools',
+    description: 'Create and manage collaborative money pools',
+    icon: PiggyBank,
+    category: 'Premium',
+    required: false
+  },
+  {
     key: 'budgets' as keyof ModuleAccess,
     name: 'Budgets',
     description: 'Create and monitor spending budgets',

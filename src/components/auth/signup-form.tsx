@@ -25,6 +25,7 @@ import { Loader2, Eye, EyeOff, Phone, CheckCircle, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation";
 import { GoogleSignInButton } from "./google-signin-button";
 import { SimpleRecaptcha } from "./simple-recaptcha";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required.").min(2, "Name must be at least 2 characters."),
@@ -299,7 +300,9 @@ export function SignupForm() {
                 <div className="mt-6 space-y-3">
                     <GoogleSignInButton
                         onSuccess={() => {
-                            router.push('/');
+                            // Let the 2FA guard handle navigation and verification
+                            // Don't navigate immediately - the auth state change will trigger the guard
+                            toast.success("Successfully signed up with Google!");
                         }}
                         onError={(error) => {
                             setError(error.message || "Failed to sign in with Google");

@@ -37,6 +37,7 @@
     "dashboard": "Dashboard",
     "transactions": "Transactions",
     "loans": "Loans",
+    "pools": "Money Pools",
     "reports": "Reports",
     "settings": "Settings",
     "logout": "Logout",

@@ -23,23 +23,40 @@ const generate2FACode = (): string => {
 };
 
 /**
- * Send 2FA code to email using Firebase Auth
+ * Send 2FA code to email using dedicated API route
  */
-const send2FACodeToEmail = async (email: string, code: string): Promise<void> => {
+const send2FACodeToEmail = async (userId: string, email: string, code: string): Promise<void> => {
   try {
-    // For now, we'll use a simple console log approach
-    // This prevents the app from getting stuck on email sending
+    // Call the dedicated 2FA API route
+    const response = await fetch('/api/auth/send-2fa-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        email,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('❌ Error sending 2FA email:', error);
+      throw new Error(`Failed to send 2FA email: ${error.error || 'Unknown error'}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error('Failed to send 2FA email');
+    }
+
+    console.log(`✅ 2FA code sent via SendGrid to ${email}`);
+  } catch (error) {
+    console.error('Error sending 2FA email via SendGrid:', error);
+    // Fallback to console logging
     console.log(`📧 2FA Code for ${email}: ${code}`);
     console.log(`🔐 Please use this code: ${code}`);
     console.log(`⏰ Code expires in 10 minutes`);
-    
-    // In production, you can implement a proper email service here
-    // For now, we'll just log the code to prevent app freezing
-    
-  } catch (error) {
-    console.error('Error sending 2FA email:', error);
-    // Don't throw error to prevent app from getting stuck
-    console.log(`📧 2FA Code for ${email}: ${code}`);
   }
 };
 
@@ -143,55 +160,34 @@ export const send2FACode = async (userId: string, email: string): Promise<{ succ
       return { success: false, message: '2FA is not enabled for this account' };
     }
 
-    const user2FARef = doc(db, 'user_2fa', userId);
-    const userDoc = await getDoc(user2FARef);
-    
-    if (!userDoc.exists()) {
-      return { success: false, message: '2FA is not enabled for this account' };
-    }
-
-    const userData = userDoc.data() as TwoFactorAuthData;
-    
-    // Check rate limiting (max 3 codes per 5 minutes)
-    const now = new Date();
-    if (userData.lastCodeSent) {
-      const lastSent = userData.lastCodeSent.toDate();
-      const timeDiff = now.getTime() - lastSent.getTime();
-      if (timeDiff < 5 * 60 * 1000) { // 5 minutes
-        const remainingTime = Math.ceil((5 * 60 * 1000 - timeDiff) / 1000);
-        return { 
-          success: false, 
-          message: `Please wait ${remainingTime} seconds before requesting another code` 
-        };
-      }
-    }
-
-    // Generate and store code
-    const code = generate2FACode();
-    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
-
-    const codeRef = doc(db, 'user_2fa_codes', userId);
-    await setDoc(codeRef, {
-      code: code,
-      expiresAt: expiresAt,
-      attempts: 0,
-      createdAt: now,
-      email: email
+    // Call the dedicated API route
+    const response = await fetch('/api/auth/send-2fa-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        email,
+      }),
     });
 
-    // Update last code sent time
-    await setDoc(user2FARef, {
-      lastCodeSent: now,
-      updatedAt: serverTimestamp()
-    }, { merge: true });
+    if (!response.ok) {
+      const error = await response.json();
+      return { 
+        success: false, 
+        message: error.error || 'Failed to send 2FA code' 
+      };
+    }
 
-    // Send code to email
-    await send2FACodeToEmail(email, code);
-
-    return { success: true, message: '2FA code sent to your email' };
+    const result = await response.json();
+    return { 
+      success: result.success, 
+      message: result.message || '2FA code sent to your email' 
+    };
   } catch (error) {
     console.error('Error sending 2FA code:', error);
-    throw new Error('Failed to send 2FA code');
+    return { success: false, message: 'Failed to send 2FA code' };
   }
 };
 

@@ -38,6 +38,7 @@
     "transactions": "Transactions",
     "draft_transactions": "Draft Transactions",
     "loans": "Loans",
+    "pools": "Money Pools",
     "reports": "Reports",
     "settings": "Settings",
     "logout": "Logout",

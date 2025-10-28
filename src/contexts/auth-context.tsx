@@ -36,6 +36,7 @@ import { createEmailOTP, verifyEmailOTP, resendEmailOTP } from '@/services/email
 import { createOrUpdateDeviceSession, generateDeviceId } from '@/services/device-management';
 import { firebaseAuthService } from '@/services/firebase-auth';
 import { updateUserProfile } from '@/services/users';
+import { sendLoginNotification, formatDeviceInfo } from '@/services/login-notifications';
 
 interface AuthContextType {
   user: User | null;
@@ -165,6 +166,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (deviceError) {
         console.error('Error creating device session:', deviceError);
         // Don't fail login if device session creation fails
+      }
+      
+      // Send login notification email
+      try {
+        const deviceInfo = formatDeviceInfo(navigator.userAgent);
+        const loginTime = new Date().toLocaleString();
+        
+        await sendLoginNotification({
+          userEmail: result.user.email || '',
+          userName: result.user.displayName || 'User',
+          loginTime,
+          deviceInfo,
+          location: 'Unknown Location', // Could be enhanced with IP geolocation
+          ipAddress: '127.0.0.1' // Could be enhanced with real IP detection
+        });
+        
+        console.log('✅ Login notification sent successfully');
+      } catch (notificationError) {
+        console.error('Error sending login notification:', notificationError);
+        // Don't fail login if notification fails
       }
       
       // Login successful
@@ -314,14 +335,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Sending password reset email to:', email);
       
-      // Create action code settings with custom URL
-      const actionCodeSettings = {
-        url: `https://moneydesk.co/reset-password`,
-        handleCodeInApp: false,
-      };
-      
-      const result = await sendPasswordResetEmail(auth, email, actionCodeSettings);
-      console.log('Password reset email sent successfully');
+      const response = await fetch('/api/auth/password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send password reset email');
+      }
+
+      const result = await response.json();
+      console.log('✅ Password reset email sent via SendGrid');
       return result;
     } catch (error) {
       console.error('Error in sendPasswordReset:', error);
@@ -445,6 +473,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Error storing Google user profile:', error);
         // Don't throw error - profile storage is optional
+      }
+      
+      // Send login notification email for Google sign-in
+      try {
+        const deviceInfo = formatDeviceInfo(navigator.userAgent);
+        const loginTime = new Date().toLocaleString();
+        
+        await sendLoginNotification({
+          userEmail: user.email || '',
+          userName: user.displayName || 'User',
+          loginTime,
+          deviceInfo,
+          location: 'Unknown Location', // Could be enhanced with IP geolocation
+          ipAddress: '127.0.0.1' // Could be enhanced with real IP detection
+        });
+        
+        console.log('✅ Google login notification sent successfully');
+      } catch (notificationError) {
+        console.error('Error sending Google login notification:', notificationError);
+        // Don't fail login if notification fails
       }
       
       return result;

@@ -45,6 +45,12 @@ const moduleInfo = {
     icon: Crown,
     requiredTier: 'free' as const
   },
+  pools: {
+    name: 'Money Pools',
+    description: 'Collaborative money pooling',
+    icon: Crown,
+    requiredTier: 'premium' as const
+  },
   reports: {
     name: 'Reports',
     description: 'Advanced analytics and insights',

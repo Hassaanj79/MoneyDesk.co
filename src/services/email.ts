@@ -1,6 +1,6 @@
-// Email service for admin notifications
-// This is a placeholder for email functionality
-// In a real implementation, you would integrate with an email service like SendGrid, AWS SES, or Nodemailer
+// Email service using SendGrid
+// Note: This service should only be used in API routes or server-side code
+// due to Node.js module requirements (fs, path)
 
 export interface EmailData {
   to: string;
@@ -11,23 +11,38 @@ export interface EmailData {
 
 export const sendEmail = async (emailData: EmailData): Promise<boolean> => {
   try {
-    console.log('Email would be sent:', emailData);
+    // Call the API route instead of using SendGrid directly
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: emailData.to,
+        subject: emailData.subject,
+        body: emailData.body,
+        html: emailData.html,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('❌ Error sending email:', error);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log('✅ Email sent successfully to:', emailData.to);
+    return result.success;
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
     
-    // In a real implementation, you would:
-    // 1. Use SendGrid, AWS SES, or Nodemailer
-    // 2. Send the actual email
-    // 3. Return true/false based on success
-    
-    // For now, we'll just log the email data
-    console.log('📧 Email Notification:');
+    // Fallback to console logging if API call fails
+    console.log('📧 Email Notification (console fallback):');
     console.log('To:', emailData.to);
     console.log('Subject:', emailData.subject);
     console.log('Body:', emailData.body);
-    
-    // Simulate email sending
-    return true;
-  } catch (error) {
-    console.error('Error sending email:', error);
+    console.log('HTML:', emailData.html);
     return false;
   }
 };

@@ -122,6 +122,7 @@ export type ModuleAccess = {
   dashboard: boolean;
   transactions: boolean;
   loans: boolean;
+  pools: boolean;
   reports: boolean;
   settings: boolean;
   accounts: boolean;
@@ -228,6 +229,84 @@ export type Notification = {
   createdAt: string;
   expiresAt?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
+};
+
+// Money Pool Types
+export type MoneyPool = {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  currency: string;
+  targetAmount: number;
+  collectedAmount: number;
+  status: 'active' | 'completed' | 'cancelled';
+  poolType: 'split_bill' | 'fundraising' | 'recurring' | 'goal_saving' | 'roasca';
+  visibility: 'public' | 'private';
+  joinCode?: string;
+  autoComplete: boolean;
+  recurringPeriod?: 'weekly' | 'monthly' | 'yearly';
+  startDate: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  participants: MoneyPoolParticipant[];
+  contributions: MoneyPoolContribution[];
+  activityLog: MoneyPoolActivity[];
+  roscaConfig?: ROSCAConfig;
+};
+
+export type ROSCAConfig = {
+  frequency: 'weekly' | 'monthly';
+  contributionAmount: number;
+  memberLimit: number;
+  rotationMode: 'fixed_order' | 'ballot_draw';
+  startDate: string;
+  currentPeriod: number;
+  rotationOrder: string[];
+  ballotSeed?: string;
+  periods: ROSCAPeriod[];
+};
+
+export type ROSCAPeriod = {
+  periodIndex: number;
+  dueDate: string;
+  payoutDate: string;
+  payoutTo: string; // memberId
+  payoutAmount: number;
+  contributions: {
+    memberId: string;
+    paidAt?: string;
+    amountPaid: number;
+    paymentRef?: string;
+  }[];
+  payoutComplete: boolean;
+};
+
+export type MoneyPoolParticipant = {
+  userId: string;
+  email: string;
+  name: string;
+  joinedAt: string;
+  isActive: boolean;
+  contributionAmount: number;
+};
+
+export type MoneyPoolContribution = {
+  id: string;
+  poolId: string;
+  userId: string;
+  amount: number;
+  notes?: string;
+  createdAt: string;
+  status: 'pending' | 'confirmed' | 'reversed';
+};
+
+export type MoneyPoolActivity = {
+  timestamp: string;
+  type: 'created' | 'joined' | 'contributed' | 'withdrawn' | 'completed' | 'cancelled';
+  userId: string;
+  description: string;
 };
 
 // export * from './notification';

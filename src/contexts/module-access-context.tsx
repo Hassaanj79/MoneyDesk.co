@@ -55,11 +55,12 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
               const defaultAccess: ModuleAccess = {
                 dashboard: true,
                 transactions: true,
-                loans: false,
-                reports: false,
+                loans: true,
+                pools: true,
+                reports: true,
                 settings: true,
                 accounts: true,
-                budgets: false,
+                budgets: true,
                 categories: true,
               };
               setModuleAccess(defaultAccess);
@@ -75,11 +76,12 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
             const defaultAccess: ModuleAccess = {
               dashboard: true,
               transactions: true,
-              loans: false,
-              reports: false,
+              loans: true,
+              pools: true,
+              reports: true,
               settings: true,
               accounts: true,
-              budgets: false,
+              budgets: true,
               categories: true,
             };
             setModuleAccess(defaultAccess);
@@ -99,6 +101,7 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
               dashboard: true,
               transactions: true,
               loans: true,
+              pools: true,
               reports: true,
               settings: true,
               accounts: true,
@@ -124,6 +127,7 @@ export const ModuleAccessProvider = ({ children }: { children: ReactNode }) => {
           dashboard: true,
           transactions: true,
           loans: true,
+          pools: true,
           reports: true,
           settings: true,
           accounts: true,

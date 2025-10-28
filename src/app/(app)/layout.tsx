@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { TwoFAGuard } from '@/components/auth/2fa-guard';
+import { DebugTwoFAGuard } from '@/components/auth/debug-2fa-guard';
 
 export default function AuthenticatedLayout({
   children,
@@ -62,8 +63,8 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <TwoFAGuard>
+    <DebugTwoFAGuard>
       <AppLayout>{children}</AppLayout>
-    </TwoFAGuard>
+    </DebugTwoFAGuard>
   );
 }

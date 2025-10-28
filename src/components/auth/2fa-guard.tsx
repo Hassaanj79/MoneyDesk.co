@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { check2FARequired, is2FAVerified, clear2FAStatus } from '@/services/signin-2fa-check'
+import { is2FAEnabled, send2FACode } from '@/services/email-2fa'
+import { TwoFactorVerification } from './two-factor-verification'
+import { Loader2 } from 'lucide-react'
 
 interface TwoFAGuardProps {
   children: React.ReactNode
@@ -18,6 +20,8 @@ export function TwoFAGuard({ children }: TwoFAGuardProps) {
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
+  const [needs2FA, setNeeds2FA] = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
 
   useEffect(() => {
     const check2FA = async () => {
@@ -26,52 +30,79 @@ export function TwoFAGuard({ children }: TwoFAGuardProps) {
         return
       }
 
-      // Temporarily disable 2FA check to prevent app from getting stuck
-      // You can re-enable this later when email system is working properly
-      console.log('2FA check temporarily disabled for user:', user.email)
-      sessionStorage.setItem('2fa_verified', 'true')
-      setHasChecked(true)
-      return
+      // Check if user has already verified 2FA in this session
+      const sessionVerified = sessionStorage.getItem('2fa_verified')
+      if (sessionVerified === 'true') {
+        setHasChecked(true)
+        return
+      }
 
-      // If user just logged in and 2FA is not verified, check if it's required
-      if (!is2FAVerified()) {
-        setIsChecking(true)
+      setIsChecking(true)
+      
+      try {
+        const isEnabled = await is2FAEnabled(user.uid)
         
-        try {
-          const isRequired = await check2FARequired(user.uid)
+        if (isEnabled) {
+          console.log('2FA is required for user:', user.email)
+          setNeeds2FA(true)
           
-          if (isRequired) {
-            console.log('2FA is required for user:', user.email)
-            // Redirect to 2FA page
-            router.push('/signin-2fa')
-            return
-          } else {
-            console.log('2FA not required for user:', user.email)
-            // Mark as verified since it's not required
-            sessionStorage.setItem('2fa_verified', 'true')
+          // Automatically send 2FA code when user logs in
+          try {
+            console.log('Sending 2FA code to:', user.email)
+            const sendResult = await send2FACode(user.uid, user.email || '')
+            if (sendResult.success) {
+              console.log('✅ 2FA code sent successfully')
+              setCodeSent(true)
+            } else {
+              console.error('❌ Failed to send 2FA code:', sendResult.message)
+              // Still show the verification screen even if code sending failed
+              // The user can manually request a new code
+              setCodeSent(false)
+            }
+          } catch (error) {
+            console.error('❌ Error sending 2FA code:', error)
+            // Still show the verification screen even if code sending failed
+            setCodeSent(false)
           }
-        } catch (error) {
-          console.error('Error checking 2FA requirement:', error)
-          // On error, allow access (fail open)
-        } finally {
-          setIsChecking(false)
-          setHasChecked(true)
+        } else {
+          console.log('2FA not required for user:', user.email)
+          // Mark as verified since it's not required
+          sessionStorage.setItem('2fa_verified', 'true')
         }
-      } else {
-        // 2FA already verified
+      } catch (error) {
+        console.error('Error checking 2FA requirement:', error)
+        // On error, allow access (fail open)
+        sessionStorage.setItem('2fa_verified', 'true')
+      } finally {
+        setIsChecking(false)
         setHasChecked(true)
       }
     }
 
     check2FA()
-  }, [user, hasChecked, isChecking, router])
+  }, [user, hasChecked, isChecking])
+
+  const handle2FASuccess = () => {
+    sessionStorage.setItem('2fa_verified', 'true')
+    setNeeds2FA(false)
+    setHasChecked(true)
+    setCodeSent(false)
+  }
+
+  const handle2FACancel = () => {
+    // Clear session and redirect to login
+    sessionStorage.removeItem('2fa_verified')
+    router.push('/signin')
+  }
 
   // Clear 2FA status when user logs out
   useEffect(() => {
     if (!user) {
-      clear2FAStatus()
+      sessionStorage.removeItem('2fa_verified')
       setHasChecked(false)
       setIsChecking(false)
+      setNeeds2FA(false)
+      setCodeSent(false)
     }
   }, [user])
 
@@ -80,9 +111,24 @@ export function TwoFAGuard({ children }: TwoFAGuardProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
           <p className="text-sm text-gray-600">Checking security settings...</p>
         </div>
+      </div>
+    )
+  }
+
+  // Show 2FA verification if needed
+  if (needs2FA && !sessionStorage.getItem('2fa_verified')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+        <TwoFactorVerification
+          onSuccess={handle2FASuccess}
+          onCancel={handle2FACancel}
+          email={user?.email || ''}
+          userId={user?.uid || ''}
+          autoSent={codeSent}
+        />
       </div>
     )
   }

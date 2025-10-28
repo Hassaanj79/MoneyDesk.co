@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   HandCoins,
   FileText,
+  PiggyBank,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
   { href: "/loans", label: "Loans", icon: HandCoins },
+  { href: "/pools", label: "Pools", icon: PiggyBank },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 

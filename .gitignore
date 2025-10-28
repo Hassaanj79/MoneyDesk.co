@@ -42,4 +42,8 @@ next-env.d.ts
 
 # firebase
 firebase-debug.log
-firestore-debug.log
+firestore-debug.logsendgrid.env
+sendgrid.env
+SENDGRID_INTEGRATION_COMPLETE.md
+SENDGRID_INTEGRATION_VERIFIED.md
+SENDGRID_TROUBLESHOOTING.md
