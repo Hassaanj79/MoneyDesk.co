@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +15,7 @@ interface EnhancedCalendarProps extends Omit<CalendarProps, 'month' | 'onMonthCh
   yearRange?: { min: number; max: number };
   month?: Date;
   onMonthChange?: (month: Date) => void;
+  onSelect?: (date: Date | DateRange | undefined) => void;
 }
 
 function EnhancedCalendar({
@@ -50,32 +51,34 @@ function EnhancedCalendar({
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const handleYearChange = (year: string) => {
-    const newYear = parseInt(year);
+  const handleYearChange = React.useCallback((year: string) => {
+    const newYear = parseInt(year, 10);
     setCurrentYear(newYear);
+    // Use the current month value directly
     const newDate = new Date(newYear, currentMonth, 1);
     setSelectedMonth(newDate);
-    // Force the calendar to update by calling onMonthChange
     if (props.onMonthChange) {
       props.onMonthChange(newDate);
     }
-  };
+  }, [props, currentMonth]);
 
-  const handleMonthChange = (month: string) => {
-    const newMonth = parseInt(month);
+  const handleMonthChange = React.useCallback((month: string) => {
+    const newMonth = parseInt(month, 10);
     setCurrentMonth(newMonth);
+    // Use the current year value directly
     const newDate = new Date(currentYear, newMonth, 1);
     setSelectedMonth(newDate);
-    // Force the calendar to update by calling onMonthChange
     if (props.onMonthChange) {
       props.onMonthChange(newDate);
     }
-  };
+  }, [props, currentYear]);
 
   const CustomCaption = ({ displayMonth }: { displayMonth: Date }) => {
     React.useEffect(() => {
-      setCurrentYear(displayMonth.getFullYear());
-      setCurrentMonth(displayMonth.getMonth());
+      const year = displayMonth.getFullYear();
+      const month = displayMonth.getMonth();
+      setCurrentYear(year);
+      setCurrentMonth(month);
     }, [displayMonth]);
 
     return (
@@ -84,9 +87,11 @@ function EnhancedCalendar({
           <>
             <Select value={currentMonth.toString()} onValueChange={handleMonthChange}>
               <SelectTrigger className="w-32 h-8 text-sm relative z-[120]">
-                <SelectValue />
+                <SelectValue>
+                  {months[currentMonth] || months[0]}
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent className="z-[130]">
+              <SelectContent className="z-[99999]">
                 {months.map((month, index) => (
                   <SelectItem key={index} value={index.toString()}>
                     {month}
@@ -99,7 +104,7 @@ function EnhancedCalendar({
               <SelectTrigger className="w-20 h-8 text-sm relative z-[120]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="z-[130]">
+              <SelectContent className="z-[99999]">
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}

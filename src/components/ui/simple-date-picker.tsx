@@ -31,9 +31,10 @@ export function SimpleDatePicker({
 
   return (
     <div className={className}>
-      <Popover open={open} onOpenChange={setOpen} modal={false}>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
+            type="button"
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal h-10 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
@@ -46,11 +47,18 @@ export function SimpleDatePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-auto p-0 z-[200]" 
+          className="w-auto p-0 z-[99999]" 
           align="start"
           side="bottom"
           sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => {
+            // Don't close when clicking inside dialog
+            const target = e.target as HTMLElement;
+            if (target.closest('[role="dialog"]')) {
+              e.preventDefault();
+            }
+          }}
         >
           <EnhancedCalendar
             mode="single"

@@ -30,35 +30,33 @@ export function DatePicker({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "w-full justify-start text-left font-normal h-10 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-            !value && "text-muted-foreground",
-            className
-          )}
-          disabled={disabled}
+    <div className={className}>
+      <Popover open={open} onOpenChange={setOpen} modal={false}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(
+              "w-full justify-start text-left font-normal h-10 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+              !value && "text-muted-foreground"
+            )}
+            disabled={disabled}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {value ? format(value, "PPP") : <span>{placeholder}</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto p-0 z-[200]"
+          align="start"
+          side="bottom"
+          sideOffset={4}
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "PPP") : <span>{placeholder}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-0 animate-in fade-in-0 zoom-in-95 duration-200 z-[100]"
-        align="start"
-        side="bottom"
-        sideOffset={4}
-        style={{
-          animation: 'fadeInScale 0.2s ease-out'
-        }}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
         <EnhancedCalendar
           mode="single"
           selected={value}
-          onSelect={(date) => {
+          onSelect={(date: Date | undefined) => {
             onChange?.(date);
             setOpen(false);
           }}
@@ -67,7 +65,8 @@ export function DatePicker({
           showYearSelector={true}
           yearRange={{ min: 1900, max: new Date().getFullYear() + 10 }}
         />
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

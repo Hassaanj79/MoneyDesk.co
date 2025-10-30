@@ -17,7 +17,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowRightLeft },
   { href: "/loans", label: "Loans", icon: HandCoins },
-  { href: "/pools", label: "Pools", icon: PiggyBank },
+  // { href: "/pools", label: "Pools", icon: PiggyBank }, // Temporarily disabled
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 

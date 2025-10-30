@@ -128,7 +128,7 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a preset" />
             </SelectTrigger>
-            <SelectContent className="z-[110]">
+            <SelectContent className="z-[99999]">
               <SelectItem value="custom">Custom</SelectItem>
               <SelectItem value="this-week">This Week</SelectItem>
               <SelectItem value="last-week">Last Week</SelectItem>
@@ -142,13 +142,14 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
           </Select>
         </div>
         <Separator />
-        <Calendar
+        <EnhancedCalendar
           initialFocus
           mode="range"
           defaultMonth={date?.from}
           selected={date}
           onSelect={handleDateSelect}
           numberOfMonths={2}
+          showYearSelector={false}
         />
       </div>
     );
@@ -187,7 +188,7 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
                     <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a preset" />
                     </SelectTrigger>
-                    <SelectContent className="z-[110]">
+                    <SelectContent className="z-[99999]">
                         <SelectItem value="custom">Custom</SelectItem>
                         <SelectItem value="this-week">This Week</SelectItem>
                         <SelectItem value="last-week">Last Week</SelectItem>
@@ -208,8 +209,7 @@ export function DateRangePicker({ className, date, onDateChange, forceOpen = fal
             selected={date}
             onSelect={handleDateSelect}
             numberOfMonths={2}
-            showYearSelector={true}
-            yearRange={{ min: 1900, max: new Date().getFullYear() + 10 }}
+            showYearSelector={false}
           />
           <Separator />
           <div className="flex justify-end p-2">

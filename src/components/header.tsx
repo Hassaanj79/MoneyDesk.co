@@ -298,36 +298,19 @@ export function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex lg:flex-row lg:items-center lg:gap-5 lg:text-sm xl:gap-6 lg:ml-8">
            {navItems.map((item) => {
-             // Special handling for Loans with Money Pools submenu
+             // Special handling for Loans (Money Pools submenu temporarily disabled)
              if (item.href === "/loans") {
                return (
-                 <DropdownMenu key={item.href}>
-                   <DropdownMenuTrigger asChild>
-                     <button
-                       className={cn(
-                         "transition-colors hover:text-foreground font-medium whitespace-nowrap",
-                         pathname === item.href || pathname === "/pools" ? "text-primary font-bold" : "text-muted-foreground"
-                       )}
-                     >
-                       {t(item.labelKey)}
-                     </button>
-                   </DropdownMenuTrigger>
-                   <DropdownMenuContent align="start">
-                     <DropdownMenuItem asChild>
-                       <Link href="/loans" className="flex items-center gap-2">
-                         <HandCoins className="h-4 w-4" />
-                         {t("navigation.loans")}
-                       </Link>
-                     </DropdownMenuItem>
-                     <DropdownMenuSeparator />
-                     <DropdownMenuItem asChild>
-                       <Link href="/pools" className="flex items-center gap-2">
-                         <PiggyBank className="h-4 w-4" />
-                         {t("navigation.pools")}
-                       </Link>
-                     </DropdownMenuItem>
-                   </DropdownMenuContent>
-                 </DropdownMenu>
+                 <Link
+                   key={item.href}
+                   href={item.href}
+                   className={cn(
+                     "transition-colors hover:text-foreground font-medium whitespace-nowrap",
+                     pathname === item.href ? "text-primary font-bold" : "text-muted-foreground"
+                   )}
+                 >
+                   {t(item.labelKey)}
+                 </Link>
                );
              }
              

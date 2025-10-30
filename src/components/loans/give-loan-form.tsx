@@ -201,8 +201,8 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="borrowerName"
@@ -226,7 +226,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                 <FormControl>
                   <Input placeholder="Phone or email" {...field} />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs">
                   Optional contact information for the borrower.
                 </FormDescription>
                 <FormMessage />
@@ -235,7 +235,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="amount"
@@ -273,7 +273,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </FormControl>
-                <FormDescription>
+                <FormDescription className="text-xs">
                   Optional interest amount to be received (in {formatCurrency(0).replace(/[\d.,]/g, '').trim()}).
                 </FormDescription>
                 <FormMessage />
@@ -282,7 +282,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={form.control}
             name="startDate"
@@ -342,7 +342,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                   ))}
                 </select>
               </FormControl>
-              <FormDescription>
+              <FormDescription className="text-xs">
                 Select the account to give the loan from.
               </FormDescription>
               <FormMessage />
@@ -360,10 +360,11 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                 <Textarea
                   placeholder="Optional description of the loan..."
                   className="resize-none"
+                  rows={2}
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
+              <FormDescription className="text-xs">
                 Optional notes about the loan.
               </FormDescription>
               <FormMessage />
@@ -372,15 +373,15 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
         />
 
         {/* Installment Options */}
-        <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+        <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
           <FormField
             control={form.control}
             name="isInstallment"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">Installment Loan</FormLabel>
-                  <FormDescription>
+                  <FormLabel className="text-sm">Installment Loan</FormLabel>
+                  <FormDescription className="text-xs">
                     Enable to split the loan into multiple payments
                   </FormDescription>
                 </div>
@@ -395,7 +396,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
           />
 
           {form.watch("isInstallment") && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="installmentCount"
@@ -412,7 +413,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                       />
                     </FormControl>
-                    <FormDescription>
+                    <FormDescription className="text-xs">
                       How many payments to split the loan into
                     </FormDescription>
                     <FormMessage />
@@ -439,7 +440,7 @@ export function GiveLoanForm({ onSuccess }: GiveLoanFormProps) {
                         <SelectItem value="yearly">Yearly</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
+                    <FormDescription className="text-xs">
                       How often payments are due
                     </FormDescription>
                     <FormMessage />

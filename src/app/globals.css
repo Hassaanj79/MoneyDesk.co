@@ -165,3 +165,102 @@ body {
     transform: scale(1) translateY(0);
   }
 }
+
+/* COMPLETELY REMOVE ALL ANIMATIONS - Instant appearance for popovers, dropdowns, selects (NOT dialogs) */
+[data-radix-popper-content-wrapper]:not([data-radix-dialog-content-wrapper]),
+[data-radix-popper-content-wrapper]:not([data-radix-dialog-content-wrapper]) > *,
+[data-radix-popover-content],
+[data-radix-select-content],
+[data-radix-dropdown-menu-content],
+[data-radix-dropdown-menu-sub-content] {
+  animation: none !important;
+  transition: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
+
+/* Popovers/dropdowns - remove animations (but NOT dialogs which need centering) */
+[data-radix-popper-content-wrapper][data-state="open"]:not(:has([role="dialog"])) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 99999 !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+[data-radix-popper-content-wrapper][data-state="open"]:not(:has([role="dialog"])) > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+[data-radix-popover-content][data-state="open"],
+[data-radix-select-content][data-state="open"],
+[data-radix-dropdown-menu-content][data-state="open"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  z-index: 99999 !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Ensure dialogs keep their centering transform - exclude from transform removal */
+[role="dialog"] *[class*="zoom-in-95"],
+[role="dialog"] *[class*="zoom-out-95"],
+[role="dialog"] *[class*="slide-in-from"],
+[role="dialog"] *[class*="slide-out-to"] {
+  /* Keep dialog animations - don't override */
+}
+
+[data-radix-dialog-content] {
+  /* Keep dialog transforms for centering */
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Remove zoom animations from popovers/dropdowns (NOT dialogs) */
+[data-radix-popover-content] [class*="zoom-in-95"],
+[data-radix-popover-content] [class*="zoom-out-95"],
+[data-radix-select-content] [class*="zoom-in-95"],
+[data-radix-select-content] [class*="zoom-out-95"],
+[data-radix-dropdown-menu-content] [class*="zoom-in-95"],
+[data-radix-dropdown-menu-content] [class*="zoom-out-95"],
+*[class*="zoom-in-95"]:not([role="dialog"] *),
+*[class*="zoom-out-95"]:not([role="dialog"] *) {
+  animation: none !important;
+}
+
+/* Remove slide animations from popovers/dropdowns (NOT dialogs) */
+[data-radix-popover-content][data-state="open"] [class*="slide-in-from"],
+[data-radix-popover-content][data-state="open"] [class*="slide-out-to"],
+[data-radix-select-content][data-state="open"] [class*="slide-in-from"],
+[data-radix-select-content][data-state="open"] [class*="slide-out-to"],
+[data-radix-dropdown-menu-content][data-state="open"] [class*="slide-in-from"],
+[data-radix-dropdown-menu-content][data-state="open"] [class*="slide-out-to"],
+*[class*="slide-in-from"]:not([role="dialog"] *),
+*[class*="slide-out-to"]:not([role="dialog"] *) {
+  animation: none !important;
+}
+
+/* Remove fade animations from popovers/dropdowns (NOT dialogs) */
+[data-radix-popover-content][data-state="open"] [class*="fade-in"],
+[data-radix-popover-content][data-state="open"] [class*="fade-out"],
+[data-radix-select-content][data-state="open"] [class*="fade-in"],
+[data-radix-select-content][data-state="open"] [class*="fade-out"],
+[data-radix-dropdown-menu-content][data-state="open"] [class*="fade-in"],
+[data-radix-dropdown-menu-content][data-state="open"] [class*="fade-out"],
+*[class*="fade-in"]:not([role="dialog"] *),
+*[class*="fade-out"]:not([role="dialog"] *) {
+  animation: none !important;
+}
+
+/* Keep dialog animations but make them fast */
+[role="dialog"] [class*="zoom-in-95"],
+[role="dialog"] [class*="zoom-out-95"],
+[role="dialog"] [class*="slide-in-from"],
+[role="dialog"] [class*="slide-out-to"] {
+  animation-duration: 0.2s !important;
+}
