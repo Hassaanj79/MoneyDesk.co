@@ -62,7 +62,7 @@ function EnhancedCalendar({
     }
   }, [props, currentMonth]);
 
-  const handleMonthChange = React.useCallback((month: string) => {
+  const handleMonthDropdownChange = React.useCallback((month: string) => {
     const newMonth = parseInt(month, 10);
     setCurrentMonth(newMonth);
     // Use the current year value directly
@@ -81,11 +81,36 @@ function EnhancedCalendar({
       setCurrentMonth(month);
     }, [displayMonth]);
 
+    const handlePrevMonth = () => {
+      const newMonth = new Date(displayMonth.getFullYear(), displayMonth.getMonth() - 1, 1);
+      setSelectedMonth(newMonth);
+      if (props.onMonthChange) {
+        props.onMonthChange(newMonth);
+      }
+    };
+
+    const handleNextMonth = () => {
+      const newMonth = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1);
+      setSelectedMonth(newMonth);
+      if (props.onMonthChange) {
+        props.onMonthChange(newMonth);
+      }
+    };
+
     return (
       <div className="flex items-center justify-center gap-2 py-2 relative z-[120]">
         {showYearSelector ? (
           <>
-            <Select value={currentMonth.toString()} onValueChange={handleMonthChange}>
+            {/* Left Arrow */}
+            <button
+              className="h-8 w-8 bg-white p-0 opacity-100 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center"
+              onClick={handlePrevMonth}
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4 text-gray-800 hover:text-gray-900 font-bold" />
+            </button>
+
+            <Select value={currentMonth.toString()} onValueChange={handleMonthDropdownChange}>
               <SelectTrigger className="w-32 h-8 text-sm relative z-[120]">
                 <SelectValue>
                   {months[currentMonth] || months[0]}
@@ -112,14 +137,50 @@ function EnhancedCalendar({
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Right Arrow */}
+            <button
+              className="h-8 w-8 bg-white p-0 opacity-100 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center"
+              onClick={handleNextMonth}
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4 text-gray-800 hover:text-gray-900 font-bold" />
+            </button>
           </>
         ) : (
-          <div className="text-sm font-medium">
-            {format(displayMonth, "MMMM yyyy")}
-          </div>
+          <>
+            {/* Left Arrow */}
+            <button
+              className="h-8 w-8 bg-white p-0 opacity-100 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center"
+              onClick={handlePrevMonth}
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4 text-gray-800 hover:text-gray-900 font-bold" />
+            </button>
+
+            <div className="text-sm font-medium px-2">
+              {format(displayMonth, "MMMM yyyy")}
+            </div>
+
+            {/* Right Arrow */}
+            <button
+              className="h-8 w-8 bg-white p-0 opacity-100 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-center"
+              onClick={handleNextMonth}
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4 text-gray-800 hover:text-gray-900 font-bold" />
+            </button>
+          </>
         )}
       </div>
     );
+  };
+
+  const handleMonthChange = (newMonth: Date) => {
+    setSelectedMonth(newMonth);
+    if (props.onMonthChange) {
+      props.onMonthChange(newMonth);
+    }
   };
 
   return (
@@ -127,19 +188,21 @@ function EnhancedCalendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       month={selectedMonth}
-      onMonthChange={setSelectedMonth}
+      onMonthChange={handleMonthChange}
+      enableYearNavigation={true}
+      enableMonthNavigation={true}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center z-[120] px-8",
+        caption: "flex justify-center pt-1 relative items-center z-[120] px-16",
         caption_label: "text-sm font-medium",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-8 w-8 bg-white p-0 opacity-100 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
         ),
-        nav_button_previous: "absolute left-2",
-        nav_button_next: "absolute right-2",
+        nav_button_previous: "absolute left-2 z-30",
+        nav_button_next: "absolute right-2 z-30",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
@@ -163,12 +226,6 @@ function EnhancedCalendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("h-4 w-4", className)} {...props} />
-        ),
         Caption: CustomCaption,
       }}
       {...(props as any)}
