@@ -23,6 +23,19 @@ export default function AuthenticatedLayout({
         console.error('Error redirecting to login:', error);
       }
     }
+    // If user exists but email is not verified, force verification flow
+    if (!loading && user && !user.emailVerified) {
+      try {
+        const emailParam = encodeURIComponent(user.email || '');
+        // Avoid redirect loops: if already on verify-email, do nothing
+        const current = window.location.pathname;
+        if (!current.startsWith('/verify-email')) {
+          router.push(`/verify-email?email=${emailParam}`);
+        }
+      } catch (error) {
+        console.error('Error redirecting to verify email:', error);
+      }
+    }
   }, [user, loading, router]);
   
   if (loading) {
@@ -60,7 +73,17 @@ export default function AuthenticatedLayout({
     );
   }
 
-  return (
-    <AppLayout>{children}</AppLayout>
-  );
+  // Block unverified users from seeing app content
+  if (user && !user.emailVerified) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-medium mb-2">Verify your email</p>
+          <p className="text-sm text-muted-foreground">We sent a verification link to your email. Please verify to continue.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AppLayout>{children}</AppLayout>;
 }

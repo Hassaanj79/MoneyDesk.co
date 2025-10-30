@@ -47,7 +47,7 @@ const formSchema = z.object({
 
 
 export function SignupForm() {
-    const { signupWithVerification } = useAuth();
+    const { signup, sendEmailVerification } = useAuth();
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState({ email: false });
@@ -87,9 +87,14 @@ export function SignupForm() {
     setLoading(prev => ({...prev, email: true}));
     setError(null);
     try {
-        await signupWithVerification(values.email, values.password, values.name, values.phone);
-        // Redirect to OTP verification page
-        router.push(`/verify-signup-otp?email=${encodeURIComponent(values.email)}`);
+        // Create user account
+        await signup(values.email, values.password, values.name, values.phone);
+        
+        // Send verification email
+        await sendEmailVerification(values.email);
+        
+        // Redirect to a static "verify email" screen
+        router.push(`/verify-email-sent?email=${encodeURIComponent(values.email)}`);
     } catch(err: any) {
         console.error('Signup error:', err);
         if (err.code === 'auth/email-already-in-use') {

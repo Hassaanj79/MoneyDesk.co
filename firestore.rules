@@ -185,6 +185,25 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // Email verification tokens - allow server-side access for email verification flow
+    match /email_verifications/{token} {
+      // Allow creation of verification tokens (for email verification requests)
+      // Allow server-side creation without auth (for API routes)
+      allow create: if true;
+      
+      // Allow reading verification tokens (for verification)
+      // Allow server-side reading without auth (for API routes)
+      allow read: if true;
+      
+      // Allow updating verification tokens (for marking as used)
+      // Allow server-side updating without auth (for API routes)
+      allow update: if true;
+      
+      // Allow deletion of verification tokens (for cleanup)
+      // Allow server-side deletion without auth (for API routes)
+      allow delete: if true;
+    }
+
     // Money pools - users can create pools and read their own
     match /pools/{poolId} {
       // Users can read pools they created

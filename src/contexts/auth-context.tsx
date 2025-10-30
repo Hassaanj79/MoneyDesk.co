@@ -47,6 +47,8 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string, phone?: string) => Promise<any>;
   signupWithVerification: (email: string, password: string, name: string, phone?: string) => Promise<any>;
   resendSignupOTP: (email: string) => Promise<void>;
+  sendEmailVerification: (email: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -308,6 +310,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const sendEmailVerification = async (email: string) => {
+    try {
+      // Send verification email via server API (handles token generation & storage)
+      const response = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send verification email');
+      }
+
+      console.log('✅ Verification email sent to:', email);
+    } catch (error) {
+      console.error('❌ Error sending verification email:', error);
+      throw error;
+    }
+  };
+
+  const refreshUser = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setUser(auth.currentUser);
+    }
+  };
+
   const logout = async () => {
     try {
       console.log('Logging out user...');
@@ -512,6 +543,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     signupWithVerification,
     resendSignupOTP,
+    sendEmailVerification,
+    refreshUser,
     logout,
     deleteAccount,
     sendPasswordReset,
